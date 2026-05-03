@@ -1,14 +1,25 @@
 # Seedance 2.0 周卡站搭建方案
 
-## 检索结论
+## 当前 MVP
 
-我用 Jina 查了官方与工程侧资料，核心判断如下：
+仓库已经升级为 Next.js MVP：
 
-- BytePlus ModelArk 已有 Seedance 2.0 视频生成 API，创建任务是异步接口，提交后需要查询任务或接收 `callback_url` 状态回调；输出成功后拿 `video_url`。
-- 官方 API 支持 `resolution: "720p"`，Seedance 2.0/2.0 fast 的 `duration` 支持 4 到 15 秒，适合做你说的 15s 周卡权益。
-- Seedance 2.0 支持文字、图片、视频、音频多模态输入；但官方文档提示 Seedance 2.0 系列对含真人脸的参考图/视频有上传限制，产品里要有素材合规校验和提示。
-- Supabase 官方提供 Next.js App Router 的 Auth 快速方案，适合先做账号、会话、Postgres、Storage、RLS。
-- 视频生成是慢任务。AWS 的生成式视频案例强调队列、回压、对象存储和通知链路，真实站点应采用 `User -> Queue -> Provider -> Storage -> Notification`，不要把生成任务做成普通同步请求。
+- 前端：`app/page.tsx` + `components/creator-app.tsx`
+- 后端 API：`/api/dashboard`、`/api/account`、`/api/claim`、`/api/redeem`、`/api/generations`、`/api/provider/seedance/callback`
+- MVP 存储：本地 JSON 文件 `.data/seedance-store.json`，Vercel 上暂用 `/tmp` 兜底
+- Provider：未配置 `BYTEPLUS_API_KEY` 时走模拟生成器；配置后走 BytePlus ModelArk Seedance 2.0 创建任务接口
+
+## 官方参数结论
+
+我用 Jina 查了 BytePlus 官方资料，核心判断如下：
+
+- BytePlus ModelArk Seedance 2.0 创建任务是异步接口，提交后需要查询任务或接收 `callback_url` 状态回调；输出成功后拿 `content.video_url`。
+- 官方 API 支持 `resolution: "720p"`。
+- Seedance 2.0/2.0 fast 的 `duration` 支持 `[4,15]` 秒，也支持 `-1` 智能时长。
+- 官方输出比例支持 `adaptive`、`16:9`、`4:3`、`1:1`、`3:4`、`9:16`、`21:9`。
+- Seedance 2.0 支持文字、图片、视频、音频多模态输入；最多 9 张图、3 段视频、3 段音频；音频不能单独输入。
+- 官方文档提示 Seedance 2.0 系列对含真人脸的参考图/视频有上传限制，产品里要有素材合规校验和提示。
+- 视频生成是慢任务，真实站点应采用 `User -> Queue -> Provider -> Storage -> Notification`，不要把生成任务做成普通同步请求。
 
 参考链接：
 
@@ -19,14 +30,18 @@
 
 ## 推荐技术栈
 
-MVP：
+当前 MVP 已使用：
 
-- 前端：Next.js App Router + TypeScript + Tailwind CSS + shadcn/ui
-- 账号：Supabase Auth
+- 前端：Next.js App Router + TypeScript + CSS
+- 部署：Vercel
+- 视频 Provider：BytePlus ModelArk Seedance 2.0 API 抽象
+
+生产化建议：
+
+- 账号：Supabase Auth 或 Clerk
 - 数据库：Supabase Postgres
-- 对象存储：Supabase Storage 或 Cloudflare R2
+- 对象存储：Cloudflare R2 或 Supabase Storage
 - 队列：Upstash QStash/Redis，或 AWS SQS
-- 部署：Vercel + Supabase
 - 管理端：Next.js `/admin` 路由，受管理员角色保护
 
 增长后：
@@ -54,8 +69,8 @@ MVP：
 
 生成：
 
-- 固定参数：`model = seedance 2.0`、`resolution = 720p`、`duration = 15`。
-- 用户可选：比例、文生/图生/多模态、声音、私密可见、seed。
+- 固定权益：`model = seedance 2.0`、`resolution = 720p`、单次最高 15 秒。
+- 用户可选：比例、时长、文生/图生/参考素材、声音、私密可见、seed。
 - 提交后立刻返回本地任务 ID，页面显示排队状态。
 - 后端 worker 调用 BytePlus 创建任务，保存 provider task ID。
 - 通过 `callback_url` 或轮询更新状态，成功后保存视频 URL 和封面。

@@ -1,5 +1,10 @@
 .vercel/
 node_modules/
+.next/
+.data/
+dist/
+dev-server*.log
+tsconfig.tsbuildinfo
 
 # Generated design drafts and screenshots
 output/
