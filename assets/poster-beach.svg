@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-label="海边的女孩">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#bfd9e4"/>
+      <stop offset=".48" stop-color="#ead2af"/>
+      <stop offset="1" stop-color="#f4efe2"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="540" fill="url(#sky)"/>
+  <path d="M0 294c150-32 252 14 398-10 174-28 324-96 562-28v284H0Z" fill="#789fa8"/>
+  <path d="M0 332c132-22 246 20 394 0 168-22 332-78 566-18v226H0Z" fill="#f3efe4"/>
+  <path d="M0 344c178 32 314 36 464 6 158-32 320-42 496-10" fill="none" stroke="#ffffff" stroke-width="13" opacity=".8"/>
+  <g transform="translate(438 184)">
+    <circle cx="44" cy="38" r="28" fill="#2e3637"/>
+    <path d="M22 74h46l30 220H0Z" fill="#2d4245"/>
+    <path d="M22 102c-42 40-72 92-88 154" stroke="#2d4245" stroke-width="18" stroke-linecap="round"/>
+    <path d="M70 102c42 36 70 82 84 142" stroke="#2d4245" stroke-width="18" stroke-linecap="round"/>
+  </g>
+</svg>

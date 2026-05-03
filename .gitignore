@@ -1,0 +1,12 @@
+.vercel/
+node_modules/
+
+# Generated design drafts and screenshots
+output/
+outputs/
+prompts/
+
+# Local environment files
+.env
+.env.*
+!.env.example

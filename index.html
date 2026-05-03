@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Seedance 2.0 满血版周卡创作台</title>
+    <link rel="preconnect" href="https://unpkg.com" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="dashboard">
+      <aside class="sidebar" aria-label="主导航">
+        <a class="brand" href="#" aria-label="Seedance 2.0 创作台">
+          <span class="brand-icon"><i data-lucide="sparkles"></i></span>
+          <span>
+            <strong>Seedance 2.0</strong>
+            <small>满血版周卡创作台</small>
+          </span>
+        </a>
+
+        <nav class="nav-list" aria-label="功能导航">
+          <a class="active" href="#"><i data-lucide="play-square"></i><span>创作台</span></a>
+          <a href="#gallery"><i data-lucide="image"></i><span>成片库</span></a>
+          <a href="#queue"><i data-lucide="list-video"></i><span>生成队列</span></a>
+          <a href="#redeem"><i data-lucide="ticket"></i><span>卡密兑换</span></a>
+          <a href="#benefits"><i data-lucide="gift"></i><span>我的权益</span></a>
+          <a href="#"><i data-lucide="clock-3"></i><span>使用记录</span></a>
+          <a href="#"><i data-lucide="settings"></i><span>设置中心</span></a>
+        </nav>
+
+        <section id="benefits" class="benefit-card" aria-labelledby="benefit-title">
+          <div class="benefit-head">
+            <h2 id="benefit-title">周卡权益</h2>
+            <span id="sideMemberState">生效中</span>
+          </div>
+          <p>Seedance 2.0 满血版周卡</p>
+          <small id="memberUntilText">有效期至 2026-05-10 24:00</small>
+          <ul>
+            <li><i data-lucide="check"></i>每天 2 次生成额度</li>
+            <li><i data-lucide="check"></i>单次生成 15 秒视频</li>
+            <li><i data-lucide="check"></i>分辨率 720p</li>
+            <li><i data-lucide="check"></i>优先生成通道</li>
+            <li><i data-lucide="check"></i>商用版权许可</li>
+          </ul>
+          <button class="light-button" type="button">查看权益详情</button>
+        </section>
+      </aside>
+
+      <div class="app">
+        <header class="topbar">
+          <div class="topbar-spacer"></div>
+          <div class="topbar-actions">
+            <button class="text-button" type="button"><i data-lucide="book-open"></i><span>帮助中心</span></button>
+            <button class="icon-button subtle" type="button" aria-label="通知"><i data-lucide="bell"></i></button>
+            <button class="user-menu" type="button">
+              <img src="assets/avatar.svg" alt="创作者头像" />
+              <span>
+                <strong>创作者_小北</strong>
+                <small>周卡用户</small>
+              </span>
+              <i data-lucide="chevron-down"></i>
+            </button>
+          </div>
+        </header>
+
+        <main class="content">
+          <section class="page-title">
+            <h1>Seedance 2.0 满血版周卡创作台</h1>
+            <p>稳定高效的 AI 视频创作体验</p>
+          </section>
+
+          <section id="notice" class="notice" hidden></section>
+
+          <section class="work-grid">
+            <div class="main-column">
+              <section class="campaign-card">
+                <div class="campaign-icon"><i data-lucide="gift"></i></div>
+                <div>
+                  <h2>免费周卡活动进行中</h2>
+                  <p>新用户每日可领取 1 张免费周卡</p>
+                </div>
+                <button id="claimButton" class="primary-button" type="button">领取免费周卡</button>
+              </section>
+
+              <form id="generationForm" class="panel composer" aria-labelledby="composer-title">
+                <div class="section-head">
+                  <h2 id="composer-title">开始创作</h2>
+                  <div class="section-actions">
+                    <button id="quickFillButton" class="soft-button" type="button">
+                      <i data-lucide="wand-sparkles"></i>
+                      <span>AI 灵感助手</span>
+                    </button>
+                    <button id="clearPromptButton" class="soft-button danger" type="button">清空</button>
+                  </div>
+                </div>
+
+                <label class="prompt-field">
+                  <span>视频描述（支持中英文）</span>
+                  <textarea id="promptInput" maxlength="1000" rows="7" placeholder="描述你想生成的视频内容、画面、动作、镜头语言等。">夕阳下的海边，女孩慢慢走向镜头，海浪轻轻拍打沙滩，电影感，柔和光影，动作自然稳定。</textarea>
+                  <small><span id="charCount">0</span> / 1000</small>
+                </label>
+
+                <div class="mode-tabs" role="group" aria-label="生成模式">
+                  <button class="segment active" type="button" data-mode="text">文生视频</button>
+                  <button class="segment" type="button" data-mode="image">图生视频</button>
+                  <button class="segment" type="button" data-mode="reference">多模态参考</button>
+                </div>
+
+                <div class="settings-grid">
+                  <label>
+                    <span>时长</span>
+                    <select id="durationInput">
+                      <option value="15">15 秒</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>分辨率</span>
+                    <select id="resolutionInput">
+                      <option value="720p">720p</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>比例</span>
+                    <select id="ratioInput">
+                      <option value="16:9">16:9</option>
+                      <option value="9:16">9:16</option>
+                      <option value="1:1">1:1</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>风格（可选）</span>
+                    <input id="styleInput" type="text" placeholder="选择或输入风格关键词" />
+                  </label>
+                </div>
+
+                <button class="advanced-row" type="button">
+                  <span>高级设置</span>
+                  <i data-lucide="chevron-down"></i>
+                </button>
+
+                <div class="composer-footer">
+                  <p><i data-lucide="clock"></i>今日额度：<strong><span id="quotaInline">2</span> / 2 次</strong></p>
+                  <button class="primary-button generate-button" type="submit">
+                    <i data-lucide="sparkles"></i>
+                    <span>开始生成</span>
+                  </button>
+                </div>
+              </form>
+
+              <section id="gallery" class="panel gallery-panel" aria-labelledby="gallery-title">
+                <div class="section-head">
+                  <div>
+                    <h2 id="gallery-title">成片库</h2>
+                    <div class="filter-tabs" aria-label="成片筛选">
+                      <button class="active" type="button">全部</button>
+                      <button type="button">视频</button>
+                      <button type="button">草稿</button>
+                    </div>
+                  </div>
+                  <button class="text-button" type="button">批量管理</button>
+                </div>
+                <div id="galleryGrid" class="gallery-grid" aria-live="polite"></div>
+              </section>
+            </div>
+
+            <aside class="right-column" aria-label="状态栏">
+              <section class="panel quota-panel" aria-labelledby="quota-title">
+                <div class="section-head">
+                  <h2 id="quota-title">今日额度</h2>
+                  <button id="refreshQuotaButton" class="text-button" type="button">规则说明</button>
+                </div>
+                <div class="quota-gauge" aria-label="今日剩余额度">
+                  <svg viewBox="0 0 180 112">
+                    <path class="gauge-bg" d="M34 92a56 56 0 0 1 112 0" />
+                    <path id="quotaArc" class="gauge-fill" d="M34 92a56 56 0 0 1 112 0" />
+                  </svg>
+                  <div>
+                    <strong><span id="quotaText">2</span><small>/2</small></strong>
+                    <span>剩余次数</span>
+                  </div>
+                </div>
+                <h3>每日 2 次生成额度</h3>
+                <p>每日 00:00 重置</p>
+                <div class="upgrade-tip">
+                  <i data-lucide="shield"></i>
+                  <span>想要更多生成次数？<br />升级会员可享更多额度</span>
+                  <button type="button">去升级</button>
+                </div>
+              </section>
+
+              <section id="redeem" class="panel redeem-panel" aria-labelledby="redeem-title">
+                <div class="section-head">
+                  <h2 id="redeem-title">卡密兑换</h2>
+                </div>
+                <form id="accessForm" class="redeem-form">
+                  <input id="codeInput" type="text" value="WEEK-SEED-2026" aria-label="兑换码" />
+                  <button class="primary-button" type="submit">兑换</button>
+                </form>
+                <button class="link-button" type="button">兑换记录 <i data-lucide="chevron-right"></i></button>
+              </section>
+
+              <section id="queue" class="panel queue-panel" aria-labelledby="queue-title">
+                <div class="section-head">
+                  <h2 id="queue-title">生成队列</h2>
+                  <button class="text-button" type="button">查看全部</button>
+                </div>
+                <div id="jobList" class="queue-list"></div>
+                <button id="clearButton" class="light-button clear-queue" type="button">清空队列</button>
+              </section>
+            </aside>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-label="时尚分镜生成样片">
+  <defs>
+    <linearGradient id="room" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#edf4f1"/>
+      <stop offset=".4" stop-color="#f9faf4"/>
+      <stop offset="1" stop-color="#d9e6ed"/>
+    </linearGradient>
+    <linearGradient id="coat" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f7faf9"/>
+      <stop offset="1" stop-color="#83bdb3"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="540" fill="url(#room)"/>
+  <path d="M0 406 H960 V540 H0Z" fill="#d6ded9"/>
+  <path d="M84 112 H876 M84 198 H876 M84 284 H876" stroke="#ffffff" stroke-width="3" opacity=".72"/>
+  <path d="M180 406 C320 360 448 354 540 406 C642 466 748 452 884 398" fill="none" stroke="#d95f4d" stroke-width="10" opacity=".62"/>
+  <g transform="translate(414 84)">
+    <circle cx="76" cy="64" r="48" fill="#29443d"/>
+    <path d="M42 122 C16 168 8 258 0 358 H156 C146 256 134 168 108 122 Z" fill="url(#coat)" stroke="#ffffff" stroke-width="5"/>
+    <path d="M56 128 L78 352 L104 128" fill="none" stroke="#17231f" stroke-width="5" opacity=".42"/>
+    <path d="M28 198 C-32 224 -64 286 -68 356" fill="none" stroke="#29443d" stroke-width="18" stroke-linecap="round"/>
+    <path d="M126 198 C190 232 224 286 232 354" fill="none" stroke="#29443d" stroke-width="18" stroke-linecap="round"/>
+  </g>
+  <g opacity=".86">
+    <rect x="150" y="122" width="96" height="152" rx="8" fill="#0e8f78"/>
+    <rect x="714" y="170" width="90" height="126" rx="8" fill="#d9972c"/>
+    <rect x="246" y="310" width="128" height="56" rx="8" fill="#367cc5"/>
+  </g>
+</svg>
