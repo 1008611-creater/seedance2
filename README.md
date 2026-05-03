@@ -27,14 +27,33 @@ FREEWEEK
 - Seedance 2.0 合规视频规格：`adaptive/16:9/9:16/1:1/4:3/3:4/21:9`，`4/5/8/10/15s/智能时长`
 - 文生视频、首帧图生、首尾帧、参考素材模式
 - Next.js API 后端：权益、额度、生成任务、回调接口
-- 未配置真实 API Key 时使用内置模拟生成器，便于先跑完整 MVP
+- 未配置真实 API Key 时使用人工履约队列，适配外部平台手动/半手动生成
 
-## 接入真实 Seedance
+## 人工履约后台
+
+后台地址：
+
+```text
+https://ai.lsb0713.online/admin
+```
+
+后台会读取 `ADMIN_TOKEN`。本机开发口令放在 `.env.local`，线上口令需要在 Vercel 环境变量中配置。
+
+工作流：
+
+1. 用户在前台提交任务，系统扣除今日额度。
+2. 管理员进入 `/admin`，复制任务包。
+3. 管理员在外部视频平台完成人工生成。
+4. 将成片上传到对象存储或其他可公开访问的位置。
+5. 在后台填入成片链接并发布，用户端自动进入成片库。
+
+## 可选：接入真实 Seedance API
 
 复制 `.env.example` 为 `.env.local`，配置：
 
 ```text
 APP_URL=https://ai.lsb0713.online
+ADMIN_TOKEN=你的后台口令
 BYTEPLUS_API_KEY=你的 ModelArk API Key
 SEEDANCE_MODEL_ID=dreamina-seedance-2-0-260128
 ```

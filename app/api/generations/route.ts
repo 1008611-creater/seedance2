@@ -64,8 +64,8 @@ export async function POST(request: NextRequest) {
         assets: input.assets,
         status: "queued",
         progress: 2,
-        provider: isSeedanceConfigured() ? "seedance" : "mock",
-        providerTaskId: isSeedanceConfigured() ? undefined : randomId("mock"),
+        provider: isSeedanceConfigured() ? "seedance" : "manual",
+        providerTaskId: isSeedanceConfigured() ? undefined : randomId("manual"),
         coverUrl: input.assets[0]?.dataUrl ?? input.assets[0]?.url ?? coverForRatio(input.ratio, state.generations.length),
         createdAt: now,
         updatedAt: now

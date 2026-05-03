@@ -169,7 +169,7 @@ export function CreatorApp() {
         privacy: "private",
         assets
       },
-      dashboard?.providerMode === "seedance" ? "任务已提交到 Seedance 队列。" : "任务已提交到生成队列。"
+      dashboard?.providerMode === "seedance" ? "任务已提交到 Seedance 队列。" : "任务已进入制作队列。"
     );
   }
 
@@ -291,7 +291,7 @@ export function CreatorApp() {
         <header className="topbar">
           <div className="provider-chip">
             <span className={dashboard?.providerMode === "seedance" ? "dot live" : "dot"} />
-            {dashboard?.providerMode === "seedance" ? "Seedance 实时通道" : "标准生成通道"}
+            {dashboard?.providerMode === "seedance" ? "Seedance 实时通道" : "人工制作通道"}
           </div>
           <div className="topbar-actions">
             <button className="text-button" type="button">
@@ -609,7 +609,7 @@ export function CreatorApp() {
 function QueueItem({ item }: { item: DashboardResponse["jobs"][number] }) {
   const statusText = {
     queued: "排队中",
-    running: "生成中",
+    running: "制作中",
     succeeded: "已完成",
     failed: "失败",
     expired: "已过期"
@@ -628,6 +628,7 @@ function QueueItem({ item }: { item: DashboardResponse["jobs"][number] }) {
       <div className="queue-progress">
         <span style={{ width: `${item.progress}%` }} />
       </div>
+      {item.userMessage ? <p className="queue-note">{item.userMessage}</p> : null}
       {item.errorMessage ? <p className="queue-error">{item.errorMessage}</p> : null}
     </article>
   );

@@ -114,12 +114,17 @@ export type Generation = {
   assets: MediaAsset[];
   status: GenerationStatus;
   progress: number;
-  provider: "mock" | "seedance";
+  provider: "manual" | "seedance";
   providerTaskId?: string;
   coverUrl: string;
   videoUrl?: string;
   lastFrameUrl?: string;
   errorMessage?: string;
+  operatorName?: string;
+  externalAccount?: string;
+  sourceTaskUrl?: string;
+  operatorNote?: string;
+  userMessage?: string;
   refundedAt?: string;
   createdAt: string;
   updatedAt: string;
@@ -140,7 +145,7 @@ export type DashboardResponse = {
   quota: QuotaSummary;
   jobs: Generation[];
   gallery: Generation[];
-  providerMode: "mock" | "seedance";
+  providerMode: "manual" | "seedance";
   ratios: typeof RATIO_OPTIONS;
   durations: typeof DURATION_OPTIONS;
   modes: typeof VIDEO_MODES;
@@ -158,4 +163,16 @@ export type CreateGenerationInput = {
   generateAudio?: boolean;
   privacy?: "private" | "link";
   assets?: MediaAsset[];
+};
+
+export type AdminQueueResponse = {
+  jobs: Generation[];
+  totals: {
+    queued: number;
+    running: number;
+    succeeded: number;
+    failed: number;
+    expired: number;
+  };
+  providerMode: "manual" | "seedance";
 };

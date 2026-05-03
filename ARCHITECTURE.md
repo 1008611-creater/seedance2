@@ -5,9 +5,22 @@
 仓库已经升级为 Next.js MVP：
 
 - 前端：`app/page.tsx` + `components/creator-app.tsx`
-- 后端 API：`/api/dashboard`、`/api/account`、`/api/claim`、`/api/redeem`、`/api/generations`、`/api/provider/seedance/callback`
+- 后端 API：`/api/dashboard`、`/api/account`、`/api/claim`、`/api/redeem`、`/api/generations`、`/api/admin/jobs`、`/api/provider/seedance/callback`
 - MVP 存储：本地 JSON 文件 `.data/seedance-store.json`，Vercel 上暂用 `/tmp` 兜底
-- Provider：未配置 `BYTEPLUS_API_KEY` 时走模拟生成器；配置后走 BytePlus ModelArk Seedance 2.0 创建任务接口
+- Provider：未配置 `BYTEPLUS_API_KEY` 时走人工履约队列；配置后走 BytePlus ModelArk Seedance 2.0 创建任务接口
+
+## 人工履约模式
+
+这版默认支持不依赖 API Key 的生产方式：
+
+- 用户端照常提交提示词、比例、时长、素材和生成音频选项。
+- 后端先检查周卡权益与每日额度，再创建 `queued` 任务。
+- 管理员访问 `/admin`，通过 `ADMIN_TOKEN` 进入制作后台。
+- 后台可复制任务包，记录使用的外部账号/窗口、外部任务链接和内部备注。
+- 完成外部生成后，管理员把视频上传到对象存储/R2/其他公开位置，并将成片链接填回后台。
+- 发布后任务变成 `succeeded`，用户前台成片库即可看到视频。
+
+注意：当前代码不包含多账号自动化、自动操控第三方网页或绕过平台限制的脚本。生产上建议把人工履约和对象存储先跑稳，再评估合规的官方 API、团队版或商用授权通道。
 
 ## 官方参数结论
 
@@ -40,7 +53,7 @@
 
 - 账号：Supabase Auth 或 Clerk
 - 数据库：Supabase Postgres
-- 对象存储：Cloudflare R2 或 Supabase Storage
+- 对象存储：Cloudflare R2 或 Supabase Storage，用于保存管理员上传的成片
 - 队列：Upstash QStash/Redis，或 AWS SQS
 - 管理端：Next.js `/admin` 路由，受管理员角色保护
 
@@ -74,6 +87,7 @@
 - 提交后立刻返回本地任务 ID，页面显示排队状态。
 - 后端 worker 调用 BytePlus 创建任务，保存 provider task ID。
 - 通过 `callback_url` 或轮询更新状态，成功后保存视频 URL 和封面。
+- 非 API 模式下由管理员后台手动更新 `running`、`succeeded` 或 `failed` 状态。
 
 ## 数据表草案
 

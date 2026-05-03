@@ -5,6 +5,7 @@ import {
   DURATION_OPTIONS,
   RATIO_OPTIONS,
   VIDEO_MODES,
+  type AdminQueueResponse,
   type DailyUsage,
   type DashboardResponse,
   type Entitlement,
@@ -43,7 +44,7 @@ export function randomId(prefix: string) {
 }
 
 export function providerMode() {
-  return process.env.BYTEPLUS_API_KEY || process.env.ARK_API_KEY ? "seedance" : "mock";
+  return process.env.BYTEPLUS_API_KEY || process.env.ARK_API_KEY ? "seedance" : "manual";
 }
 
 function createDefaultStore(): StoreState {
@@ -101,7 +102,7 @@ export async function mutateStore<T>(mutator: (state: StoreState) => T | Promise
 
 export async function getDashboard(userId: string): Promise<DashboardResponse> {
   return mutateStore((state) => {
-    advanceMockGenerations(state);
+    normalizeLegacyGenerations(state);
     const user = ensureUser(state, userId);
     return dashboardForUser(state, user.id);
   });
@@ -245,6 +246,74 @@ export function dashboardForUser(state: StoreState, userId: string): DashboardRe
   };
 }
 
+export function adminQueue(state: StoreState): AdminQueueResponse {
+  normalizeLegacyGenerations(state);
+  const jobs = state.generations.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  return {
+    jobs,
+    totals: {
+      queued: jobs.filter((item) => item.status === "queued").length,
+      running: jobs.filter((item) => item.status === "running").length,
+      succeeded: jobs.filter((item) => item.status === "succeeded").length,
+      failed: jobs.filter((item) => item.status === "failed").length,
+      expired: jobs.filter((item) => item.status === "expired").length
+    },
+    providerMode: providerMode()
+  };
+}
+
+export function updateManualGeneration(
+  state: StoreState,
+  id: string,
+  patch: Partial<Pick<
+    Generation,
+    | "status"
+    | "progress"
+    | "videoUrl"
+    | "coverUrl"
+    | "operatorName"
+    | "externalAccount"
+    | "sourceTaskUrl"
+    | "operatorNote"
+    | "userMessage"
+    | "errorMessage"
+  >>
+) {
+  const generation = state.generations.find((item) => item.id === id);
+  if (!generation) throw new Error("任务不存在。");
+
+  const previousStatus = generation.status;
+  generation.status = patch.status ?? generation.status;
+  generation.progress = patch.progress ?? generation.progress;
+  generation.videoUrl = patch.videoUrl?.trim() || generation.videoUrl;
+  generation.coverUrl = patch.coverUrl?.trim() || generation.coverUrl;
+  generation.operatorName = patch.operatorName?.trim() || generation.operatorName;
+  generation.externalAccount = patch.externalAccount?.trim() || generation.externalAccount;
+  generation.sourceTaskUrl = patch.sourceTaskUrl?.trim() || generation.sourceTaskUrl;
+  generation.operatorNote = patch.operatorNote?.trim() || generation.operatorNote;
+  generation.userMessage = patch.userMessage?.trim() || generation.userMessage;
+  generation.errorMessage = patch.errorMessage?.trim() || generation.errorMessage;
+  generation.updatedAt = nowIso();
+
+  if (generation.status === "running") {
+    generation.progress = Math.max(generation.progress, 18);
+  }
+
+  if (generation.status === "succeeded") {
+    if (!generation.videoUrl) throw new Error("发布成片前需要填写视频链接。");
+    generation.progress = 100;
+    generation.completedAt = generation.updatedAt;
+    generation.errorMessage = undefined;
+  }
+
+  if ((generation.status === "failed" || generation.status === "expired") && previousStatus !== generation.status) {
+    generation.progress = 100;
+    refundQuota(state, generation);
+  }
+
+  return generation;
+}
+
 export function quotaForUser(state: StoreState, userId: string, entitlement?: Entitlement): QuotaSummary {
   const limit = entitlement?.dailyLimit ?? 0;
   const usage = entitlement ? ensureUsage(state, userId, limit) : undefined;
@@ -258,35 +327,21 @@ export function quotaForUser(state: StoreState, userId: string, entitlement?: En
   };
 }
 
-export function advanceMockGenerations(state: StoreState) {
-  const now = Date.now();
+export function normalizeLegacyGenerations(state: StoreState) {
   for (const generation of state.generations) {
-    if (generation.provider !== "mock") continue;
-    if (!["queued", "running"].includes(generation.status)) continue;
-
-    const created = new Date(generation.createdAt).getTime();
-    const elapsed = Math.max(0, (now - created) / 1000);
-    const durationSeconds = generation.durationSeconds === -1 ? 10 : generation.durationSeconds;
-    const totalSeconds = 22 + durationSeconds * 3.2;
-
-    if (elapsed < 4) {
-      generation.status = "queued";
-      generation.progress = Math.max(generation.progress, 4);
+    if ((generation.provider as string) === "mock") {
+      generation.provider = "manual";
+      if (generation.status === "running") {
+        generation.status = "queued";
+        generation.progress = 8;
+      }
+      if (generation.videoUrl?.includes("interactive-examples.mdn.mozilla.net")) {
+        generation.videoUrl = undefined;
+        generation.completedAt = undefined;
+        generation.status = "queued";
+        generation.progress = 8;
+      }
       generation.updatedAt = nowIso();
-      continue;
     }
-
-    if (elapsed < totalSeconds) {
-      generation.status = "running";
-      generation.progress = Math.min(96, Math.round(((elapsed - 4) / (totalSeconds - 4)) * 96));
-      generation.updatedAt = nowIso();
-      continue;
-    }
-
-    generation.status = "succeeded";
-    generation.progress = 100;
-    generation.videoUrl = "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4";
-    generation.completedAt = nowIso();
-    generation.updatedAt = generation.completedAt;
   }
 }
