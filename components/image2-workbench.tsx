@@ -783,6 +783,8 @@ export function Image2Workbench({ initialData }: { initialData: Image2WorkbenchD
           onClose={() => setPromptModalStage(null)}
           onCopyText={copyText}
           prompt={promptModalStage === "outfit" ? outfitPrompt : framePrompt}
+          referenceCount={promptModalStage === "outfit" ? 2 : 3}
+          stage={promptModalStage}
           title={promptModalStage === "outfit" ? "人物穿搭图提示词" : "视频首帧图提示词"}
         />
       ) : null}
@@ -1020,6 +1022,7 @@ function WorkflowView(props: {
             onOpenTemplate={() => props.onOpenTemplate("outfit")}
             prompt={props.outfitPrompt}
             referenceCount={outfitRefs.length}
+            stage="outfit"
             stepLabel="步骤一"
             template={props.outfitTemplate}
             title="人物穿搭图"
@@ -1035,6 +1038,7 @@ function WorkflowView(props: {
             onOpenTemplate={() => props.onOpenTemplate("first-frame")}
             prompt={props.framePrompt}
             referenceCount={frameRefs.length}
+            stage="first-frame"
             stepLabel="步骤二"
             template={props.frameTemplate}
             title="视频首帧图"
@@ -1584,11 +1588,13 @@ function GenerationStep(props: {
   onOpenTemplate: () => void;
   prompt: string;
   referenceCount: number;
+  stage: WorkbenchPromptTemplateStage;
   stepLabel: string;
   template?: WorkbenchPromptTemplate;
   title: string;
 }) {
   const copyKey = `${props.title}-prompt`;
+  const quality = buildPromptQualityCheck(props.stage, props.prompt, props.referenceCount);
   return (
     <article className="image2-generation-step">
       <div className="image2-generation-step-head">
@@ -1605,6 +1611,7 @@ function GenerationStep(props: {
           </button>
         </div>
       </div>
+      <PromptQualityMeter check={quality} />
       <pre>{props.prompt}</pre>
       <div className="image2-generation-actions">
         <button type="button" onClick={props.onOpenPrompt}>
@@ -1686,6 +1693,8 @@ function TemplateColumn(props: {
   templates: WorkbenchPromptTemplate[];
   title: string;
 }) {
+  const activeTemplate = findTemplate(props.templates, props.activeId, props.stage);
+  const quality = buildPromptQualityCheck(props.stage, [activeTemplate?.prompt ?? "", props.note].filter(Boolean).join("\n"), 2);
   return (
     <article className="image2-template-column">
       <h3>{props.title}</h3>
@@ -1702,6 +1711,7 @@ function TemplateColumn(props: {
           </button>
         ))}
       </div>
+      <PromptQualityMeter check={quality} compact />
       <label>
         <span>{props.stage === "outfit" ? "穿搭图补充要求" : "首帧图补充要求"}</span>
         <textarea value={props.note} onChange={(event) => props.onNoteChange(event.target.value)} />
@@ -1777,17 +1787,23 @@ function PromptModal({
   onClose,
   onCopyText,
   prompt,
+  referenceCount,
+  stage,
   title
 }: {
   copied: string;
   onClose: () => void;
   onCopyText: (value: string, key: string) => Promise<void>;
   prompt: string;
+  referenceCount: number;
+  stage: WorkbenchPromptTemplateStage;
   title: string;
 }) {
+  const quality = buildPromptQualityCheck(stage, prompt, referenceCount);
   return (
     <ModalShell title={title} kicker="Prompt Check" onClose={onClose}>
       <div className="image2-prompt-modal">
+        <PromptQualityMeter check={quality} />
         <pre>{prompt}</pre>
         <button type="button" onClick={() => onCopyText(prompt, title)}>
           <Copy aria-hidden="true" />
@@ -2105,6 +2121,124 @@ function feedbackPromptPatchForReason(reason: string): Partial<Record<WorkbenchP
     }
   };
   return patches[reason] ?? patches["其他"];
+}
+
+type PromptQualityCheck = {
+  checks: Array<{ help: string; label: string; passed: boolean }>;
+  label: string;
+  missing: string[];
+  passedCount: number;
+  score: number;
+  tone: "strong" | "medium" | "weak";
+  total: number;
+};
+
+function buildPromptQualityCheck(stage: WorkbenchPromptTemplateStage, prompt: string, referenceCount: number): PromptQualityCheck {
+  const text = prompt.replace(/\s+/g, " ");
+  const criteria =
+    stage === "outfit"
+      ? [
+          {
+            label: "人物一致",
+            help: "补充脸型、五官、发型、年龄感或身份稳定。",
+            passed: /人物|五官|身份|发型|年龄|脸型|识别|主体/.test(text)
+          },
+          {
+            label: "服装还原",
+            help: "补充版型、颜色、材质、纹理、领口袖口或褶皱结构。",
+            passed: /服装|衣服|版型|颜色|层次|材质|褶皱|纹理|边缘|领口|袖口/.test(text)
+          },
+          {
+            label: "构图完整",
+            help: "补充全身/半身稳定入镜、主体位置、留白或三分法。",
+            passed: /全身|半身|入镜|构图|居中|三分|主体|留白/.test(text)
+          },
+          {
+            label: "光线质感",
+            help: "补充背景、光线、摄影质感、真实自然或电影感。",
+            passed: /背景|光线|棚拍|街拍|电影|真实|自然|摄影|质感/.test(text)
+          },
+          {
+            label: "负面约束",
+            help: "补充不要文字、水印、额外人物、Logo 或脏污伪影。",
+            passed: /不要|避免|无文字|无水印|水印|文字|额外人物|Logo|伪影|品牌错位/.test(text)
+          },
+          {
+            label: "参考齐全",
+            help: "至少选中人物图和服装图。",
+            passed: referenceCount >= 2
+          }
+        ]
+      : [
+          {
+            label: "主体延续",
+            help: "补充延续穿搭图的人物身份、脸型、发型和服装。",
+            passed: /人物身份|身份|服装延续|延续|一致|保留|主体|穿搭图/.test(text)
+          },
+          {
+            label: "场景融合",
+            help: "补充场景、空间、透视、光线、阴影、落地感或景深。",
+            passed: /场景|环境|空间|光线|氛围|透视|真实|阴影|景深|落地/.test(text)
+          },
+          {
+            label: "迁移构图",
+            help: "补充动作迁移、身体空间、运动方向、姿态或方向留白。",
+            passed: /动作迁移|身体空间|运动方向|姿态|可迁移|方向留白|首帧/.test(text)
+          },
+          {
+            label: "肢体安全",
+            help: "补充头手脚完整、手脚清晰、避免切边畸形或粘连。",
+            passed: /头手脚|手脚|肢体|全身|完整|切边|畸形|粘连|清晰可见/.test(text)
+          },
+          {
+            label: "首帧可用",
+            help: "补充视频首帧、开场、封面、画面干净可读或工作底稿。",
+            passed: /视频首帧|首帧|开场|封面|画面干净|可读|工作底稿|直接进入/.test(text)
+          },
+          {
+            label: "负面约束",
+            help: "补充不要文字、水印、Logo、脏污伪影或额外人物。",
+            passed: /不要|避免|无文字|无水印|水印|文字|Logo|伪影|额外人物/.test(text)
+          },
+          {
+            label: "参考齐全",
+            help: "至少选中穿搭/主图和场景图；动作图可继续加分。",
+            passed: referenceCount >= 2
+          }
+        ];
+  const passedCount = criteria.filter((item) => item.passed).length;
+  const total = criteria.length;
+  const score = Math.round((passedCount / total) * 100);
+  return {
+    checks: criteria,
+    label: score >= 86 ? "强" : score >= 70 ? "可用" : "需补",
+    missing: criteria.filter((item) => !item.passed).map((item) => item.label),
+    passedCount,
+    score,
+    tone: score >= 86 ? "strong" : score >= 70 ? "medium" : "weak",
+    total
+  };
+}
+
+function PromptQualityMeter({ check, compact = false }: { check: PromptQualityCheck; compact?: boolean }) {
+  return (
+    <div className={`image2-prompt-quality ${check.tone}${compact ? " compact" : ""}`}>
+      <div className="image2-prompt-quality-head">
+        <span>Prompt 质检</span>
+        <strong>{check.score}</strong>
+        <small>{check.label} · {check.passedCount}/{check.total}</small>
+      </div>
+      <div className="image2-prompt-quality-grid">
+        {check.checks.map((item) => (
+          <span className={item.passed ? "pass" : "miss"} key={item.label} title={item.passed ? "已覆盖" : item.help}>
+            {item.passed ? <Check aria-hidden="true" /> : <X aria-hidden="true" />}
+            {item.label}
+          </span>
+        ))}
+      </div>
+      {!compact && check.missing.length ? <p>建议补强：{check.missing.join("、")}</p> : null}
+    </div>
+  );
 }
 
 function filterAssets(assets: WorkbenchAsset[], query: string) {
