@@ -27,12 +27,6 @@ const nextConfig = {
   async redirects() {
     return [
       {
-        source: "/",
-        has: [{ type: "host", value: "image2.lsb0713.online" }],
-        destination: "/image2-cases",
-        permanent: false
-      },
-      {
         source: "/image2-atlas",
         destination: "/image2-cases",
         permanent: false
