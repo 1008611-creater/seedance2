@@ -400,14 +400,6 @@ export function Image2Workbench({ initialData }: { initialData: Image2WorkbenchD
           </button>
         </section>
 
-        <section className="image2-workbench-channel">
-          <div>
-            <span className="live-dot" />
-            <strong>Ikun Image2</strong>
-          </div>
-          <p>默认走 Monkey Tools NewAPI / gpt-image-2，本机配置由全局 skill 管理。</p>
-        </section>
-
         <div className="image2-workbench-links">
           {data.referenceLinks.map((item) => (
             <a href={item.href} key={item.href}>

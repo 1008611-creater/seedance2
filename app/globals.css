@@ -3421,40 +3421,8 @@ select:focus {
   background: #f3fbf7;
 }
 
-.image2-workbench-channel {
-  margin-top: auto;
-  border: 1px solid #d7dedb;
-  border-radius: 8px;
-  padding: 14px;
-  background: #f8faf7;
-}
-
-.image2-workbench-channel div {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.image2-workbench-channel strong {
-  font-size: 13px;
-}
-
-.image2-workbench-channel p {
-  margin: 8px 0 0;
-  color: #657277;
-  font-size: 12px;
-  line-height: 1.65;
-}
-
-.live-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--iw-green);
-  box-shadow: 0 0 0 4px rgba(15, 124, 102, 0.12);
-}
-
 .image2-workbench-links {
+  margin-top: auto;
   display: grid;
   gap: 8px;
 }
@@ -5301,7 +5269,6 @@ select:focus {
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 
-  .image2-workbench-channel,
   .image2-workbench-links {
     display: none;
   }
