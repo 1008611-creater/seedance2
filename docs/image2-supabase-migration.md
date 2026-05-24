@@ -22,6 +22,8 @@ This package prepares `/image2-cases` for real account-backed sync without break
   - Static guard for the shared workbench migration.
 - `tools/migrate-image2-workbench-to-supabase.mjs`
   - Uploads the local action-transfer material matrix, generated results, and feedback JSON into the shared Supabase workbench tables.
+- `tools/smoke-image2-workbench-supabase.mjs`
+  - Live smoke test for the shared workbench bucket/tables. It writes a tiny temporary image, asset row, and feedback row, reads them back, then cleans them up.
 - `tools/generate-image2-license-batch.mjs`
   - Generates a local plaintext card batch and a matching Supabase insert SQL file containing only `code_hash` values.
 - `tools/smoke-image2-license-redemption.mjs`
@@ -114,6 +116,12 @@ npm run check:image2-workbench-migration
 ```
 
 Then run `supabase/migrations/202605250001_image2_workbench_supabase.sql` in Supabase SQL Editor.
+
+After the SQL is applied, verify the live bucket and tables:
+
+```powershell
+npm run smoke:image2-workbench
+```
 
 Preview what will be migrated from the local素材母版:
 

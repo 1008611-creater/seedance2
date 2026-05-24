@@ -17,6 +17,7 @@
     "generate:image2-license-codes": "node tools/generate-image2-license-batch.mjs",
     "hash:image2-license-codes": "node tools/hash-image2-license-codes.mjs",
     "smoke:image2-supabase": "node tools/smoke-image2-supabase-assets.mjs",
+    "smoke:image2-workbench": "node tools/smoke-image2-workbench-supabase.mjs",
     "smoke:image2-license": "node tools/smoke-image2-license-redemption.mjs",
     "pw:test": "playwright test",
     "pw:test:headed": "playwright test --headed",
