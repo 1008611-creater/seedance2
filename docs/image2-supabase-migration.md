@@ -12,10 +12,16 @@ This package prepares `/image2-cases` for real account-backed sync without break
   - Minimal license-code membership slice for the live Image2 site: license code hashes, redemption audit, entitlements, and an optional `redeem_license_code` RPC. Use this when the full migration is too large for a first rollout.
 - `supabase/migrations/202605240001_image2_license_rpc_refresh.sql`
   - Optional RPC refresh patch for projects where the tables exist but PostgREST has not picked up `redeem_license_code`. The production API no longer depends on this RPC.
+- `supabase/migrations/202605250001_image2_workbench_supabase.sql`
+  - Adds the shared Image2 workbench library: `image2_workbench_assets`, `image2_workbench_feedback`, and the public `image2-workbench-media` Storage bucket.
 - `tools/check-supabase-migration.mjs`
   - Static guard that checks required tables, RLS enablement, hashed-code boundaries, and the redeem RPC.
 - `tools/check-image2-license-migration.mjs`
   - Static guard for the minimal Image2 license redemption migration.
+- `tools/check-image2-workbench-migration.mjs`
+  - Static guard for the shared workbench migration.
+- `tools/migrate-image2-workbench-to-supabase.mjs`
+  - Uploads the local action-transfer material matrix, generated results, and feedback JSON into the shared Supabase workbench tables.
 - `tools/generate-image2-license-batch.mjs`
   - Generates a local plaintext card batch and a matching Supabase insert SQL file containing only `code_hash` values.
 - `tools/smoke-image2-license-redemption.mjs`
@@ -34,6 +40,11 @@ This package prepares `/image2-cases` for real account-backed sync without break
   - recent prompt reuse events
 - The first cloud-sync table is `image2_asset_snapshots`, which stores the current `image2-assets-v1` JSON contract. This keeps the existing local merge logic reusable.
 - `image2_asset_events` and `image2_prompt_variants` provide normalized hooks for analytics and future higher-value Workbench features.
+- The team Image2 workbench is a separate shared workspace, not a per-user favorite store:
+  - `image2_workbench_assets` stores人物、服装、场景、动作、结果图。
+  - `image2_workbench_feedback` stores the post-generation ratings and reason tags.
+  - `image2-workbench-media` stores the actual uploaded/generated images with public read URLs.
+  - Server routes use `SUPABASE_SERVICE_ROLE_KEY`; browser clients only receive public image URLs and API JSON.
 
 ## Auth And RLS
 
@@ -65,9 +76,12 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY= # sb_publishable_... or legacy anon JWT
 SUPABASE_SERVICE_ROLE_KEY=     # sb_secret_... or legacy service_role JWT
 IMAGE2_ASSET_SYNC_BACKEND=supabase
+IMAGE2_WORKBENCH_STORAGE_BACKEND=supabase
+DAIHUO_OUTPUT_ROOT=D:/codex-work/daihuo/output
 ```
 
 Keep `IMAGE2_ASSET_SYNC_BACKEND=local` until the Supabase project has the migration applied and the auth UI/API routes are wired.
+Keep `IMAGE2_WORKBENCH_STORAGE_BACKEND=local` until `202605250001_image2_workbench_supabase.sql` is applied and the local material library has been migrated.
 
 ## Supabase Auth URL Settings
 
@@ -90,6 +104,36 @@ If a different preview domain is used, add its `/auth/callback` URL as well. Sup
 5. Test `/image2-cases` login, `同步到云端`, and `从云端合并` with a test account.
 6. Verify password reset and email verification callback pages with allowed Redirect URLs.
 7. Replace the current local card redeem route with the hashed-card Supabase table flow. The RPC can be added later as a database-side hardening pass.
+
+## Workbench Shared Library Migration
+
+Apply the shared workbench migration in Supabase SQL Editor:
+
+```powershell
+npm run check:image2-workbench-migration
+```
+
+Then run `supabase/migrations/202605250001_image2_workbench_supabase.sql` in Supabase SQL Editor.
+
+Preview what will be migrated from the local素材母版:
+
+```powershell
+npm run migrate:image2-workbench-supabase -- --dry-run=true
+```
+
+Upload the local matrix assets, generated result library, and feedback records:
+
+```powershell
+npm run migrate:image2-workbench-supabase
+```
+
+After the script succeeds, set this in Vercel and local `.env.local` when you want the website to use the shared cloud workbench:
+
+```text
+IMAGE2_WORKBENCH_STORAGE_BACKEND=supabase
+```
+
+The workbench route still falls back to local files or built-in cloud seed images if Supabase is not ready, so deployment can remain live while the database is being prepared.
 
 For the smaller live membership slice, apply this after `202605230002_image2_asset_sync_minimal.sql`:
 
@@ -122,6 +166,7 @@ Run:
 ```powershell
 npm run check:supabase-migration
 npm run check:image2-license-migration
+npm run check:image2-workbench-migration
 npm run typecheck
 npm run build
 ```

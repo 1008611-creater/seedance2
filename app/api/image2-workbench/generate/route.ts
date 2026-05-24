@@ -9,10 +9,15 @@ export const runtime = "nodejs";
 export const maxDuration = 180;
 
 function mimeFor(filePath: string) {
-  const ext = path.extname(filePath).toLowerCase();
+  const targetPath = /^https?:\/\//i.test(filePath) ? new URL(filePath).pathname : filePath;
+  const ext = path.extname(targetPath).toLowerCase();
   if (ext === ".jpg" || ext === ".jpeg") return "image/jpeg";
   if (ext === ".webp") return "image/webp";
   return "image/png";
+}
+
+function isHttpUrl(value: string) {
+  return /^https?:\/\//i.test(value);
 }
 
 function resolveReferencePath(filePath: string) {
@@ -23,6 +28,22 @@ function resolveReferencePath(filePath: string) {
 }
 
 async function fileToReference(name: string, filePath: string): Promise<ReferenceImage> {
+  if (isHttpUrl(filePath)) {
+    const response = await fetch(filePath);
+    if (!response.ok) {
+      throw new Error(`参考图读取失败：${response.status}`);
+    }
+    const contentType = response.headers.get("content-type")?.split(";", 1)[0] || mimeFor(filePath);
+    if (!contentType.startsWith("image/")) {
+      throw new Error("参考图链接不是有效图片。");
+    }
+    const file = Buffer.from(await response.arrayBuffer());
+    return {
+      name,
+      dataUrl: `data:${contentType};base64,${file.toString("base64")}`
+    };
+  }
+
   const resolvedPath = resolveReferencePath(filePath);
   const file = await readFile(/* turbopackIgnore: true */ resolvedPath);
   return {

@@ -1,6 +1,13 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
+import {
+  isSupabaseWorkbenchEnabled,
+  readCloudWorkbenchAssets,
+  readCloudWorkbenchFeedback,
+  saveCloudWorkbenchAsset,
+  saveCloudWorkbenchFeedback
+} from "./image2-workbench-cloud";
 
 export type WorkbenchAssetGroup = "人物" | "服装" | "场景" | "动作" | "结果";
 
@@ -173,7 +180,7 @@ type WorkbenchFeedbackManifest = {
   updatedAt: string;
 };
 
-type SaveWorkbenchAssetInput = {
+export type SaveWorkbenchAssetInput = {
   buffer: Buffer;
   mimeType: string;
   originalName?: string;
@@ -181,9 +188,11 @@ type SaveWorkbenchAssetInput = {
   title: string;
   note?: string;
   tags?: string[];
-  origin: "upload" | "generated";
+  origin: "master" | "upload" | "generated";
   stage?: WorkbenchPromptTemplateStage;
   prompt?: string;
+  id?: string;
+  createdAt?: string;
 };
 
 export type SaveWorkbenchFeedbackInput = {
@@ -388,6 +397,13 @@ async function readWorkbenchLibraryAssets() {
 }
 
 export async function readWorkbenchFeedback() {
+  if (isSupabaseWorkbenchEnabled()) {
+    try {
+      return await readCloudWorkbenchFeedback();
+    } catch {
+      // Fall through to the local manifest when Supabase is not ready yet.
+    }
+  }
   const manifest = await readJson<WorkbenchFeedbackManifest>(workbenchFeedbackPath, {
     version: "image2-workbench-feedback-v1",
     feedback: [],
@@ -411,6 +427,13 @@ export function getWorkbenchFeedbackStats(feedback: WorkbenchFeedback[]): Workbe
 }
 
 export async function saveWorkbenchFeedback(input: SaveWorkbenchFeedbackInput) {
+  if (isSupabaseWorkbenchEnabled()) {
+    try {
+      return await saveCloudWorkbenchFeedback(input);
+    } catch {
+      // Fall back to the local manifest when Supabase is not ready yet.
+    }
+  }
   const now = new Date().toISOString();
   const feedback: WorkbenchFeedback = {
     id: `F-${Date.now()}-${randomUUID().slice(0, 6)}`,
@@ -437,9 +460,17 @@ export async function saveWorkbenchFeedback(input: SaveWorkbenchFeedbackInput) {
 }
 
 export async function saveImage2WorkbenchAsset(input: SaveWorkbenchAssetInput) {
+  if (isSupabaseWorkbenchEnabled()) {
+    try {
+      return await saveCloudWorkbenchAsset(input);
+    } catch {
+      // Keep the local-first path available if the cloud store is not ready.
+    }
+  }
   const now = new Date().toISOString();
-  const id = `${input.origin === "generated" ? "G" : "U"}-${Date.now()}-${randomUUID().slice(0, 6)}`;
-  const directory = path.join(workbenchLibraryRoot, input.origin === "generated" ? "generated" : "uploads");
+  const prefix = input.origin === "generated" ? "G" : input.origin === "master" ? "M" : "U";
+  const id = input.id || `${prefix}-${Date.now()}-${randomUUID().slice(0, 6)}`;
+  const directory = path.join(workbenchLibraryRoot, input.origin === "generated" ? "generated" : input.origin === "master" ? "master" : "uploads");
   const extension = extensionForMimeType(input.mimeType);
   const storedPath = path.join(directory, `${id}.${extension}`);
   await mkdir(directory, { recursive: true });
@@ -454,15 +485,33 @@ export async function saveImage2WorkbenchAsset(input: SaveWorkbenchAssetInput) {
     subtitle:
       input.origin === "generated"
         ? `生成沉淀 · ${stageLabel || "结果图"}`
-        : `团队上传 · ${groupByKind[input.kind]}`,
-    note: cleanText(input.note, input.origin === "generated" ? "由作图工作台自动沉淀，可继续投入下一步流程。" : "团队新增参考素材。", 260),
+        : input.origin === "master"
+          ? `素材母版 · ${groupByKind[input.kind]}`
+          : `团队上传 · ${groupByKind[input.kind]}`,
+    note: cleanText(
+      input.note,
+      input.origin === "generated"
+        ? "由作图工作台自动沉淀，可继续投入下一步流程。"
+        : input.origin === "master"
+          ? "从动作迁移素材母版迁入，可作为团队公共参考素材。"
+          : "团队新增参考素材。",
+      260
+    ),
     sourcePath: storedPath,
     previewPath: storedPath,
-    tags: [...new Set([...(input.tags ?? []), input.origin === "generated" ? "生成沉淀" : "团队上传", stageLabel].filter(Boolean) as string[])].slice(0, 5),
+    tags: [
+      ...new Set([
+        ...(input.tags ?? []),
+        input.origin === "generated" ? "生成沉淀" : input.origin === "master" ? "素材母版" : "团队上传",
+        stageLabel
+      ].filter(Boolean) as string[])
+    ].slice(0, 5),
     promptHint:
       input.origin === "generated"
         ? `可复用的${stageLabel || "结果图"}；选择后继续进入动作迁移首帧流程。`
-        : "团队上传素材，已可加入当前作图流程。",
+        : input.origin === "master"
+          ? "素材母版公共资产，适合团队批量选择和复盘。"
+          : "团队上传素材，已可加入当前作图流程。",
     origin: input.origin,
     stage: input.stage,
     createdAt: now,
@@ -487,6 +536,7 @@ function makeTags(...parts: Array<string | undefined>) {
 }
 
 export async function loadImage2WorkbenchData(): Promise<Image2WorkbenchData> {
+  const useSupabaseWorkbench = isSupabaseWorkbenchEnabled();
   const matrix = await readJson<{
     character?: { id?: string; path?: string; note?: string };
     dresses?: Array<{
@@ -644,7 +694,9 @@ export async function loadImage2WorkbenchData(): Promise<Image2WorkbenchData> {
     });
   }
 
-  const sharedAssets = await readWorkbenchLibraryAssets();
+  const sharedAssets = useSupabaseWorkbench
+    ? await readCloudWorkbenchAssets().catch(() => readWorkbenchLibraryAssets())
+    : await readWorkbenchLibraryAssets();
   const feedback = await readWorkbenchFeedback();
   const feedbackStats = getWorkbenchFeedbackStats(feedback);
   const assets = [...personAssets, ...clothingAssets, ...sceneAssets, ...motionAssets, ...resultAssets, ...sharedAssets];
@@ -684,9 +736,9 @@ export async function loadImage2WorkbenchData(): Promise<Image2WorkbenchData> {
     }));
 
   const artifactPaths: WorkbenchArtifactPaths = {
-    mainImage: await firstExistingPath([currentHeroPath, currentMainAssetPath]),
-    contactSheet: await firstExistingPath([contactSheetPath]),
-    middleFrameGrid: await firstExistingPath([middleFrameGridPath])
+    mainImage: (await firstExistingPath([currentHeroPath, currentMainAssetPath])) ?? "/image2/hero/case-30001-vr.jpg",
+    contactSheet: (await firstExistingPath([contactSheetPath])) ?? "/image2/hero/case-20243-fashion.jpg",
+    middleFrameGrid: (await firstExistingPath([middleFrameGridPath])) ?? "/image2/hero/case-20275-bangkok.jpg"
   };
 
   const metrics: WorkbenchMetric[] = [
@@ -699,7 +751,7 @@ export async function loadImage2WorkbenchData(): Promise<Image2WorkbenchData> {
   ];
 
   return {
-    sourceLabel: assets.length ? "动作迁移工作流素材母版" : "Image2 云端演示种子库",
+    sourceLabel: useSupabaseWorkbench ? "Image2 Supabase 工作台" : assets.length ? "动作迁移工作流素材母版" : "Image2 云端演示种子库",
     metrics,
     assets: finalAssets,
     feedback,

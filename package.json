@@ -12,6 +12,8 @@
     "typecheck": "tsc --noEmit",
     "check:supabase-migration": "node tools/check-supabase-migration.mjs",
     "check:image2-license-migration": "node tools/check-image2-license-migration.mjs",
+    "check:image2-workbench-migration": "node tools/check-image2-workbench-migration.mjs",
+    "migrate:image2-workbench-supabase": "node tools/migrate-image2-workbench-to-supabase.mjs",
     "generate:image2-license-codes": "node tools/generate-image2-license-batch.mjs",
     "hash:image2-license-codes": "node tools/hash-image2-license-codes.mjs",
     "smoke:image2-supabase": "node tools/smoke-image2-supabase-assets.mjs",
@@ -32,6 +34,7 @@
     "bb:screenshot": "node tools/bitbrowser-playwright.mjs screenshot"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.106.1",
     "lucide-react": "latest",
     "next": "latest",
     "react": "latest",
