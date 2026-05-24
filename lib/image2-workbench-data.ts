@@ -108,6 +108,15 @@ export type Image2WorkbenchData = {
   artifactPaths: WorkbenchArtifactPaths;
   referenceLinks: WorkbenchReferenceLink[];
   updatedAt: string;
+  access?: WorkbenchAccessState;
+};
+
+export type WorkbenchAccessState = {
+  email?: string;
+  isAuthenticated: boolean;
+  isTeamMember: boolean;
+  message?: string;
+  mode: "public" | "team";
 };
 
 const outputRoot = path.resolve(
@@ -282,6 +291,21 @@ const promptTemplates: WorkbenchPromptTemplate[] = [
   }
 ];
 
+function referenceLinks(): WorkbenchReferenceLink[] {
+  return [
+    {
+      label: "Image2 案例库",
+      href: "/image2-cases",
+      note: "打开高价值案例和提示词库"
+    },
+    {
+      label: "视频创作台",
+      href: "/video-studio",
+      note: "保留原 Seedance / 视频入口"
+    }
+  ];
+}
+
 const cloudSeedAssets: WorkbenchAsset[] = [
   {
     id: "seed-person",
@@ -366,6 +390,62 @@ async function readJson<T>(filePath: string, fallback: T) {
   } catch {
     return fallback;
   }
+}
+
+async function readFeaturedWorkbenchCases() {
+  const casePayload = await readJson<{
+    cases?: Array<{
+      id: number;
+      title: string;
+      categoryLabel: string;
+      imageUrl: string;
+      imageAlt: string;
+      promptPreview: string;
+      sourceLabel?: string;
+      valueTier: string;
+      valueScore: number;
+      featured?: boolean;
+      sourceNote?: string;
+    }>;
+  }>(caseLibraryPath, {});
+
+  return (casePayload.cases ?? [])
+    .filter((item) => item.featured)
+    .sort((a, b) => b.valueScore - a.valueScore)
+    .slice(0, 8)
+    .map((item) => ({
+      id: item.id,
+      title: item.title,
+      categoryLabel: item.categoryLabel,
+      imageUrl: item.imageUrl,
+      imageAlt: item.imageAlt,
+      promptPreview: item.promptPreview,
+      sourceLabel: item.sourceLabel,
+      valueTier: item.valueTier,
+      valueScore: item.valueScore,
+      sourceNote: item.sourceNote
+    }));
+}
+
+export async function loadPublicImage2WorkbenchData(access?: WorkbenchAccessState): Promise<Image2WorkbenchData> {
+  return {
+    sourceLabel: "Image2 公开入口",
+    metrics: [],
+    assets: [],
+    feedback: [],
+    feedbackStats: { total: 0, usable: 0, needsFix: 0, reject: 0 },
+    promptTemplates,
+    featuredCases: await readFeaturedWorkbenchCases(),
+    artifactPaths: {},
+    referenceLinks: referenceLinks(),
+    updatedAt: new Date().toISOString(),
+    access: access ?? {
+      isAuthenticated: false,
+      isTeamMember: false,
+      message: "团队素材仅对登录且通过白名单的成员开放。",
+      mode: "public"
+    }
+  };
 }
 
 function extensionForMimeType(mimeType: string) {
@@ -535,7 +615,7 @@ function makeTags(...parts: Array<string | undefined>) {
   return parts.filter((part): part is string => Boolean(part && part.trim())).slice(0, 4);
 }
 
-export async function loadImage2WorkbenchData(): Promise<Image2WorkbenchData> {
+export async function loadImage2WorkbenchData(access?: WorkbenchAccessState): Promise<Image2WorkbenchData> {
   const useSupabaseWorkbench = isSupabaseWorkbenchEnabled();
   const matrix = await readJson<{
     character?: { id?: string; path?: string; note?: string };
@@ -702,38 +782,7 @@ export async function loadImage2WorkbenchData(): Promise<Image2WorkbenchData> {
   const assets = [...personAssets, ...clothingAssets, ...sceneAssets, ...motionAssets, ...resultAssets, ...sharedAssets];
   const finalAssets = assets.length ? assets : cloudSeedAssets;
 
-  const casePayload = await readJson<{
-    cases?: Array<{
-      id: number;
-      title: string;
-      categoryLabel: string;
-      imageUrl: string;
-      imageAlt: string;
-      promptPreview: string;
-      sourceLabel?: string;
-      valueTier: string;
-      valueScore: number;
-      featured?: boolean;
-      sourceNote?: string;
-    }>;
-  }>(caseLibraryPath, {});
-
-  const featuredCases = (casePayload.cases ?? [])
-    .filter((item) => item.featured)
-    .sort((a, b) => b.valueScore - a.valueScore)
-    .slice(0, 8)
-    .map((item) => ({
-      id: item.id,
-      title: item.title,
-      categoryLabel: item.categoryLabel,
-      imageUrl: item.imageUrl,
-      imageAlt: item.imageAlt,
-      promptPreview: item.promptPreview,
-      sourceLabel: item.sourceLabel,
-      valueTier: item.valueTier,
-      valueScore: item.valueScore,
-      sourceNote: item.sourceNote
-    }));
+  const featuredCases = await readFeaturedWorkbenchCases();
 
   const artifactPaths: WorkbenchArtifactPaths = {
     mainImage: (await firstExistingPath([currentHeroPath, currentMainAssetPath])) ?? "/image2/hero/case-30001-vr.jpg",
@@ -759,19 +808,13 @@ export async function loadImage2WorkbenchData(): Promise<Image2WorkbenchData> {
     promptTemplates,
     featuredCases,
     artifactPaths,
-    referenceLinks: [
-      {
-        label: "Image2 案例库",
-        href: "/image2-cases",
-        note: "打开高价值案例和提示词库"
-      },
-      {
-        label: "视频创作台",
-        href: "/video-studio",
-        note: "保留原 Seedance / 视频入口"
-      }
-    ],
-    updatedAt: new Date().toISOString()
+    referenceLinks: referenceLinks(),
+    updatedAt: new Date().toISOString(),
+    access: access ?? {
+      isAuthenticated: true,
+      isTeamMember: true,
+      mode: "team"
+    }
   };
 }
 

@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { NextRequest, NextResponse } from "next/server";
 import { generateImage2, type ReferenceImage } from "@/lib/image2-generation";
+import { image2WorkbenchAccessResponse, requireImage2WorkbenchTeamMember } from "@/lib/image2-workbench-access";
 import { loadImage2WorkbenchData, saveImage2WorkbenchAsset, type WorkbenchPromptTemplateStage } from "@/lib/image2-workbench-data";
 import { toUserFacingError } from "@/lib/user-facing-error";
 
@@ -75,6 +76,7 @@ function decodeGeneratedImage(dataUrl: string) {
 
 export async function POST(request: NextRequest) {
   try {
+    const access = await requireImage2WorkbenchTeamMember(request);
     const body = (await request.json()) as Record<string, unknown>;
     const prompt = String(body.prompt ?? "").trim();
     if (prompt.length < 12) {
@@ -88,7 +90,7 @@ export async function POST(request: NextRequest) {
       ? body.referenceIds.filter((item): item is string => typeof item === "string").slice(0, 4)
       : [];
 
-    const workbench = await loadImage2WorkbenchData();
+    const workbench = await loadImage2WorkbenchData(access);
     const assetsById = new Map(workbench.assets.map((asset) => [asset.id, asset]));
     const idReferences = await Promise.all(
       referenceIds
@@ -129,6 +131,8 @@ export async function POST(request: NextRequest) {
       sharedAssets
     });
   } catch (error) {
+    const accessResponse = await image2WorkbenchAccessResponse(error);
+    if (accessResponse) return accessResponse;
     return NextResponse.json(
       { error: toUserFacingError(error instanceof Error ? error.message : error, "作图失败。") },
       { status: 500 }

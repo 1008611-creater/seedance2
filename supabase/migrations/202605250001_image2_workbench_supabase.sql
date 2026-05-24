@@ -1,6 +1,6 @@
 -- Image2 workbench shared library: team assets, generated results, and feedback.
 -- Apply this after the base Image2 Supabase migration. The application uses
--- the server-only service role key for writes and public Storage URLs for image reads.
+-- the server-only service role key for writes and signed Storage URLs for image reads.
 
 create extension if not exists pgcrypto;
 
@@ -18,7 +18,7 @@ insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
 values (
   'image2-workbench-media',
   'image2-workbench-media',
-  true,
+  false,
   12582912,
   array['image/png', 'image/jpeg', 'image/webp']
 )
@@ -102,12 +102,9 @@ create policy "image2 workbench feedback service all"
   using (true)
   with check (true);
 
+-- Keep the media bucket private. Team-only API routes issue short-lived signed URLs
+-- after Supabase login and email whitelist checks.
 drop policy if exists "image2 workbench media public read" on storage.objects;
-create policy "image2 workbench media public read"
-  on storage.objects
-  for select
-  to public
-  using (bucket_id = 'image2-workbench-media');
 
 drop policy if exists "image2 workbench media service insert" on storage.objects;
 create policy "image2 workbench media service insert"

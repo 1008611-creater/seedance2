@@ -114,9 +114,18 @@ function shouldUseSupabaseWorkbench() {
   return mode === "supabase";
 }
 
-function toPublicUrl(storagePath: string) {
+async function toSignedUrl(storagePath: string) {
   const client = getSupabaseClient();
-  return client.storage.from(workbenchBucket).getPublicUrl(storagePath).data.publicUrl;
+  const expiresIn = Number(process.env.IMAGE2_WORKBENCH_SIGNED_URL_SECONDS || 6 * 60 * 60);
+  const response = await client.storage.from(workbenchBucket).createSignedUrl(storagePath, Math.max(300, expiresIn));
+  if (response.error || !response.data?.signedUrl) {
+    throw new Error(response.error?.message || "素材签名链接创建失败。");
+  }
+  return response.data.signedUrl;
+}
+
+function toStoragePointer(storagePath: string) {
+  return `supabase://${workbenchBucket}/${storagePath}`;
 }
 
 function storageObjectPathFor(id: string, mimeType: string, origin: "master" | "upload" | "generated", stage?: WorkbenchPromptTemplateStage) {
@@ -124,7 +133,8 @@ function storageObjectPathFor(id: string, mimeType: string, origin: "master" | "
   return `workbench/${origin}/${stageFolder}/${id}.${extensionForMimeType(mimeType)}`;
 }
 
-function toAsset(row: WorkbenchAssetRow): WorkbenchAsset {
+async function toAsset(row: WorkbenchAssetRow): Promise<WorkbenchAsset> {
+  const signedUrl = row.storage_object_path ? await toSignedUrl(row.storage_object_path) : undefined;
   return {
     id: row.id,
     kind: row.kind,
@@ -132,8 +142,8 @@ function toAsset(row: WorkbenchAssetRow): WorkbenchAsset {
     title: row.title,
     subtitle: row.subtitle,
     note: row.note,
-    sourcePath: row.source_path,
-    previewPath: row.preview_path,
+    sourcePath: signedUrl ?? row.source_path,
+    previewPath: signedUrl ?? row.preview_path,
     tags: stringList(row.tags, 8, 40),
     promptHint: row.prompt_hint,
     ratio: row.ratio ?? undefined,
@@ -234,7 +244,7 @@ export async function readCloudWorkbenchAssets(): Promise<WorkbenchAsset[]> {
     throw new Error(response.error.message);
   }
 
-  return (response.data ?? []).map((row) => toAsset(row as WorkbenchAssetRow));
+  return Promise.all((response.data ?? []).map((row) => toAsset(row as WorkbenchAssetRow)));
 }
 
 export async function readCloudWorkbenchFeedback(): Promise<WorkbenchFeedback[]> {
@@ -258,7 +268,8 @@ export async function saveCloudWorkbenchAsset(input: SaveWorkbenchAssetInput) {
   const id = input.id || `${prefix}-${Date.now()}-${crypto.randomUUID().slice(0, 6)}`;
   const createdAt = input.createdAt || new Date().toISOString();
   const storageObjectPath = await uploadAssetBuffer(input, id);
-  const previewPath = toPublicUrl(storageObjectPath);
+  const previewPath = await toSignedUrl(storageObjectPath);
+  const storagePointer = toStoragePointer(storageObjectPath);
   const asset = buildAssetRecord(input, id, createdAt, previewPath, previewPath);
   const client = getSupabaseClient();
   const response = await (client.from("image2_workbench_assets") as any).upsert(
@@ -270,8 +281,8 @@ export async function saveCloudWorkbenchAsset(input: SaveWorkbenchAssetInput) {
       title: asset.title,
       subtitle: asset.subtitle,
       note: asset.note,
-      source_path: asset.sourcePath,
-      preview_path: asset.previewPath,
+      source_path: storagePointer,
+      preview_path: storagePointer,
       tags: asset.tags,
       prompt_hint: asset.promptHint,
       ratio: asset.ratio ?? null,

@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { loadImage2WorkbenchData, saveImage2WorkbenchAsset, type WorkbenchAssetKind } from "@/lib/image2-workbench-data";
+import {
+  image2WorkbenchAccessResponse,
+  loadImage2WorkbenchDataForRequest,
+  requireImage2WorkbenchTeamMember
+} from "@/lib/image2-workbench-access";
+import { saveImage2WorkbenchAsset, type WorkbenchAssetKind } from "@/lib/image2-workbench-data";
 import { toUserFacingError } from "@/lib/user-facing-error";
 
 export const runtime = "nodejs";
@@ -8,10 +13,12 @@ const allowedKinds = new Set<WorkbenchAssetKind>(["person", "clothing", "scene",
 const allowedTypes = new Set(["image/png", "image/jpeg", "image/webp"]);
 const maximumBytes = 12 * 1024 * 1024;
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    return NextResponse.json(await loadImage2WorkbenchData());
+    return NextResponse.json(await loadImage2WorkbenchDataForRequest(request));
   } catch (error) {
+    const accessResponse = await image2WorkbenchAccessResponse(error);
+    if (accessResponse) return accessResponse;
     return NextResponse.json(
       { error: toUserFacingError(error instanceof Error ? error.message : error, "素材读取失败。") },
       { status: 500 }
@@ -21,6 +28,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    await requireImage2WorkbenchTeamMember(request);
     const formData = await request.formData();
     const file = formData.get("file");
     const kind = String(formData.get("kind") ?? "") as WorkbenchAssetKind;
@@ -51,10 +59,11 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json({ asset }, { status: 201 });
   } catch (error) {
+    const accessResponse = await image2WorkbenchAccessResponse(error);
+    if (accessResponse) return accessResponse;
     return NextResponse.json(
       { error: toUserFacingError(error instanceof Error ? error.message : error, "素材上传失败。") },
       { status: 500 }
     );
   }
 }
-

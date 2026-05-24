@@ -39,7 +39,8 @@ import type {
   WorkbenchFeedbackRating,
   WorkbenchFeedbackStage,
   WorkbenchPromptTemplate,
-  WorkbenchPromptTemplateStage
+  WorkbenchPromptTemplateStage,
+  WorkbenchReferenceLink
 } from "@/lib/image2-workbench-data";
 
 type WorkbenchView = "workflow" | "matrix" | "templates" | "results" | "cases";
@@ -80,8 +81,29 @@ type FeedbackPayload = {
   error?: string;
 };
 
+type AccountAuthMode = "login" | "signup" | "recover";
+
+type AccountAuthStatus = {
+  message: string;
+  tone: "idle" | "busy" | "success" | "error";
+};
+
+type Image2AccountSession = {
+  accessToken: string;
+  refreshToken?: string;
+  expiresAt?: number;
+  user: {
+    id: string;
+    email?: string;
+  };
+};
+
 const historyStorageKey = "image2-motion-workbench-history:v2";
 const legacyHistoryStorageKey = "image2-motion-workbench-history:v1";
+const accountSessionStorageKey = "image2-workbench-team-session:v1";
+const supabaseAuthUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/+$/, "");
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+const isSupabaseAuthConfigured = Boolean(supabaseAuthUrl && supabaseAnonKey);
 const viewOptions: Array<{ id: WorkbenchView; label: string; icon: typeof Grid3X3 }> = [
   { id: "workflow", label: "流程工作台", icon: SquareStack },
   { id: "matrix", label: "素材矩阵", icon: Grid3X3 },
@@ -108,8 +130,119 @@ const feedbackRatingOptions: Array<{ rating: WorkbenchFeedbackRating; label: str
   { rating: "reject", label: "废图", icon: X }
 ];
 
+const readAccountSession = () => {
+  try {
+    const raw = window.localStorage.getItem(accountSessionStorageKey);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Image2AccountSession;
+    if (!parsed.accessToken || !parsed.user?.id) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+};
+
+const persistAccountSession = (session: Image2AccountSession) => {
+  window.localStorage.setItem(accountSessionStorageKey, JSON.stringify(session));
+  return session;
+};
+
+const clearAccountSession = () => {
+  window.localStorage.removeItem(accountSessionStorageKey);
+};
+
+const supabaseAuthHeaders = (accessToken?: string) => ({
+  apikey: supabaseAnonKey,
+  "Content-Type": "application/json",
+  ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
+});
+
+const toAccountSession = (data: Record<string, unknown>): Image2AccountSession => {
+  const user = data.user as { id?: string; email?: string } | undefined;
+  const accessToken = typeof data.access_token === "string" ? data.access_token : "";
+  if (!accessToken || !user?.id) throw new Error("登录响应缺少会话信息。");
+  const expiresIn = typeof data.expires_in === "number" ? data.expires_in : undefined;
+  return {
+    accessToken,
+    refreshToken: typeof data.refresh_token === "string" ? data.refresh_token : undefined,
+    expiresAt: expiresIn ? Date.now() + expiresIn * 1000 : undefined,
+    user: {
+      id: user.id,
+      email: user.email
+    }
+  };
+};
+
+const supabaseAuthRequest = async (path: string, init: RequestInit = {}, accessToken?: string) => {
+  if (!isSupabaseAuthConfigured) throw new Error("Supabase 账号入口未配置。");
+  const response = await fetch(`${supabaseAuthUrl}/auth/v1/${path}`, {
+    ...init,
+    headers: {
+      ...supabaseAuthHeaders(accessToken),
+      ...(init.headers ?? {})
+    }
+  });
+  const text = await response.text();
+  let data: Record<string, unknown> = {};
+  if (text) {
+    try {
+      data = JSON.parse(text) as Record<string, unknown>;
+    } catch {
+      data = { message: text.slice(0, 240) };
+    }
+  }
+  if (!response.ok) {
+    throw new Error(String(data.error_description ?? data.msg ?? data.message ?? data.error ?? "账号请求失败。"));
+  }
+  return data;
+};
+
+const signInWithSupabasePassword = async (email: string, password: string) =>
+  toAccountSession(
+    await supabaseAuthRequest("token?grant_type=password", {
+      method: "POST",
+      body: JSON.stringify({ email, password })
+    })
+  );
+
+const withAuthRedirect = (path: string, redirectTo?: string) =>
+  redirectTo ? `${path}${path.includes("?") ? "&" : "?"}redirect_to=${encodeURIComponent(redirectTo)}` : path;
+
+const getAuthCallbackUrl = (mode: "confirm" | "recovery") => {
+  if (typeof window === "undefined") return undefined;
+  return `${window.location.origin}/auth/callback?mode=${mode}`;
+};
+
+const signUpWithSupabasePassword = async (email: string, password: string, redirectTo?: string) => {
+  const data = await supabaseAuthRequest(withAuthRedirect("signup", redirectTo), {
+    method: "POST",
+    body: JSON.stringify({ email, password })
+  });
+  return data.access_token ? toAccountSession(data) : null;
+};
+
+const recoverSupabasePassword = async (email: string, redirectTo?: string) => {
+  await supabaseAuthRequest(withAuthRedirect("recover", redirectTo), {
+    method: "POST",
+    body: JSON.stringify({ email })
+  });
+};
+
+const signOutSupabaseSession = async (accessToken: string) => {
+  await supabaseAuthRequest("logout", { method: "POST" }, accessToken);
+};
+
 export function Image2Workbench({ initialData }: { initialData: Image2WorkbenchData }) {
   const [data, setData] = useState(initialData);
+  const [accountSession, setAccountSession] = useState<Image2AccountSession | null>(null);
+  const [accountEmail, setAccountEmail] = useState("");
+  const [accountPassword, setAccountPassword] = useState("");
+  const [accountAuthMode, setAccountAuthMode] = useState<AccountAuthMode>("login");
+  const [accountAuthStatus, setAccountAuthStatus] = useState<AccountAuthStatus>({
+    message: isSupabaseAuthConfigured ? "团队成员登录后进入工作台。" : "账号入口未配置。",
+    tone: "idle"
+  });
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [activeView, setActiveView] = useState<WorkbenchView>("workflow");
   const [activeAssetKind, setActiveAssetKind] = useState<WorkbenchAssetKind>("person");
   const [query, setQuery] = useState("");
@@ -131,6 +264,104 @@ export function Image2Workbench({ initialData }: { initialData: Image2WorkbenchD
   const [feedbackTarget, setFeedbackTarget] = useState<FeedbackTarget | null>(null);
   const [copied, setCopied] = useState("");
 
+  const authHeaders = (session = accountSession): Record<string, string> =>
+    session?.accessToken ? { Authorization: `Bearer ${session.accessToken}` } : {};
+
+  async function refreshData(sessionOverride = accountSession) {
+    const response = await fetch("/api/image2-workbench", {
+      cache: "no-store",
+      headers: authHeaders(sessionOverride)
+    });
+    const payload = (await response.json()) as Image2WorkbenchData & { error?: string };
+    if (!response.ok) {
+      setData(payload);
+      throw new Error(payload.error ?? payload.access?.message ?? "刷新失败。");
+    }
+    setData(payload);
+    setSelectedIds((current) => ({ ...initialSelections(payload.assets), ...current }));
+    setAccountAuthStatus({
+      message: payload.access?.message ?? "团队工作台已解锁。",
+      tone: payload.access?.isTeamMember ? "success" : "idle"
+    });
+    return payload;
+  }
+
+  async function restoreTeamSession(session: Image2AccountSession) {
+    setAccountSession(session);
+    setAccountEmail(session.user.email ?? "");
+    try {
+      await refreshData(session);
+    } catch (error) {
+      setAccountAuthStatus({
+        message: error instanceof Error ? error.message : "团队权限校验失败。",
+        tone: "error"
+      });
+    }
+  }
+
+  async function submitAccountAuth(event: FormEvent) {
+    event.preventDefault();
+    if (!isSupabaseAuthConfigured) return;
+    const email = accountEmail.trim();
+
+    if (accountAuthMode === "recover") {
+      if (!email) {
+        setAccountAuthStatus({ message: "请输入要找回密码的邮箱。", tone: "error" });
+        return;
+      }
+      setAccountAuthStatus({ message: "正在发送重置邮件...", tone: "busy" });
+      try {
+        await recoverSupabasePassword(email, getAuthCallbackUrl("recovery"));
+        setAccountAuthStatus({ message: "已发送重置邮件，请查看邮箱。", tone: "success" });
+      } catch (error) {
+        setAccountAuthStatus({ message: error instanceof Error ? error.message : "重置邮件发送失败。", tone: "error" });
+      }
+      return;
+    }
+
+    if (!email || accountPassword.length < 6) {
+      setAccountAuthStatus({ message: "请输入邮箱和至少 6 位密码。", tone: "error" });
+      return;
+    }
+
+    setAccountAuthStatus({ message: accountAuthMode === "login" ? "正在登录..." : "正在注册...", tone: "busy" });
+    try {
+      const session =
+        accountAuthMode === "login"
+          ? await signInWithSupabasePassword(email, accountPassword)
+          : await signUpWithSupabasePassword(email, accountPassword, getAuthCallbackUrl("confirm"));
+      if (!session) {
+        setAccountAuthMode("login");
+        setAccountAuthStatus({ message: "注册成功，请完成邮箱验证后再登录。", tone: "success" });
+        return;
+      }
+
+      persistAccountSession(session);
+      setAccountSession(session);
+      setAccountPassword("");
+      await refreshData(session);
+      setIsAuthModalOpen(false);
+    } catch (error) {
+      setAccountAuthStatus({ message: error instanceof Error ? error.message : "账号请求失败。", tone: "error" });
+    }
+  }
+
+  async function signOutAccount() {
+    const session = accountSession;
+    setAccountAuthStatus({ message: "正在退出...", tone: "busy" });
+    try {
+      if (session?.accessToken) await signOutSupabaseSession(session.accessToken);
+    } catch {
+      // Local session cleanup still needs to happen when the remote token is already expired.
+    }
+    clearAccountSession();
+    setAccountSession(null);
+    setData(initialData);
+    setSelectedIds(initialSelections(initialData.assets));
+    setAccountPassword("");
+    setAccountAuthStatus({ message: "已退出团队账号。", tone: "success" });
+  }
+
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(historyStorageKey) ?? window.localStorage.getItem(legacyHistoryStorageKey);
@@ -141,6 +372,12 @@ export function Image2Workbench({ initialData }: { initialData: Image2WorkbenchD
     } catch {
       setHistory([]);
     }
+  }, []);
+
+  useEffect(() => {
+    if (!isSupabaseAuthConfigured) return;
+    const saved = readAccountSession();
+    if (saved) void restoreTeamSession(saved);
   }, []);
 
   useEffect(() => {
@@ -158,15 +395,6 @@ export function Image2Workbench({ initialData }: { initialData: Image2WorkbenchD
       )
     );
   }, [history]);
-
-  async function refreshData() {
-    const response = await fetch("/api/image2-workbench", { cache: "no-store" });
-    const payload = (await response.json()) as Image2WorkbenchData & { error?: string };
-    if (!response.ok) throw new Error(payload.error ?? "刷新失败。");
-    setData(payload);
-    setSelectedIds((current) => ({ ...initialSelections(payload.assets), ...current }));
-    return payload;
-  }
 
   const assetsById = useMemo(() => new Map(data.assets.map((asset) => [asset.id, asset])), [data.assets]);
   const assetsByKind = useMemo(() => groupAssetsByKind(data.assets), [data.assets]);
@@ -258,7 +486,7 @@ export function Image2Workbench({ initialData }: { initialData: Image2WorkbenchD
   }) {
     const response = await fetch("/api/image2-workbench/feedback", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...authHeaders() },
       body: JSON.stringify({
         assetId: input.target.assetId,
         stage: input.target.stage,
@@ -298,7 +526,7 @@ export function Image2Workbench({ initialData }: { initialData: Image2WorkbenchD
       const selectedReferenceIds = referenceIds.filter((id): id is string => Boolean(id));
       const response = await fetch("/api/image2-workbench/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify({
           stage,
           prompt,
@@ -345,6 +573,44 @@ export function Image2Workbench({ initialData }: { initialData: Image2WorkbenchD
     } finally {
       setGenerating(null);
     }
+  }
+
+  const isTeamMember = data.access?.isTeamMember === true;
+  if (!isTeamMember) {
+    return (
+      <>
+        <PublicWorkbenchGate
+          accountEmail={accountSession?.user.email ?? accountEmail}
+          authStatus={accountAuthStatus}
+          featuredCases={data.featuredCases}
+          isAuthConfigured={isSupabaseAuthConfigured}
+          isAuthenticated={Boolean(accountSession)}
+          onOpenAuth={() => setIsAuthModalOpen(true)}
+          onSignOut={() => void signOutAccount()}
+          referenceLinks={data.referenceLinks}
+        />
+        {isAuthModalOpen ? (
+          <WorkbenchAuthModal
+            authMode={accountAuthMode}
+            authStatus={accountAuthStatus}
+            email={accountEmail}
+            isConfigured={isSupabaseAuthConfigured}
+            onClose={() => setIsAuthModalOpen(false)}
+            onEmailChange={setAccountEmail}
+            onModeChange={(mode) => {
+              setAccountAuthMode(mode);
+              setAccountAuthStatus({
+                message: mode === "recover" ? "输入邮箱后发送重置邮件。" : "团队成员登录后进入工作台。",
+                tone: "idle"
+              });
+            }}
+            onPasswordChange={setAccountPassword}
+            onSubmit={submitAccountAuth}
+            password={accountPassword}
+          />
+        ) : null}
+      </>
+    );
   }
 
   return (
@@ -525,6 +791,7 @@ export function Image2Workbench({ initialData }: { initialData: Image2WorkbenchD
 
       {isUploadOpen ? (
         <AssetUploadModal
+          authHeaders={authHeaders()}
           defaultKind={activeAssetKind}
           onClose={() => setIsUploadOpen(false)}
           onUploaded={async (asset) => {
@@ -549,6 +816,147 @@ export function Image2Workbench({ initialData }: { initialData: Image2WorkbenchD
         />
       ) : null}
     </main>
+  );
+}
+
+function PublicWorkbenchGate({
+  accountEmail,
+  authStatus,
+  featuredCases,
+  isAuthConfigured,
+  isAuthenticated,
+  onOpenAuth,
+  onSignOut,
+  referenceLinks
+}: {
+  accountEmail: string;
+  authStatus: AccountAuthStatus;
+  featuredCases: WorkbenchCase[];
+  isAuthConfigured: boolean;
+  isAuthenticated: boolean;
+  onOpenAuth: () => void;
+  onSignOut: () => void;
+  referenceLinks: WorkbenchReferenceLink[];
+}) {
+  return (
+    <main className="image2-public-gate">
+      <section className="image2-public-panel" aria-label="Image2 公开入口">
+        <div className="image2-public-copy">
+          <small>Image2 Workbench</small>
+          <h1>团队素材库已转入登录白名单</h1>
+          <p>外部访问者看到公开入口；团队素材、生成结果和反馈记录只在成员邮箱通过白名单后加载。</p>
+          <div className={`image2-public-status ${authStatus.tone}`}>
+            <strong>{isAuthenticated ? accountEmail || "已登录账号" : "访客模式"}</strong>
+            <span>{isAuthConfigured ? authStatus.message : "当前环境未配置 Supabase 账号入口。"}</span>
+          </div>
+          <div className="image2-public-actions">
+            <button type="button" onClick={onOpenAuth} disabled={!isAuthConfigured}>
+              <WandSparkles aria-hidden="true" />
+              {isAuthenticated ? "切换团队账号" : "团队成员登录"}
+            </button>
+            {isAuthenticated ? (
+              <button className="ghost" type="button" onClick={onSignOut}>
+                退出
+              </button>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="image2-public-links">
+          {referenceLinks.map((item) => (
+            <a href={item.href} key={item.href}>
+              <FolderOpen aria-hidden="true" />
+              <span>
+                <strong>{item.label}</strong>
+                <small>{item.note}</small>
+              </span>
+            </a>
+          ))}
+        </div>
+
+        <div className="image2-public-cases" aria-label="公开案例参考">
+          {featuredCases.slice(0, 4).map((item) => (
+            <a href="/image2-cases" key={item.id}>
+              <span>{item.categoryLabel}</span>
+              <strong>{item.title}</strong>
+            </a>
+          ))}
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function WorkbenchAuthModal({
+  authMode,
+  authStatus,
+  email,
+  isConfigured,
+  onClose,
+  onEmailChange,
+  onModeChange,
+  onPasswordChange,
+  onSubmit,
+  password
+}: {
+  authMode: AccountAuthMode;
+  authStatus: AccountAuthStatus;
+  email: string;
+  isConfigured: boolean;
+  onClose: () => void;
+  onEmailChange: (value: string) => void;
+  onModeChange: (mode: AccountAuthMode) => void;
+  onPasswordChange: (value: string) => void;
+  onSubmit: (event: FormEvent) => void;
+  password: string;
+}) {
+  const submitLabel = authMode === "login" ? "登录并校验白名单" : authMode === "signup" ? "注册账号" : "发送重置邮件";
+  return (
+    <ModalShell title="团队账号" kicker="Team Access" onClose={onClose}>
+      {isConfigured ? (
+        <form className="image2-team-auth-form" onSubmit={onSubmit}>
+          <div className="image2-team-auth-tabs" role="tablist" aria-label="团队账号模式">
+            {(["login", "signup", "recover"] as AccountAuthMode[]).map((mode) => (
+              <button
+                aria-pressed={authMode === mode}
+                className={authMode === mode ? "active" : ""}
+                key={mode}
+                type="button"
+                onClick={() => onModeChange(mode)}
+              >
+                {mode === "login" ? "登录" : mode === "signup" ? "注册" : "找回"}
+              </button>
+            ))}
+          </div>
+          <label>
+            <span>邮箱</span>
+            <input autoComplete="email" type="email" value={email} onChange={(event) => onEmailChange(event.target.value)} />
+          </label>
+          {authMode !== "recover" ? (
+            <label>
+              <span>密码</span>
+              <input
+                autoComplete={authMode === "login" ? "current-password" : "new-password"}
+                type="password"
+                value={password}
+                onChange={(event) => onPasswordChange(event.target.value)}
+              />
+            </label>
+          ) : null}
+          <p className={`image2-team-auth-status ${authStatus.tone}`}>{authStatus.message}</p>
+          <div className="image2-team-auth-actions">
+            <button type="button" onClick={onClose}>
+              取消
+            </button>
+            <button className="primary" disabled={authStatus.tone === "busy"} type="submit">
+              {authStatus.tone === "busy" ? "处理中" : submitLabel}
+            </button>
+          </div>
+        </form>
+      ) : (
+        <p className="image2-team-auth-status error">Supabase 账号入口未配置，暂时不能登录团队工作台。</p>
+      )}
+    </ModalShell>
   );
 }
 
@@ -1409,10 +1817,12 @@ function CasePreviewModal({ caseItem, onClose }: { caseItem: WorkbenchCase; onCl
 }
 
 function AssetUploadModal({
+  authHeaders,
   defaultKind,
   onClose,
   onUploaded
 }: {
+  authHeaders: HeadersInit;
   defaultKind: WorkbenchAssetKind;
   onClose: () => void;
   onUploaded: (asset: WorkbenchAsset) => Promise<void>;
@@ -1458,6 +1868,7 @@ function AssetUploadModal({
       formData.append("tags", tags.trim());
       const response = await fetch("/api/image2-workbench/assets", {
         method: "POST",
+        headers: authHeaders,
         body: formData
       });
       const payload = (await response.json()) as { asset?: WorkbenchAsset; error?: string };
