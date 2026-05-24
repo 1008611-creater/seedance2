@@ -111,8 +111,7 @@ function getSupabaseClient() {
 
 function shouldUseSupabaseWorkbench() {
   const mode = process.env.IMAGE2_WORKBENCH_STORAGE_BACKEND?.trim().toLowerCase();
-  if (mode) return mode === "supabase";
-  return process.env.VERCEL === "1" && Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+  return mode === "supabase";
 }
 
 function toPublicUrl(storagePath: string) {
