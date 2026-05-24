@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { normalizeProviderTask } from "@/lib/provider";
 import { mutateStore, refundQuota } from "@/lib/store";
 import { nowIso } from "@/lib/time";
+import { toUserFacingError } from "@/lib/user-facing-error";
 
 export const runtime = "nodejs";
 
@@ -21,7 +22,9 @@ export async function POST(request: NextRequest) {
     generation.status = normalized.status;
     generation.videoUrl = normalized.videoUrl ?? generation.videoUrl;
     generation.lastFrameUrl = normalized.lastFrameUrl ?? generation.lastFrameUrl;
-    generation.errorMessage = normalized.errorMessage ?? generation.errorMessage;
+    generation.errorMessage = normalized.errorMessage
+      ? toUserFacingError(normalized.errorMessage, "Seedance 任务处理失败。")
+      : generation.errorMessage;
     generation.progress = normalized.status === "succeeded" || normalized.status === "failed" ? 100 : generation.progress;
     generation.updatedAt = nowIso();
 

@@ -45,6 +45,7 @@ export type VideoRatio = (typeof RATIO_OPTIONS)[number]["value"];
 export type VideoDuration = (typeof DURATION_OPTIONS)[number]["value"];
 export type VideoResolution = "720p";
 export type GenerationStatus = "queued" | "running" | "succeeded" | "failed" | "expired";
+export type VideoProviderMode = "manual" | "seedance" | "doubao2api";
 export type AssetKind = "image" | "video" | "audio";
 export type AssetRole = "first_frame" | "last_frame" | "reference_image" | "reference_video" | "reference_audio";
 
@@ -98,6 +99,65 @@ export type DailyUsage = {
   updatedAt: string;
 };
 
+export type Image2PromptStructure = {
+  subject: string;
+  style: string;
+  composition: string;
+  lighting: string;
+  materials: string;
+  text: string;
+};
+
+export type Image2PromptWorkbenchDraft = {
+  caseTitle: string;
+  fields: Image2PromptStructure;
+  note: string;
+  prompt: string;
+  updatedAt: string;
+};
+
+export type Image2PromptReuseHistoryItem = {
+  action: "copied" | "generated" | "saved";
+  caseKey: string;
+  caseTitle: string;
+  createdAt: string;
+  id: string;
+  prompt: string;
+};
+
+export type Image2CaseCollection = {
+  id: string;
+  name: string;
+  caseKeys: string[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type Image2CaseNote = {
+  caseKey: string;
+  note: string;
+  updatedAt: string;
+};
+
+export type Image2AssetSnapshot = {
+  version: "image2-assets-v1";
+  favoriteCaseKeys: string[];
+  activeCollectionId: string | null;
+  collections: Image2CaseCollection[];
+  notes: Record<string, Image2CaseNote>;
+  promptDrafts: Record<string, Image2PromptWorkbenchDraft>;
+  promptReuseHistory: Image2PromptReuseHistoryItem[];
+  updatedAt: string;
+};
+
+export type Image2UserAssets = {
+  id: string;
+  userId: string;
+  snapshot: Image2AssetSnapshot;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type Generation = {
   id: string;
   userId: string;
@@ -114,7 +174,7 @@ export type Generation = {
   assets: MediaAsset[];
   status: GenerationStatus;
   progress: number;
-  provider: "manual" | "seedance";
+  provider: VideoProviderMode;
   providerTaskId?: string;
   coverUrl: string;
   videoUrl?: string;
@@ -145,7 +205,7 @@ export type DashboardResponse = {
   quota: QuotaSummary;
   jobs: Generation[];
   gallery: Generation[];
-  providerMode: "manual" | "seedance";
+  providerMode: VideoProviderMode;
   ratios: typeof RATIO_OPTIONS;
   durations: typeof DURATION_OPTIONS;
   modes: typeof VIDEO_MODES;
@@ -174,5 +234,5 @@ export type AdminQueueResponse = {
     failed: number;
     expired: number;
   };
-  providerMode: "manual" | "seedance";
+  providerMode: VideoProviderMode;
 };

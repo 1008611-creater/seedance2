@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSeedanceTask, isSeedanceConfigured } from "@/lib/provider";
+import { configuredVideoProvider, createVideoProviderTask } from "@/lib/provider";
 import {
   consumeQuota,
   dashboardForUser,
@@ -10,6 +10,7 @@ import {
 import { nowIso } from "@/lib/time";
 import { DURATION_OPTIONS, RATIO_OPTIONS, VIDEO_MODES, type Generation } from "@/lib/types";
 import type { VideoDuration, VideoMode, VideoRatio, VideoResolution } from "@/lib/types";
+import { toUserFacingError } from "@/lib/user-facing-error";
 import { coverForRatio, titleFromPrompt, validateGenerationInput } from "@/lib/video-rules";
 
 export const runtime = "nodejs";
@@ -31,6 +32,7 @@ export async function POST(request: NextRequest) {
   let created: Generation | undefined;
 
   try {
+    const activeProvider = configuredVideoProvider();
     const input = validateGenerationInput({
       userId,
       prompt: String(body.prompt ?? ""),
@@ -64,8 +66,8 @@ export async function POST(request: NextRequest) {
         assets: input.assets,
         status: "queued",
         progress: 2,
-        provider: isSeedanceConfigured() ? "seedance" : "manual",
-        providerTaskId: isSeedanceConfigured() ? undefined : randomId("manual"),
+        provider: activeProvider,
+        providerTaskId: activeProvider === "manual" ? randomId("manual") : undefined,
         coverUrl: input.assets[0]?.dataUrl ?? input.assets[0]?.url ?? coverForRatio(input.ratio, state.generations.length),
         createdAt: now,
         updatedAt: now
@@ -75,16 +77,31 @@ export async function POST(request: NextRequest) {
 
     if (!created) throw new Error("任务创建失败。");
 
-    if (created.provider === "seedance") {
+    if (created.provider !== "manual") {
       try {
-        const providerTask = await createSeedanceTask(created);
+        const providerTask = await createVideoProviderTask(created);
         await mutateStore((state) => {
           const generation = state.generations.find((item) => item.id === created?.id);
           if (!generation) return;
+          const status = providerTask.status ?? "queued";
           generation.providerTaskId = providerTask.providerTaskId;
-          generation.status = "queued";
-          generation.progress = 5;
+          generation.status = status;
+          generation.progress = status === "succeeded" || status === "failed" || status === "expired" ? 100 : 5;
+          generation.videoUrl = providerTask.videoUrl ?? generation.videoUrl;
+          generation.coverUrl = providerTask.coverUrl ?? generation.coverUrl;
+          generation.lastFrameUrl = providerTask.lastFrameUrl ?? generation.lastFrameUrl;
+          generation.errorMessage = providerTask.errorMessage
+            ? toUserFacingError(providerTask.errorMessage, "实时生成失败。")
+            : generation.errorMessage;
           generation.updatedAt = nowIso();
+
+          if (status === "succeeded") {
+            generation.completedAt = generation.updatedAt;
+          }
+
+          if (status === "failed" || status === "expired") {
+            refundQuota(state, generation);
+          }
         });
       } catch (error) {
         await mutateStore((state) => {
@@ -92,7 +109,10 @@ export async function POST(request: NextRequest) {
           if (!generation) return;
           generation.status = "failed";
           generation.progress = 100;
-          generation.errorMessage = error instanceof Error ? error.message : "Seedance 创建任务失败。";
+          generation.errorMessage = toUserFacingError(
+            error instanceof Error ? error.message : error,
+            generation.provider === "doubao2api" ? "doubao2api 生成失败。" : "Seedance 创建任务失败。"
+          );
           generation.updatedAt = nowIso();
           refundQuota(state, generation);
         });
@@ -107,6 +127,6 @@ export async function POST(request: NextRequest) {
       modes: VIDEO_MODES
     });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "提交失败。" }, { status: 400 });
+    return NextResponse.json({ error: toUserFacingError(error instanceof Error ? error.message : error, "提交失败。") }, { status: 400 });
   }
 }

@@ -4,6 +4,8 @@ node_modules/
 .data/
 dist/
 dev-server*.log
+automation-console*.log
+.logs/
 tsconfig.tsbuildinfo
 
 # Generated design drafts and screenshots
@@ -15,3 +17,7 @@ prompts/
 .env
 .env.*
 !.env.example
+
+# Local-only plaintext card batches; generated SQL should contain hashes only.
+.license-codes*.txt
+.license-codes*.sql

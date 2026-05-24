@@ -13,6 +13,7 @@ import {
   ListVideo,
   Loader2,
   Lock,
+  Music2,
   Play,
   Settings,
   Sparkles,
@@ -31,6 +32,7 @@ import type {
   VideoMode,
   VideoRatio
 } from "@/lib/types";
+import { toUserFacingError } from "@/lib/user-facing-error";
 
 const storageKey = "seedance-mvp-user-id";
 const demoPrompt =
@@ -42,6 +44,54 @@ const promptIdeas = [
   "雪山日出，登山者站在山脊上回望镜头，云海缓慢流动，金色阳光洒在雪面，史诗感。",
   "森林晨雾里，阳光穿过高大的树木，镜头低角度穿过草叶，空气里有细小水汽，安静自然。"
 ];
+
+const doubaoImageRatios = ["1:1", "16:9", "9:16", "4:3", "3:4"] as const;
+
+type MusicTrack = {
+  audioUrl: string;
+  title: string;
+  duration?: number;
+  lyrics?: string;
+  coverUrl?: string;
+};
+
+type DoubaoImageResult = {
+  url: string;
+  revisedPrompt?: string;
+};
+
+type DoubaoImageReference = {
+  name: string;
+  mimeType: string;
+  dataUrl: string;
+};
+
+type Doubao2ApiAccountStatus = {
+  id: string;
+  adminUrl: string;
+  reachable: boolean;
+  loggedIn: boolean;
+  status: string;
+  needsCaptcha: boolean;
+  inFlight: boolean;
+  cooldownUntil?: number;
+  loginRequiredUntil?: number;
+  lastError?: string;
+};
+
+type Doubao2ApiStatus = {
+  configured: boolean;
+  reachable: boolean;
+  providerType: string;
+  rootUrl: string;
+  error?: string;
+  pool?: {
+    cooldownUntil?: number;
+    lastError?: string;
+    lastRateLimitAt?: number;
+  };
+  accounts: Doubao2ApiAccountStatus[];
+};
 
 export function CreatorApp() {
   const [userId, setUserId] = useState("");
@@ -55,10 +105,23 @@ export function CreatorApp() {
   const [style, setStyle] = useState("");
   const [seed, setSeed] = useState("");
   const [generateAudio, setGenerateAudio] = useState(true);
+  const [musicPrompt, setMusicPrompt] = useState("一首轻快的夏日流行歌曲，旋律明亮，适合短视频开场。");
+  const [musicGenre, setMusicGenre] = useState("Pop");
+  const [musicLyric, setMusicLyric] = useState("");
+  const [musicTracks, setMusicTracks] = useState<MusicTrack[]>([]);
+  const [musicError, setMusicError] = useState("");
+  const [musicLoading, setMusicLoading] = useState(false);
+  const [imagePrompt, setImagePrompt] = useState("一张高级产品海报，透明耳机悬浮在柔和棚拍光下，干净背景，细节清晰。");
+  const [imageRatio, setImageRatio] = useState<(typeof doubaoImageRatios)[number]>("16:9");
+  const [imageReference, setImageReference] = useState<DoubaoImageReference | null>(null);
+  const [imageResults, setImageResults] = useState<DoubaoImageResult[]>([]);
+  const [imageError, setImageError] = useState("");
+  const [imageLoading, setImageLoading] = useState(false);
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [code, setCode] = useState("WEEK-SEED-2026");
   const [accountDraft, setAccountDraft] = useState({ displayName: "", email: "" });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let saved = localStorage.getItem(storageKey);
@@ -95,6 +158,15 @@ export function CreatorApp() {
   const modeRequiresFiles = mode !== "text";
   const activeJobs = dashboard?.jobs ?? [];
   const gallery = dashboard?.gallery ?? [];
+  const providerMode = dashboard?.providerMode ?? "manual";
+  const [channelStatus, setChannelStatus] = useState<Doubao2ApiStatus | null>(null);
+  const [channelLoading, setChannelLoading] = useState(false);
+  const doubaoCooldownUntil = Math.max(
+    channelStatus?.pool?.cooldownUntil ?? 0,
+    ...(channelStatus?.accounts ?? []).map((account) => account.cooldownUntil ?? 0)
+  );
+  const doubaoCoolingDown = providerMode === "doubao2api" && doubaoCooldownUntil > Date.now();
+  const doubaoCooldownText = doubaoCoolingDown ? `本地通道冷却到 ${formatLocalTime(doubaoCooldownUntil)}` : "";
 
   async function refreshDashboard(id = userId, showError = true) {
     if (!id) return;
@@ -106,9 +178,38 @@ export function CreatorApp() {
       if (!response.ok) throw new Error(json.error ?? "加载失败。");
       setDashboard(json);
     } catch (error) {
-      if (showError) flash(error instanceof Error ? error.message : "加载失败。", "error");
+      if (showError) flash(toUserFacingError(error instanceof Error ? error.message : error, "加载失败。"), "error");
     }
   }
+
+  async function refreshDoubao2ApiStatus() {
+    setChannelLoading(true);
+    try {
+      const response = await fetch("/api/provider/doubao2api/status", { cache: "no-store" });
+      const json = await response.json();
+      if (!response.ok) throw new Error(json.error ?? "本地通道状态读取失败。");
+      setChannelStatus(json);
+    } catch (error) {
+      setChannelStatus({
+        configured: false,
+        reachable: false,
+        providerType: "doubao2api-proxy",
+        rootUrl: "",
+        error: error instanceof Error ? error.message : "本地通道状态读取失败。",
+        pool: {},
+        accounts: []
+      });
+    } finally {
+      setChannelLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (providerMode !== "doubao2api") return;
+    void refreshDoubao2ApiStatus();
+    const timer = window.setInterval(() => void refreshDoubao2ApiStatus(), 10000);
+    return () => window.clearInterval(timer);
+  }, [providerMode]);
 
   async function apiPost(path: string, payload: Record<string, unknown>, successMessage: string) {
     if (!userId) return;
@@ -127,7 +228,7 @@ export function CreatorApp() {
       setDashboard(json);
       flash(successMessage);
     } catch (error) {
-      flash(error instanceof Error ? error.message : "操作失败。", "error");
+      flash(toUserFacingError(error instanceof Error ? error.message : error, "操作失败。"), "error");
     } finally {
       setBusy(null);
     }
@@ -155,6 +256,10 @@ export function CreatorApp() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
+    if (doubaoCoolingDown) {
+      flash(`${doubaoCooldownText}，到点前先别继续提交。`, "error");
+      return;
+    }
     await apiPost(
       "/api/generations",
       {
@@ -169,8 +274,113 @@ export function CreatorApp() {
         privacy: "private",
         assets
       },
-      dashboard?.providerMode === "seedance" ? "任务已提交到 Seedance 队列。" : "任务已进入制作队列。"
+      providerSubmitMessage(dashboard?.providerMode)
     );
+  }
+
+  async function handleMusicSubmit(event: FormEvent) {
+    event.preventDefault();
+    const description = musicPrompt.trim();
+    if (!description) {
+      flash("请输入音乐描述。", "error");
+      return;
+    }
+    if (doubaoCoolingDown) {
+      const message = `${doubaoCooldownText}，音乐生成先暂停。`;
+      setMusicError(message);
+      flash(message, "error");
+      return;
+    }
+
+    setMusicLoading(true);
+    setMusicError("");
+    try {
+      const response = await fetch("/api/music/generations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-seedance-user": userId
+        },
+        body: JSON.stringify({
+          prompt: description,
+          genre: musicGenre.trim() || undefined,
+          lyric: musicLyric.trim() || undefined
+        })
+      });
+      const json = await response.json();
+      if (!response.ok) throw new Error(json.error ?? "音乐生成失败。");
+      const tracks = normalizeMusicTracks(json);
+      if (!tracks.length) throw new Error("音乐生成完成，但没有返回可播放音频。");
+      setMusicTracks(tracks);
+      flash("音乐生成完成。");
+    } catch (error) {
+      const message = toUserFacingError(error instanceof Error ? error.message : error, "音乐生成失败。");
+      setMusicError(message);
+      flash(message, "error");
+    } finally {
+      setMusicLoading(false);
+    }
+  }
+
+  async function handleDoubaoImageSubmit(event: FormEvent) {
+    event.preventDefault();
+    const description = imagePrompt.trim();
+    if (!description) {
+      flash("请输入图片描述。", "error");
+      return;
+    }
+    if (doubaoCoolingDown) {
+      const message = `${doubaoCooldownText}，图片生成先暂停。`;
+      setImageError(message);
+      flash(message, "error");
+      return;
+    }
+
+    setImageLoading(true);
+    setImageError("");
+    try {
+      const response = await fetch("/api/doubao2api/images", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-seedance-user": userId
+        },
+        body: JSON.stringify({
+          prompt: description,
+          ratio: imageRatio,
+          refImageDataUrl: imageReference?.dataUrl,
+          refImageName: imageReference?.name,
+          refImageMimeType: imageReference?.mimeType
+        })
+      });
+      const json = await response.json();
+      if (!response.ok) throw new Error(json.error ?? "图片生成失败。");
+      const images = normalizeDoubaoImages(json);
+      if (!images.length) throw new Error("图片生成完成，但没有返回可展示图片。");
+      setImageResults(images);
+      flash("图片生成完成。");
+    } catch (error) {
+      const message = toUserFacingError(error instanceof Error ? error.message : error, "图片生成失败。");
+      setImageError(message);
+      flash(message, "error");
+    } finally {
+      setImageLoading(false);
+    }
+  }
+
+  async function handleDoubaoImageFile(files: FileList | null) {
+    const file = files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      flash("请上传图片文件。", "error");
+      return;
+    }
+
+    setImageReference({
+      name: file.name,
+      mimeType: file.type,
+      dataUrl: await readFile(file)
+    });
   }
 
   async function handleFiles(files: FileList | null) {
@@ -237,6 +447,18 @@ export function CreatorApp() {
             <ImageIcon />
             <span>成片库</span>
           </a>
+          <a href="#doubao-image">
+            <ImageIcon />
+            <span>文生图</span>
+          </a>
+          <a href="#music">
+            <Music2 />
+            <span>文生音乐</span>
+          </a>
+          <a href="#channel">
+            <KeyRound />
+            <span>本地通道</span>
+          </a>
           <a href="#queue">
             <ListVideo />
             <span>生成队列</span>
@@ -290,8 +512,8 @@ export function CreatorApp() {
       <div className="app">
         <header className="topbar">
           <div className="provider-chip">
-            <span className={dashboard?.providerMode === "seedance" ? "dot live" : "dot"} />
-            {dashboard?.providerMode === "seedance" ? "Seedance 实时通道" : "人工制作通道"}
+            <span className={providerMode === "manual" ? "dot" : "dot live"} />
+            {providerStatusLabel(providerMode)}
           </div>
           <div className="topbar-actions">
             <button className="text-button" type="button">
@@ -475,12 +697,162 @@ export function CreatorApp() {
                       {dashboard?.quota.remaining ?? 0} / {dashboard?.quota.limit ?? 0} 次
                     </strong>
                   </p>
-                  <button className="primary-button generate-button" type="submit" disabled={busy === "/api/generations"}>
+                  <button className="primary-button generate-button" type="submit" disabled={busy === "/api/generations" || doubaoCoolingDown}>
                     {busy === "/api/generations" ? <Loader2 className="spin" /> : <Sparkles />}
-                    <span>开始生成</span>
+                    <span>{doubaoCoolingDown ? "通道冷却中" : "开始生成"}</span>
                   </button>
                 </div>
               </form>
+
+              <section id="doubao-image" className="panel doubao-image-panel">
+                <div className="section-head">
+                  <h2>文生图 / 图生图</h2>
+                  <span className="provider-chip compact">
+                    <ImageIcon />
+                    doubao-image
+                  </span>
+                </div>
+
+                <form className="doubao-image-form" onSubmit={handleDoubaoImageSubmit}>
+                  <label className="prompt-field image-prompt">
+                    <span>图片描述</span>
+                    <textarea
+                      maxLength={800}
+                      rows={4}
+                      value={imagePrompt}
+                      onChange={(event) => setImagePrompt(event.target.value)}
+                      placeholder="描述主体、风格、构图、光线和画面比例。"
+                    />
+                    <small>{imagePrompt.length} / 800</small>
+                  </label>
+
+                  <div className="image-tool-row">
+                    <div className="image-ratio-tabs" role="group" aria-label="图片比例">
+                      {doubaoImageRatios.map((item) => (
+                        <button
+                          className={`duration-chip ${imageRatio === item ? "active" : ""}`}
+                          type="button"
+                          key={item}
+                          onClick={() => setImageRatio(item)}
+                        >
+                          <strong>{item}</strong>
+                          <span>图片比例</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="image-reference-actions">
+                      <input
+                        ref={imageInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={(event) => void handleDoubaoImageFile(event.target.files)}
+                      />
+                      <button className="upload-button" type="button" onClick={() => imageInputRef.current?.click()}>
+                        <Upload />
+                        参考图
+                      </button>
+                      {imageReference ? (
+                        <span className="asset-pill">
+                          <ImageIcon />
+                          {imageReference.name}
+                          <button type="button" onClick={() => setImageReference(null)} aria-label="移除参考图">
+                            <X />
+                          </button>
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="music-actions">
+                    <button className="primary-button" type="submit" disabled={imageLoading}>
+                      {imageLoading ? <Loader2 className="spin" /> : <ImageIcon />}
+                      <span>生成图片</span>
+                    </button>
+                    {imageError ? <p className="inline-error">{imageError}</p> : null}
+                  </div>
+                </form>
+
+                <div className="doubao-image-results">
+                  {imageResults.length ? (
+                    imageResults.map((item, index) => (
+                      <figure className="doubao-image-result" key={`${item.url}-${index}`}>
+                        <a href={item.url} target="_blank" rel="noreferrer">
+                          <img src={item.url} alt={item.revisedPrompt || `生成图片 ${index + 1}`} />
+                        </a>
+                        <figcaption>{item.revisedPrompt || imagePrompt}</figcaption>
+                      </figure>
+                    ))
+                  ) : (
+                    <div className="empty-mini">暂无图片</div>
+                  )}
+                </div>
+              </section>
+
+              <section id="music" className="panel music-panel">
+                <div className="section-head">
+                  <h2>文生音乐</h2>
+                  <span className="provider-chip compact">
+                    <Music2 />
+                    doubao-music
+                  </span>
+                </div>
+
+                <form className="music-form" onSubmit={handleMusicSubmit}>
+                  <label className="prompt-field music-prompt">
+                    <span>音乐描述</span>
+                    <textarea
+                      maxLength={800}
+                      rows={4}
+                      value={musicPrompt}
+                      onChange={(event) => setMusicPrompt(event.target.value)}
+                      placeholder="描述歌曲风格、情绪、节奏、用途。"
+                    />
+                    <small>{musicPrompt.length} / 800</small>
+                  </label>
+
+                  <div className="music-fields">
+                    <label>
+                      <span>流派</span>
+                      <input value={musicGenre} onChange={(event) => setMusicGenre(event.target.value)} placeholder="Pop / Folk" />
+                    </label>
+                    <label>
+                      <span>歌词</span>
+                      <input value={musicLyric} onChange={(event) => setMusicLyric(event.target.value)} placeholder="可选" />
+                    </label>
+                  </div>
+
+                  <div className="music-actions">
+                    <button className="primary-button" type="submit" disabled={musicLoading}>
+                      {musicLoading ? <Loader2 className="spin" /> : <Music2 />}
+                      <span>生成音乐</span>
+                    </button>
+                    {musicError ? <p className="inline-error">{musicError}</p> : null}
+                  </div>
+                </form>
+
+                <div className="music-results">
+                  {musicTracks.length ? (
+                    musicTracks.map((track, index) => (
+                      <article className="music-track" key={`${track.audioUrl}-${index}`}>
+                        <div className="music-track-head">
+                          <div>
+                            <h3>{track.title || `音乐 ${index + 1}`}</h3>
+                            {track.duration ? <p>{formatDuration(track.duration)}</p> : null}
+                          </div>
+                          <a className="text-button" href={track.audioUrl} target="_blank" rel="noreferrer">
+                            打开音频
+                          </a>
+                        </div>
+                        <audio controls src={track.audioUrl} />
+                        {track.lyrics ? <pre>{track.lyrics}</pre> : null}
+                      </article>
+                    ))
+                  ) : (
+                    <div className="empty-mini">暂无音乐</div>
+                  )}
+                </div>
+              </section>
 
               <section id="gallery" className="panel gallery-panel">
                 <div className="section-head">
@@ -509,6 +881,48 @@ export function CreatorApp() {
             </div>
 
             <aside className="right-column">
+              <section id="channel" className="panel channel-panel">
+                <div className="section-head">
+                  <h2>本地通道</h2>
+                  <button className="text-button" type="button" onClick={() => void refreshDoubao2ApiStatus()}>
+                    {channelLoading ? "刷新中" : "刷新"}
+                  </button>
+                </div>
+
+                {providerMode === "doubao2api" ? (
+                  <div className="channel-list">
+                    {doubaoCoolingDown ? (
+                      <div className="channel-cooldown">
+                        <Clock />
+                        <span>{doubaoCooldownText}</span>
+                      </div>
+                    ) : null}
+                    {(channelStatus?.accounts ?? []).length ? (
+                      channelStatus?.accounts.map((account) => (
+                        <article className="channel-account" key={account.id}>
+                          <div className="channel-account-main">
+                            <span className={`status-dot ${accountStatusTone(account)}`} />
+                            <div>
+                              <strong>{account.id}</strong>
+                              <small>{accountStatusText(account)}</small>
+                            </div>
+                          </div>
+                          {account.adminUrl ? (
+                            <a className="text-button channel-login-link" href={account.adminUrl} aria-label={`打开 ${account.id} 登录页`}>
+                              登录
+                            </a>
+                          ) : null}
+                        </article>
+                      ))
+                    ) : (
+                      <div className="empty-mini">{channelStatus?.error ?? "等待本地代理状态"}</div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="empty-mini">当前不是 doubao2api 通道</div>
+                )}
+              </section>
+
               <section className="panel quota-panel">
                 <div className="section-head">
                   <h2>今日额度</h2>
@@ -629,7 +1043,7 @@ function QueueItem({ item }: { item: DashboardResponse["jobs"][number] }) {
         <span style={{ width: `${item.progress}%` }} />
       </div>
       {item.userMessage ? <p className="queue-note">{item.userMessage}</p> : null}
-      {item.errorMessage ? <p className="queue-error">{item.errorMessage}</p> : null}
+      {item.errorMessage ? <p className="queue-error">{toUserFacingError(item.errorMessage, "任务处理失败。")}</p> : null}
     </article>
   );
 }
@@ -652,6 +1066,63 @@ function GalleryCard({ item }: { item: DashboardResponse["gallery"][number] }) {
   );
 }
 
+function normalizeMusicTracks(payload: unknown): MusicTrack[] {
+  if (!payload || typeof payload !== "object") return [];
+  const data = (payload as { data?: unknown }).data;
+  if (!Array.isArray(data)) return [];
+
+  const tracks: MusicTrack[] = [];
+  for (const item of data) {
+    if (!item || typeof item !== "object") continue;
+    const record = item as Record<string, unknown>;
+    const audioUrl = stringValue(record.audio_url ?? record.audioUrl ?? record.url);
+    if (!audioUrl) continue;
+    tracks.push({
+      audioUrl,
+      title: stringValue(record.title) || "生成音乐",
+      duration: numberValue(record.duration),
+      lyrics: stringValue(record.lyrics ?? record.lyric),
+      coverUrl: stringValue(record.cover_url ?? record.coverUrl)
+    });
+  }
+  return tracks;
+}
+
+function normalizeDoubaoImages(payload: unknown): DoubaoImageResult[] {
+  if (!payload || typeof payload !== "object") return [];
+  const data = (payload as { data?: unknown }).data;
+  if (!Array.isArray(data)) return [];
+
+  const images: DoubaoImageResult[] = [];
+  for (const item of data) {
+    if (!item || typeof item !== "object") continue;
+    const record = item as Record<string, unknown>;
+    const url = stringValue(record.url ?? record.image_url ?? record.imageUrl);
+    if (!url) continue;
+    images.push({
+      url,
+      revisedPrompt: stringValue(record.revised_prompt ?? record.revisedPrompt)
+    });
+  }
+  return images;
+}
+
+function stringValue(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function numberValue(value: unknown) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function formatDuration(seconds: number) {
+  const total = Math.max(0, Math.round(seconds));
+  const minutes = Math.floor(total / 60);
+  const rest = total % 60;
+  return `${minutes}:${String(rest).padStart(2, "0")}`;
+}
+
 function trimAssets(assets: MediaAsset[], mode: VideoMode) {
   if (mode === "text") return [];
   if (mode === "first-frame") return assets.filter((asset) => asset.kind === "image").slice(0, 1);
@@ -670,4 +1141,37 @@ function readFile(file: File) {
     reader.addEventListener("error", () => reject(reader.error));
     reader.readAsDataURL(file);
   });
+}
+
+function providerStatusLabel(mode: DashboardResponse["providerMode"]) {
+  if (mode === "doubao2api") return "doubao2api 本地通道";
+  if (mode === "seedance") return "Seedance 实时通道";
+  return "人工制作通道";
+}
+
+function providerSubmitMessage(mode?: DashboardResponse["providerMode"]) {
+  if (mode === "doubao2api") return "任务已提交到 doubao2api 本地通道。";
+  if (mode === "seedance") return "任务已提交到 Seedance 队列。";
+  return "任务已进入制作队列。";
+}
+
+function accountStatusTone(account: Doubao2ApiAccountStatus) {
+  if (!account.reachable) return "offline";
+  if (account.needsCaptcha) return "warn";
+  if (account.cooldownUntil && account.cooldownUntil > Date.now()) return "warn";
+  if (account.loggedIn) return "live";
+  return "idle";
+}
+
+function accountStatusText(account: Doubao2ApiAccountStatus) {
+  if (!account.reachable) return "服务未连接";
+  if (account.needsCaptcha) return "需要人工验证";
+  if (account.cooldownUntil && account.cooldownUntil > Date.now()) return `冷却到 ${formatLocalTime(account.cooldownUntil)}`;
+  if (account.loginRequiredUntil && account.loginRequiredUntil > Date.now()) return "需要扫码登录";
+  if (account.loggedIn) return account.inFlight ? "生成中" : "已登录可用";
+  return account.status === "not_ready" ? "待扫码登录" : account.status;
+}
+
+function formatLocalTime(timestamp: number) {
+  return new Date(timestamp).toLocaleTimeString("zh-CN", { hour12: false, hour: "2-digit", minute: "2-digit" });
 }

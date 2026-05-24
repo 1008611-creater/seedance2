@@ -15,6 +15,7 @@ import {
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { formatChinaDateTime } from "@/lib/time";
 import type { AdminQueueResponse, Generation, GenerationStatus } from "@/lib/types";
+import { toUserFacingError } from "@/lib/user-facing-error";
 
 type Draft = {
   videoUrl: string;
@@ -81,7 +82,7 @@ export function AdminConsole() {
       if (!response.ok) throw new Error(json.error ?? "后台加载失败。");
       setQueue(json);
     } catch (error) {
-      flash(error instanceof Error ? error.message : "后台加载失败。", "error");
+      flash(toUserFacingError(error instanceof Error ? error.message : error, "后台加载失败。"), "error");
     } finally {
       setBusy("");
     }
@@ -117,7 +118,7 @@ export function AdminConsole() {
       setQueue(json);
       flash(status === "succeeded" ? "成片已发布给用户。" : "任务状态已更新。");
     } catch (error) {
-      flash(error instanceof Error ? error.message : "任务更新失败。", "error");
+      flash(toUserFacingError(error instanceof Error ? error.message : error, "任务更新失败。"), "error");
     } finally {
       setBusy("");
     }

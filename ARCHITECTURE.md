@@ -91,6 +91,13 @@
 
 ## 数据表草案
 
+Image2 案例库的正式账号、云端资产、卡密和权益 schema 已整理为可执行迁移：
+
+- `supabase/migrations/202605230001_image2_accounts_assets.sql`
+- `docs/image2-supabase-migration.md`
+
+下面保留早期 MVP 草案作为 Seedance 周卡站上下文，后续以迁移文件为准。
+
 ```sql
 profiles (
   id uuid primary key references auth.users(id),

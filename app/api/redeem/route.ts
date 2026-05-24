@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dashboardForUser, mutateStore, redeemCode } from "@/lib/store";
 import { DURATION_OPTIONS, RATIO_OPTIONS, VIDEO_MODES } from "@/lib/types";
+import { toUserFacingError } from "@/lib/user-facing-error";
 
 export const runtime = "nodejs";
 
@@ -22,6 +23,6 @@ export async function POST(request: NextRequest) {
       modes: VIDEO_MODES
     });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "兑换失败。" }, { status: 400 });
+    return NextResponse.json({ error: toUserFacingError(error instanceof Error ? error.message : error, "兑换失败。") }, { status: 400 });
   }
 }

@@ -3,10 +3,33 @@
   "version": "0.2.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3012",
+    "cache:image2-images": "node tools/cache-image2-case-images.mjs",
+    "build:image2-lite": "node tools/build-image2-lite-data.mjs",
+    "prebuild": "npm run build:image2-lite",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check:supabase-migration": "node tools/check-supabase-migration.mjs",
+    "check:image2-license-migration": "node tools/check-image2-license-migration.mjs",
+    "generate:image2-license-codes": "node tools/generate-image2-license-batch.mjs",
+    "hash:image2-license-codes": "node tools/hash-image2-license-codes.mjs",
+    "smoke:image2-supabase": "node tools/smoke-image2-supabase-assets.mjs",
+    "smoke:image2-license": "node tools/smoke-image2-license-redemption.mjs",
+    "pw:test": "playwright test",
+    "pw:test:headed": "playwright test --headed",
+    "pw:debug": "playwright test --debug",
+    "pw:bit-recorded": "playwright test tests/bitbrowser-recorded-flow.spec.ts --headed",
+    "pw:codegen": "playwright codegen",
+    "pw:float": "powershell.exe -STA -NoProfile -ExecutionPolicy Bypass -File tools/playwright-recorder-floating.ps1",
+    "pw:studio": "powershell.exe -STA -NoProfile -ExecutionPolicy Bypass -File tools/playwright-recorder-floating.ps1",
+    "pw:install-app": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/install-recorder-app.ps1",
+    "pw:uninstall-app": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/uninstall-recorder-app.ps1",
+    "pw:report": "playwright show-report output/playwright/playwright-report",
+    "bb:list": "node tools/bitbrowser-playwright.mjs list",
+    "bb:pages": "node tools/bitbrowser-playwright.mjs pages",
+    "bb:goto": "node tools/bitbrowser-playwright.mjs goto",
+    "bb:screenshot": "node tools/bitbrowser-playwright.mjs screenshot"
   },
   "dependencies": {
     "lucide-react": "latest",
@@ -15,6 +38,7 @@
     "react-dom": "latest"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",

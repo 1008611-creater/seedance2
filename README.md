@@ -9,7 +9,7 @@ npm install
 npm run dev
 ```
 
-默认地址：`http://localhost:3000`
+默认地址：`http://localhost:3012`
 
 演示卡密：
 

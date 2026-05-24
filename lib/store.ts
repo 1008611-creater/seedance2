@@ -10,11 +10,19 @@ import {
   type DashboardResponse,
   type Entitlement,
   type Generation,
+  type Image2AssetSnapshot,
+  type Image2CaseCollection,
+  type Image2CaseNote,
+  type Image2PromptReuseHistoryItem,
+  type Image2PromptWorkbenchDraft,
+  type Image2UserAssets,
   type LicenseCode,
   type QuotaSummary,
   type UserProfile
 } from "./types";
+import { configuredVideoProvider } from "./provider";
 import { addDaysIso, nextShanghaiMidnightIso, nowIso, shanghaiDateKey } from "./time";
+import { toUserFacingError } from "./user-facing-error";
 
 type StoreState = {
   users: UserProfile[];
@@ -22,6 +30,7 @@ type StoreState = {
   entitlements: Entitlement[];
   dailyUsage: DailyUsage[];
   generations: Generation[];
+  image2Assets: Image2UserAssets[];
 };
 
 const demoCodes = ["WEEK-SEED-2026", "VIP-720P-7D", "FREEWEEK"];
@@ -44,7 +53,7 @@ export function randomId(prefix: string) {
 }
 
 export function providerMode() {
-  return process.env.BYTEPLUS_API_KEY || process.env.ARK_API_KEY ? "seedance" : "manual";
+  return configuredVideoProvider();
 }
 
 function createDefaultStore(): StoreState {
@@ -54,6 +63,7 @@ function createDefaultStore(): StoreState {
     entitlements: [],
     dailyUsage: [],
     generations: [],
+    image2Assets: [],
     licenseCodes: demoCodes.map((code, index) => ({
       id: randomId("code"),
       codeHash: codeHash(code),
@@ -70,6 +80,7 @@ async function readStore(): Promise<StoreState> {
   try {
     const raw = await readFile(file, "utf8");
     const parsed = JSON.parse(raw) as StoreState;
+    normalizeStoreShape(parsed);
     fallbackStore.state = parsed;
     return structuredClone(parsed);
   } catch {
@@ -95,6 +106,7 @@ async function writeStore(state: StoreState) {
 
 export async function mutateStore<T>(mutator: (state: StoreState) => T | Promise<T>) {
   const state = await readStore();
+  normalizeStoreShape(state);
   const result = await mutator(state);
   await writeStore(state);
   return result;
@@ -120,6 +132,15 @@ export function ensureUser(state: StoreState, userId: string) {
     state.users.push(user);
   }
   return user;
+}
+
+function normalizeStoreShape(state: StoreState) {
+  state.users ||= [];
+  state.licenseCodes ||= [];
+  state.entitlements ||= [];
+  state.dailyUsage ||= [];
+  state.generations ||= [];
+  state.image2Assets ||= [];
 }
 
 export function updateUser(state: StoreState, userId: string, patch: Partial<UserProfile>) {
@@ -246,6 +267,173 @@ export function dashboardForUser(state: StoreState, userId: string): DashboardRe
   };
 }
 
+function cleanString(value: unknown, fallback = "", maxLength = 4000) {
+  return typeof value === "string" ? value.trim().slice(0, maxLength) : fallback;
+}
+
+function cleanIso(value: unknown, fallback = nowIso()) {
+  if (typeof value !== "string") return fallback;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? fallback : date.toISOString();
+}
+
+function cleanKeys(value: unknown, limit = 1200) {
+  if (!Array.isArray(value)) return [] as string[];
+  return [...new Set(value.map((item) => cleanString(item, "", 160)).filter(Boolean))].slice(0, limit);
+}
+
+function emptyImage2AssetSnapshot(updatedAt = nowIso()): Image2AssetSnapshot {
+  return {
+    version: "image2-assets-v1",
+    favoriteCaseKeys: [],
+    activeCollectionId: null,
+    collections: [],
+    notes: {},
+    promptDrafts: {},
+    promptReuseHistory: [],
+    updatedAt
+  };
+}
+
+function normalizePromptFields(value: unknown): Image2PromptWorkbenchDraft["fields"] {
+  const record = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+  return {
+    subject: cleanString(record.subject, "", 1200),
+    style: cleanString(record.style, "", 1200),
+    composition: cleanString(record.composition, "", 1200),
+    lighting: cleanString(record.lighting, "", 1200),
+    materials: cleanString(record.materials, "", 1200),
+    text: cleanString(record.text, "", 1200)
+  };
+}
+
+export function normalizeImage2AssetSnapshot(value: unknown): Image2AssetSnapshot {
+  const now = nowIso();
+  const record = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+  const collections = Array.isArray(record.collections)
+    ? record.collections
+        .filter((item): item is Record<string, unknown> => Boolean(item && typeof item === "object"))
+        .map((item): Image2CaseCollection => {
+          const createdAt = cleanIso(item.createdAt, now);
+          return {
+            id: cleanString(item.id, randomId("collection"), 120),
+            name: cleanString(item.name, "未命名项目夹", 80) || "未命名项目夹",
+            caseKeys: cleanKeys(item.caseKeys, 600),
+            createdAt,
+            updatedAt: cleanIso(item.updatedAt, createdAt)
+          };
+        })
+        .slice(0, 80)
+    : [];
+
+  const notes =
+    record.notes && typeof record.notes === "object" && !Array.isArray(record.notes)
+      ? Object.fromEntries(
+          Object.entries(record.notes as Record<string, unknown>)
+            .filter((entry): entry is [string, Record<string, unknown>] => Boolean(entry[1] && typeof entry[1] === "object"))
+            .map(([key, item]) => {
+              const caseKey = cleanString(item.caseKey, cleanString(key, "", 160), 160);
+              const note: Image2CaseNote = {
+                caseKey,
+                note: cleanString(item.note, "", 6000),
+                updatedAt: cleanIso(item.updatedAt, now)
+              };
+              return [caseKey, note] as const;
+            })
+            .filter(([key, item]) => Boolean(key && item.note))
+            .slice(0, 1200)
+        )
+      : {};
+
+  const promptDrafts =
+    record.promptDrafts && typeof record.promptDrafts === "object" && !Array.isArray(record.promptDrafts)
+      ? Object.fromEntries(
+          Object.entries(record.promptDrafts as Record<string, unknown>)
+            .filter((entry): entry is [string, Record<string, unknown>] => Boolean(entry[0] && entry[1] && typeof entry[1] === "object"))
+            .map(([key, item]) => {
+              const draft: Image2PromptWorkbenchDraft = {
+                caseTitle: cleanString(item.caseTitle, "未命名案例", 240),
+                fields: normalizePromptFields(item.fields),
+                note: cleanString(item.note, "", 3000),
+                prompt: cleanString(item.prompt, "", 12000),
+                updatedAt: cleanIso(item.updatedAt, now)
+              };
+              return [cleanString(key, "", 160), draft] as const;
+            })
+            .filter(([key, item]) => Boolean(key && item.prompt))
+            .slice(0, 1200)
+        )
+      : {};
+
+  const promptReuseHistory = Array.isArray(record.promptReuseHistory)
+    ? record.promptReuseHistory
+        .filter((item): item is Record<string, unknown> => Boolean(item && typeof item === "object"))
+        .map((item): Image2PromptReuseHistoryItem => ({
+          action: item.action === "generated" || item.action === "saved" ? item.action : "copied",
+          caseKey: cleanString(item.caseKey, "", 160),
+          caseTitle: cleanString(item.caseTitle, "未命名案例", 240),
+          createdAt: cleanIso(item.createdAt, now),
+          id: cleanString(item.id, randomId("reuse"), 180),
+          prompt: cleanString(item.prompt, "", 12000)
+        }))
+        .filter((item) => Boolean(item.caseKey && item.prompt))
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 120)
+    : [];
+
+  const activeCollectionId = cleanString(record.activeCollectionId, "", 120);
+
+  return {
+    version: "image2-assets-v1",
+    favoriteCaseKeys: cleanKeys(record.favoriteCaseKeys, 1200),
+    activeCollectionId: collections.some((item) => item.id === activeCollectionId) ? activeCollectionId : null,
+    collections,
+    notes,
+    promptDrafts,
+    promptReuseHistory,
+    updatedAt: cleanIso(record.updatedAt, now)
+  };
+}
+
+export function getImage2AssetsForUser(state: StoreState, userId: string) {
+  normalizeStoreShape(state);
+  const user = ensureUser(state, userId);
+  const existing = state.image2Assets.find((item) => item.userId === user.id);
+  return (
+    existing ?? {
+      id: randomId("image2_assets"),
+      userId: user.id,
+      snapshot: emptyImage2AssetSnapshot(),
+      createdAt: nowIso(),
+      updatedAt: nowIso()
+    }
+  );
+}
+
+export function saveImage2AssetsForUser(state: StoreState, userId: string, value: unknown) {
+  normalizeStoreShape(state);
+  const user = ensureUser(state, userId);
+  const snapshot = normalizeImage2AssetSnapshot(value);
+  snapshot.updatedAt = nowIso();
+  let assets = state.image2Assets.find((item) => item.userId === user.id);
+
+  if (!assets) {
+    assets = {
+      id: randomId("image2_assets"),
+      userId: user.id,
+      snapshot,
+      createdAt: snapshot.updatedAt,
+      updatedAt: snapshot.updatedAt
+    };
+    state.image2Assets.push(assets);
+  } else {
+    assets.snapshot = snapshot;
+    assets.updatedAt = snapshot.updatedAt;
+  }
+
+  return assets;
+}
+
 export function adminQueue(state: StoreState): AdminQueueResponse {
   normalizeLegacyGenerations(state);
   const jobs = state.generations.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -292,7 +480,9 @@ export function updateManualGeneration(
   generation.sourceTaskUrl = patch.sourceTaskUrl?.trim() || generation.sourceTaskUrl;
   generation.operatorNote = patch.operatorNote?.trim() || generation.operatorNote;
   generation.userMessage = patch.userMessage?.trim() || generation.userMessage;
-  generation.errorMessage = patch.errorMessage?.trim() || generation.errorMessage;
+  generation.errorMessage = patch.errorMessage
+    ? toUserFacingError(patch.errorMessage, "任务处理失败。")
+    : generation.errorMessage;
   generation.updatedAt = nowIso();
 
   if (generation.status === "running") {
@@ -342,6 +532,9 @@ export function normalizeLegacyGenerations(state: StoreState) {
         generation.progress = 8;
       }
       generation.updatedAt = nowIso();
+    }
+    if (generation.errorMessage) {
+      generation.errorMessage = toUserFacingError(generation.errorMessage, "任务处理失败。");
     }
   }
 }

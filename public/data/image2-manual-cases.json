@@ -1,0 +1,3433 @@
+{
+  "sources": [
+    {
+      "id": "youmind",
+      "label": "YouMind OpenLab Awesome GPT Image 2",
+      "site": "https://youmind.com/gpt-image-2-prompts",
+      "repository": "https://github.com/YouMind-OpenLab/awesome-gpt-image-2",
+      "count": 6,
+      "licenseNote": "仓库采用 CC BY 4.0，README 明示社区案例仅供教育整理；复刻、转载或商用前需回到原作者帖文和图库页面确认授权边界。"
+    },
+    {
+      "id": "fotor-blog",
+      "label": "Fotor GPT Image 2 Prompts",
+      "site": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "repository": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "count": 24,
+      "licenseNote": "博客页含提示词与示例图，适合做能力研究与提示词整理；图片与品牌素材版权归原站或示例作者，发布时应回链并避免直接商用搬运。"
+    },
+    {
+      "id": "morphic",
+      "label": "Morphic GPT Image 2 Prompt Library",
+      "site": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "repository": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "count": 40,
+      "licenseNote": "页面展示完整 prompt 与对应输出案例，适合做提示词研究与分类整理；发布前仍需核查页面素材授权与转载边界。"
+    },
+    {
+      "id": "picsart-blog",
+      "label": "Picsart GPT Image 2 Prompts",
+      "site": "https://picsart.com/blog/gpt-image-2-prompts/",
+      "repository": "https://picsart.com/blog/gpt-image-2-prompts/",
+      "count": 6,
+      "licenseNote": "博客页提供 prompt + output 示例，适合做案例拆解；涉及人物编辑与品牌字样时，发布和复刻需规避肖像、商标与素材来源风险。"
+    }
+  ],
+  "sourceRadar": [
+    {
+      "id": "youmind",
+      "label": "YouMind OpenLab Awesome GPT Image 2",
+      "url": "https://youmind.com/gpt-image-2-prompts",
+      "status": "已接入",
+      "note": "本轮人工精选 6 条 Featured prompts；原库超 6600 条，后续适合按分类持续抽样。"
+    },
+    {
+      "id": "fotor-blog",
+      "label": "Fotor GPT Image 2 Prompts",
+      "url": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "status": "已完整吸收",
+      "note": "已解析 24 条图文 prompt，覆盖商品、信息图、UI、角色、展示和娱乐类。"
+    },
+    {
+      "id": "picsart-blog",
+      "label": "Picsart GPT Image 2 Prompts",
+      "url": "https://picsart.com/blog/gpt-image-2-prompts/",
+      "status": "已完整吸收",
+      "note": "已解析 6 条带输出图的 prompt，补强编辑、产品图和生活化样例。"
+    },
+    {
+      "id": "morphic",
+      "label": "Morphic GPT Image 2 Prompt Library",
+      "url": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "status": "已完整吸收",
+      "note": "已解析 40 条 Morphic 图文 prompt，适合做提示词风格谱系。"
+    },
+    {
+      "id": "image2studio-app-ui",
+      "label": "Image2Studio App UI Mockup",
+      "url": "https://image2studio.com/en/prompts/use-case/app-ui-mockup",
+      "status": "待复查",
+      "note": "检索结果可见多条 GPT-image-2 prompt 与 CDN 直链图，适合补充 UI/广告构图案例；当前运行只拿到搜索页摘要，需下轮优先补抓完整 prompt 与页面授权边界。"
+    }
+  ],
+  "cases": [
+    {
+      "id": 30001,
+      "caseCode": "Y1",
+      "sourceCaseId": "1",
+      "sourceId": "youmind",
+      "sourceName": "YouMind OpenLab Awesome GPT Image 2",
+      "title": "VR Headset Exploded View Poster",
+      "category": "Charts & Infographics",
+      "categoryLabel": "图表与信息图",
+      "sourceCategory": "Featured Prompts",
+      "styles": [
+        "Structured",
+        "Infographic",
+        "Product",
+        "3D"
+      ],
+      "styleLabels": [
+        "结构化提示词",
+        "图表/信息图",
+        "商品商业图",
+        "3D 渲染"
+      ],
+      "scenes": [
+        "Product Marketing",
+        "Diagram / Chart",
+        "Text / Typography",
+        "author:wory＠ホッピング中"
+      ],
+      "sceneLabels": [
+        "产品营销",
+        "图解/图表",
+        "文字排版",
+        "wory＠ホッピング中"
+      ],
+      "imageUrl": "https://cms-assets.youmind.com/media/1776658772018_lukyfw_HGSUfldbIAEiMWZ.jpg",
+      "imageAlt": "VR Headset Exploded View Poster - Image 1",
+      "prompt": "{ \"type\": \"exploded view product diagram poster\", \"subject\": \"VR headset\", \"style\": \"clean high-tech 3D render, studio lighting, glowing accents\", \"background\": \"soft purple and blue gradient\", \"header\": { \"logo\": \"∞ Meta Quest 3\", \"subtitle\": \"まったく新しい現実を、まったく新しい構造から。\" }, \"layout\": { \"centerpiece\": \"vertically stacked exploded view of a VR headset showing 9 distinct layers of internal components: outer shell, camera sensors, motherboard with chip, pancake lenses, internal frame, battery packs, side straps, top strap, and facial interface cushion.\", \"callout_labels\": { \"count\": 8, \"left_side\": [ \"Snapdragon® XR2 Gen 2\\n圧倒的な処理性能でリアルタイムな体験を。\", \"調整可能なIPD機構\\n幅広いユーザーに快適なフィット感を。\", \"精密設計されたヘッドストラップ\\n快適さと安定性を追求したエルゴノミクス。\" ], \"right_side\": [ \"フェイスプレート\\n洗練されたデザインと最適な重量バランス。\", \"トラッキングカメラ\\n高精度な位置トラッキングと環境認識を実現。\", \"パンケーキレンズ\\n薄型設計で広い視野角と鮮明な映像を提供。\", \"高性能バッテリー\\n長時間駆動を支える最適化された電源設計。\", \"柔らかなフェイスインターフェース\\n長時間でも快適な装着感を実現。\" ] }, \"footer\": { \"left_text_block\": { \"headline\": \"体験は、構造から進化する。\", \"body\": \"一つひとつのパーツに、没入体験を支える最先端テクノロジーとこだわりの設計。Meta Quest 3は、未来を感じさせる体験を内部から生み出しています。\" }, \"right_logo\": \"∞ Meta\" } } }",
+      "promptPreview": "结构化爆炸图海报：VR 头显 9 层拆解、日文标题与卖点标注、渐变棚拍背景。",
+      "promptKind": "JSON/结构化",
+      "sourceLabel": "Twitter Post",
+      "sourceUrl": "https://x.com/wory37303852/status/2045925660401795478#reversed-0",
+      "githubUrl": "https://github.com/YouMind-OpenLab/awesome-gpt-image-2/blob/main/README.md#no-1-vr-headset-exploded-view-poster",
+      "featured": true,
+      "valueScore": 97,
+      "valueTier": "精选",
+      "author": "wory＠ホッピング中",
+      "aspect": "portrait",
+      "resolution": "",
+      "sourceNote": "YouMind Featured Prompt · Published 2026-04-19",
+      "riskNote": "含 Meta Quest 3 与品牌文案，适合学习版式与结构，不宜直接商用复刻品牌资产。",
+      "publishAngle": "可做“Image2 文案排版 + 工业拆解图”能力代表作。"
+    },
+    {
+      "id": 30002,
+      "caseCode": "Y2",
+      "sourceCaseId": "2",
+      "sourceId": "youmind",
+      "sourceName": "YouMind OpenLab Awesome GPT Image 2",
+      "title": "Illustrated City Food Map",
+      "category": "Charts & Infographics",
+      "categoryLabel": "图表与信息图",
+      "sourceCategory": "Featured Prompts",
+      "styles": [
+        "Infographic",
+        "Illustration",
+        "Poster"
+      ],
+      "styleLabels": [
+        "图表/信息图",
+        "插画艺术",
+        "海报排版"
+      ],
+      "scenes": [
+        "Travel",
+        "Food",
+        "Map",
+        "author:いなほ ゆら"
+      ],
+      "sceneLabels": [
+        "旅行",
+        "美食",
+        "地图",
+        "いなほ ゆら"
+      ],
+      "imageUrl": "https://cms-assets.youmind.com/media/1776659635645_p8a6uc_HGNhvubaEAAW7Oh.jpg",
+      "imageAlt": "Illustrated City Food Map - Image 1",
+      "prompt": "Design a playful illustrated gourmet map poster for Osaka, Japan. Show iconic local foods placed geographically across neighborhoods, each with cute hand-drawn illustration style and legible Japanese labels. Include a title area, map legend, transit lines, water area, and decorative travel poster framing. Bright editorial colors, clean layout, highly readable typography, tourist-friendly composition.",
+      "promptPreview": "大阪美食地图海报：插画地图、地点与食物配对、日文标签、旅行海报构图。",
+      "promptKind": "英文",
+      "sourceLabel": "Twitter Post",
+      "sourceUrl": "https://x.com/inahoyura/status/2045797366016496006#reversed-0",
+      "githubUrl": "https://github.com/YouMind-OpenLab/awesome-gpt-image-2/blob/main/README.md#no-2-illustrated-city-food-map",
+      "featured": true,
+      "valueScore": 93,
+      "valueTier": "精选",
+      "author": "いなほ ゆら",
+      "aspect": "portrait",
+      "resolution": "",
+      "sourceNote": "YouMind Featured Prompt · Published 2026-04-19",
+      "riskNote": "涉及特定城市与餐饮品牌联想，适合学习地图信息组织与插画语气。",
+      "publishAngle": "可做“城市地图 + 食物信息图”类代表案例。"
+    },
+    {
+      "id": 30003,
+      "caseCode": "Y3",
+      "sourceCaseId": "3",
+      "sourceId": "youmind",
+      "sourceName": "YouMind OpenLab Awesome GPT Image 2",
+      "title": "Luxury Cosmetics Billboard Mockup",
+      "category": "Products & E-commerce",
+      "categoryLabel": "商品与电商",
+      "sourceCategory": "Featured Prompts",
+      "styles": [
+        "Advertising",
+        "Mockup",
+        "Luxury",
+        "Photorealistic"
+      ],
+      "styleLabels": [
+        "广告创意",
+        "样机合成",
+        "轻奢商业",
+        "摄影写实"
+      ],
+      "scenes": [
+        "Outdoor Advertising",
+        "Beauty",
+        "Mockup",
+        "author:Digital Emily"
+      ],
+      "sceneLabels": [
+        "户外广告",
+        "美妆",
+        "样机",
+        "Digital Emily"
+      ],
+      "imageUrl": "https://cms-assets.youmind.com/media/1776660592114_gpd0pj_HGPbx7DbMAAQmVn.jpg",
+      "imageAlt": "Luxury Cosmetics Billboard Mockup - Image 1",
+      "prompt": "Create a photorealistic luxury cosmetics billboard mockup installed on a modern urban street. Billboard shows a premium skincare bottle with elegant serif typography and soft warm neutral palette. Keep ad design centered, premium, minimal, with strong readability from distance. Include believable environmental reflections and realistic daylight.",
+      "promptPreview": "城市街景中的高端护肤品广告牌：商品大图、极简排版、真实户外样机。",
+      "promptKind": "英文",
+      "sourceLabel": "Twitter Post",
+      "sourceUrl": "https://x.com/emily_digital/status/2045905220493011264#reversed-0",
+      "githubUrl": "https://github.com/YouMind-OpenLab/awesome-gpt-image-2/blob/main/README.md#no-3-luxury-cosmetics-billboard-mockup",
+      "featured": true,
+      "valueScore": 92,
+      "valueTier": "精选",
+      "author": "Digital Emily",
+      "aspect": "portrait",
+      "resolution": "",
+      "sourceNote": "YouMind Featured Prompt · Published 2026-04-19",
+      "riskNote": "品牌广告类适合学习真实样机与文字整合，不宜直接沿用品牌命名。",
+      "publishAngle": "适合展示“实景样机 + 品牌广告文字”生成能力。"
+    },
+    {
+      "id": 30004,
+      "caseCode": "Y4",
+      "sourceCaseId": "4",
+      "sourceId": "youmind",
+      "sourceName": "YouMind OpenLab Awesome GPT Image 2",
+      "title": "Modern Dashboard Interface Layout",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "Featured Prompts",
+      "styles": [
+        "UI Design",
+        "Dashboard",
+        "Glass",
+        "Minimal"
+      ],
+      "styleLabels": [
+        "UI 设计",
+        "数据看板",
+        "玻璃质感",
+        "极简版式"
+      ],
+      "scenes": [
+        "SaaS",
+        "Product UI",
+        "Analytics",
+        "author:KJ"
+      ],
+      "sceneLabels": [
+        "SaaS",
+        "产品界面",
+        "数据分析",
+        "KJ"
+      ],
+      "imageUrl": "https://cms-assets.youmind.com/media/1776661074764_19x0l5_HGQH4AvaIAAnjM4.jpg",
+      "imageAlt": "Modern Dashboard Interface Layout - Image 1",
+      "prompt": "Design a polished desktop analytics dashboard for an AI operations platform. Use a dark, elegant glassmorphism interface with modular cards, charts, left navigation, activity stream, and KPI tiles. Typography should be crisp and legible, with balanced spacing and professional product-shot presentation.",
+      "promptPreview": "AI 运维桌面看板：深色玻璃风、KPI 卡片、图表与侧边导航。",
+      "promptKind": "英文",
+      "sourceLabel": "Twitter Post",
+      "sourceUrl": "https://x.com/kjuiux/status/2045920579681634710#reversed-0",
+      "githubUrl": "https://github.com/YouMind-OpenLab/awesome-gpt-image-2/blob/main/README.md#no-4-modern-dashboard-interface-layout",
+      "featured": true,
+      "valueScore": 90,
+      "valueTier": "精选",
+      "author": "KJ",
+      "aspect": "landscape",
+      "resolution": "",
+      "sourceNote": "YouMind Featured Prompt · Published 2026-04-19",
+      "riskNote": "适合做 UI 质感与密度测试，但真实产品设计仍需人工校验信息架构。",
+      "publishAngle": "可纳入“UI 与界面”类，展示看板排版稳定性。"
+    },
+    {
+      "id": 30005,
+      "caseCode": "Y5",
+      "sourceCaseId": "5",
+      "sourceId": "youmind",
+      "sourceName": "YouMind OpenLab Awesome GPT Image 2",
+      "title": "Anime Martial Arts Battle Illustration",
+      "category": "Illustration & Art",
+      "categoryLabel": "插画与艺术",
+      "sourceCategory": "Featured Prompts",
+      "styles": [
+        "Anime",
+        "Action",
+        "Dynamic",
+        "Illustration"
+      ],
+      "styleLabels": [
+        "动漫风格",
+        "动作场面",
+        "强动态",
+        "插画艺术"
+      ],
+      "scenes": [
+        "Action Scene",
+        "Characters",
+        "Dojo",
+        "author:たねもみ 2.0 / Tanemomi Ver2.0"
+      ],
+      "sceneLabels": [
+        "动作场景",
+        "人物角色",
+        "道馆",
+        "たねもみ 2.0 / Tanemomi Ver2.0"
+      ],
+      "imageUrl": "https://cms-assets.youmind.com/media/1776661681954_3k2ecu_HGS7ywEaUAAqtp-.jpg",
+      "imageAlt": "Anime Martial Arts Battle Illustration - Image 1",
+      "prompt": "An anime-style illustration of a high-impact martial arts battle between two young female fighters in a traditional wooden martial arts dojo. In the foreground, a girl with black hair in a high bun wears a red and white Chinese-style martial arts outfit with baggy pants. She is in a dynamic, low, forward-thrusting stance, surrounded by swirling red energy and water splashes. In the background to the right, a girl with light purple hair in twin buns wears a green and purple Chinese dress with gold embroidery and black tights. She is leaping through the air in a flying kick pose, surrounded by swirling blue energy. The wooden floorboards are splintering from the intense impact, with debris and dust flying through the air. Above them hangs a weathered wooden sign with the text \"武術会\". The scene features dramatic lighting, a low-angle dynamic perspective, and intense action effects.",
+      "promptPreview": "高冲击动漫格斗：双女角色、道馆木地板破裂、红蓝能量对冲、低机位透视。",
+      "promptKind": "英文",
+      "sourceLabel": "Twitter Post",
+      "sourceUrl": "https://x.com/Tanemomi_Ver2/status/2046063806846214265#reversed-0",
+      "githubUrl": "https://github.com/YouMind-OpenLab/awesome-gpt-image-2/blob/main/README.md#no-5-anime-martial-arts-battle-illustration",
+      "featured": true,
+      "valueScore": 90,
+      "valueTier": "精选",
+      "author": "たねもみ 2.0 / Tanemomi Ver2.0",
+      "aspect": "landscape",
+      "resolution": "",
+      "sourceNote": "YouMind Featured Prompt · Published 2026-04-20",
+      "riskNote": "动作与角色设计相对通用，但若继续沿作者个人角色体系扩展，要注意角色一致性是否落入他人 IP。",
+      "publishAngle": "适合放进‘叙事动作插画’类，展示 Image2 的动势和风格稳定性。"
+    },
+    {
+      "id": 30006,
+      "caseCode": "Y6",
+      "sourceCaseId": "6",
+      "sourceId": "youmind",
+      "sourceName": "YouMind OpenLab Awesome GPT Image 2",
+      "title": "3D Stone Staircase Evolution Infographic",
+      "category": "Charts & Infographics",
+      "categoryLabel": "图表与信息图",
+      "sourceCategory": "Featured Prompts",
+      "styles": [
+        "Structured",
+        "Infographic",
+        "3D",
+        "Realistic"
+      ],
+      "styleLabels": [
+        "结构化提示词",
+        "图表/信息图",
+        "3D 渲染",
+        "摄影写实"
+      ],
+      "scenes": [
+        "Infographic / Edu Visual",
+        "Diagram / Chart",
+        "Education",
+        "author:知识猫图解"
+      ],
+      "sceneLabels": [
+        "信息图/教育视觉",
+        "图解/图表",
+        "教育",
+        "知识猫图解"
+      ],
+      "imageUrl": "https://cms-assets.youmind.com/media/1776661968404_8a5flm_HGQc_KOaMAA2vt0.jpg",
+      "imageAlt": "3D Stone Staircase Evolution Infographic - Image 1",
+      "prompt": "{ \"type\": \"evolutionary timeline infographic\", \"instruction\": \"Using REFERENCE_0 as a structural base, transform the flat vector design into a highly realistic 3D infographic. Replace the smooth ramps with distinct stone steps and upgrade all organisms to photorealistic 3D models.\", \"style\": { \"background\": \"vintage textured parchment paper\", \"staircase\": \"realistic textured stone blocks\", \"subjects\": \"highly detailed photorealistic 3D renders\" }, \"layout\": { \"main_title\": \"人类演化\", \"sections\": [ { \"position\": \"left sidebar\", \"count\": 8, \"labels\": [\"L0: 单细胞生命\", \"L1: 多细胞生物\", \"L2: 动物界\", \"L3: 脊索动物\", \"L4: 上陆革命\", \"L5: 哺乳纲\", \"L6: 人科演化\", \"L7: 智人纪元\"] }, { \"position\": \"top right\", \"title\": \"获得的功能 / 失去的功能\", \"description\": \"Legend with plus and minus icons\" }, { \"position\": \"bottom center\", \"title\": \"演化关键里程碑\", \"count\": 6, \"description\": \"Timeline with a silhouette graphic of 6 figures showing ape-to-human evolution\" } ], \"centerpiece\": { \"description\": \"Winding stone staircase with 25 numbered steps featuring specific organisms.\", \"count\": 25, \"notable_elements\": [ \"Step 07: Jellyfish\", \"Step 09: Ammonite\", \"Step 10: Trilobite\", \"Step 24: Walking human\", \"Step 25: glowing cosmic silhouette with a question mark\" ] } } }",
+      "promptPreview": "把平面演化图升级成 3D 石阶信息图：左侧时间层级、右侧图例、底部里程碑。",
+      "promptKind": "JSON/结构化",
+      "sourceLabel": "Twitter Post",
+      "sourceUrl": "https://x.com/GeekCatX/status/2045792240044511277#reversed-1",
+      "githubUrl": "https://github.com/YouMind-OpenLab/awesome-gpt-image-2/blob/main/README.md#no-6-3d-stone-staircase-evolution-infographic",
+      "featured": true,
+      "valueScore": 97,
+      "valueTier": "精选",
+      "author": "知识猫图解",
+      "aspect": "portrait",
+      "resolution": "",
+      "sourceNote": "YouMind Featured Prompt · Published 2026-04-19",
+      "riskNote": "明确引用 REFERENCE_0 结构底稿，复刻时要替换为自有底稿或抽象结构说明，避免直接挪用他人图表。",
+      "publishAngle": "适合强调 Image2 的“参考图重构 + 高信息密度教育图解”能力。"
+    },
+    {
+      "id": 31001,
+      "caseCode": "F1",
+      "sourceCaseId": "1",
+      "sourceId": "fotor-blog",
+      "sourceName": "Fotor GPT Image 2 Prompts",
+      "title": "Product Ad",
+      "category": "Products & E-commerce",
+      "categoryLabel": "商品与电商",
+      "sourceCategory": "1. Product & E-commerce Images",
+      "styles": [
+        "Product"
+      ],
+      "styleLabels": [
+        "商品商业图"
+      ],
+      "scenes": [
+        "1. Product & E-commerce Images",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "1. Product & E-commerce Images",
+        "网页来源"
+      ],
+      "imageUrl": "https://imgv3.fotor.com/images/blog-richtext-image/1-Coffee-poster.jpg",
+      "imageAlt": "Product Ad example",
+      "prompt": "Create an advertisement for {argument name=\"product\" default=\"iced coffee\"}. A stylish and modern design from {argument name=\"country\" default=\"Japan\"}. European fonts are dynamically laid out. Target audience: {argument name=\"target\" default=\"10-30s\"}. Aspect ratio 1:1.",
+      "promptPreview": "Create an advertisement for {argument name=\"product\" default=\"iced coffee\"}. A stylish and modern design from {argument name=\"country\" default=\"Japan\"}. European fonts are dynamically laid out. Target audience: {argument name=\"target\" defau",
+      "promptKind": "英文",
+      "sourceLabel": "Fotor blog prompt guide",
+      "sourceUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "githubUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Fotor GPT Image 2 Prompts",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Fotor 20+ prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 31002,
+      "caseCode": "F2",
+      "sourceCaseId": "2",
+      "sourceId": "fotor-blog",
+      "sourceName": "Fotor GPT Image 2 Prompts",
+      "title": "Product Hero Poster",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "1. Product & E-commerce Images",
+      "styles": [
+        "UI",
+        "Text"
+      ],
+      "styleLabels": [
+        "UI/界面",
+        "文字渲染"
+      ],
+      "scenes": [
+        "1. Product & E-commerce Images",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "1. Product & E-commerce Images",
+        "网页来源"
+      ],
+      "imageUrl": "https://imgv3.fotor.com/images/blog-richtext-image/Skin-care-product-inforgraphics.jpg",
+      "imageAlt": "Product Hero Poster example",
+      "prompt": "High-end skincare e-commerce hero poster for \"Clarifying Stabilizing Essence\". Style: Clean, light luxury, strong scientific skincare feel. Center: a semi-transparent frosted glass essence bottle with golden liquid and water droplet reflections. Background: off-white to warm gray gradient with liquid flow and microscopic molecular structure decorations. Must include clearly readable copy with: product name, tagline (barrier repair, soothe redness, radiant skin), formula generation, key ingredients (ceramide, panthenol B5, centella extract, micro-liposomes), suitable skin types (sensitive, sleep-deprived, seasonal-instability skin), limited-time price, and gift bundle details. Fine print: \"Individual results may vary, use consistently.\" Overall must be high-end, not tacky.",
+      "promptPreview": "High-end skincare e-commerce hero poster for \"Clarifying Stabilizing Essence\". Style: Clean, light luxury, strong scientific skincare feel. Center: a semi-transparent frosted glass essence bottle with golden liquid and water droplet reflect",
+      "promptKind": "英文",
+      "sourceLabel": "Fotor blog prompt guide",
+      "sourceUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "githubUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "featured": true,
+      "valueScore": 94,
+      "valueTier": "精选",
+      "author": "Fotor GPT Image 2 Prompts",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Fotor 20+ prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 31003,
+      "caseCode": "F3",
+      "sourceCaseId": "3",
+      "sourceId": "fotor-blog",
+      "sourceName": "Fotor GPT Image 2 Prompts",
+      "title": "Product Photoshoots",
+      "category": "Products & E-commerce",
+      "categoryLabel": "商品与电商",
+      "sourceCategory": "1. Product & E-commerce Images",
+      "styles": [
+        "Product"
+      ],
+      "styleLabels": [
+        "商品商业图"
+      ],
+      "scenes": [
+        "1. Product & E-commerce Images",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "1. Product & E-commerce Images",
+        "网页来源"
+      ],
+      "imageUrl": "https://imgv3.fotor.com/images/blog-richtext-image/fotor-ai-20260424172710.png",
+      "imageAlt": "Product Photoshoots example",
+      "prompt": "CALMING GREEN TEA Film Kit displayed frontally, the open box shows soft sage-green film pouches and translucent ampoules with matte silver caps, product placed centrally with clear branding CALMING GREEN TEA -- 7 Days to Soothed Skin, pastel green background with botanical graphic accents, three minimal icons (leaf, wave, balance) floating around the product to emphasize benefits, photographic, hyper detailed, ultra realistic, lifelike, 8k, high detail, soft professional lighting.",
+      "promptPreview": "CALMING GREEN TEA Film Kit displayed frontally, the open box shows soft sage-green film pouches and translucent ampoules with matte silver caps, product placed centrally with clear branding CALMING GREEN TEA -- 7 Days to Soothed Skin, paste",
+      "promptKind": "英文",
+      "sourceLabel": "Fotor blog prompt guide",
+      "sourceUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "githubUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Fotor GPT Image 2 Prompts",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Fotor 20+ prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 31004,
+      "caseCode": "F4",
+      "sourceCaseId": "4",
+      "sourceId": "fotor-blog",
+      "sourceName": "Fotor GPT Image 2 Prompts",
+      "title": "Encyclopedia Image",
+      "category": "Charts & Infographics",
+      "categoryLabel": "图表与信息图",
+      "sourceCategory": "2. Educational & Informational Visuals",
+      "styles": [
+        "Infographic"
+      ],
+      "styleLabels": [
+        "图表/信息图"
+      ],
+      "scenes": [
+        "2. Educational & Informational Visuals",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "2. Educational & Informational Visuals",
+        "网页来源"
+      ],
+      "imageUrl": "https://imgv3.fotor.com/images/blog-richtext-image/Corgi-encyclopedia-image.png",
+      "imageAlt": "Encyclopedia Image example",
+      "prompt": "Generate a high-quality vertical science popularization encyclopedia image based on[Corgi].",
+      "promptPreview": "Generate a high-quality vertical science popularization encyclopedia image based on[Corgi].",
+      "promptKind": "英文",
+      "sourceLabel": "Fotor blog prompt guide",
+      "sourceUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "githubUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "featured": false,
+      "valueScore": 80,
+      "valueTier": "高价值",
+      "author": "Fotor GPT Image 2 Prompts",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Fotor 20+ prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 31005,
+      "caseCode": "F5",
+      "sourceCaseId": "5",
+      "sourceId": "fotor-blog",
+      "sourceName": "Fotor GPT Image 2 Prompts",
+      "title": "English Learning Infographic Poster",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "2. Educational & Informational Visuals",
+      "styles": [
+        "UI",
+        "Text"
+      ],
+      "styleLabels": [
+        "UI/界面",
+        "文字渲染"
+      ],
+      "scenes": [
+        "2. Educational & Informational Visuals",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "2. Educational & Informational Visuals",
+        "网页来源"
+      ],
+      "imageUrl": "https://imgv3.fotor.com/images/blog-richtext-image/An-English-learning-infographic-poster-about-20-common-vegetables.png",
+      "imageAlt": "English Learning Infographic Poster example",
+      "prompt": "Create a clean English learning infographic poster titled 20 Common Vegetables. Use a neat 4x5 grid layout, with each card displaying one vegetable. Each card should include: A realistic-style image of the vegetable, the English name in bold, British or American IPA pronunciation, a short English description. Overall style:Minimalist design with a white background, using soft green and light pastel tones. Card-based UI design with rounded corners, clean typography, balanced spacing, and visually pleasing composition. Designed for English beginners, similar to a classroom teaching poster. Suitable for social media sharing, high resolution, 4K quality, infographic style.",
+      "promptPreview": "Create a clean English learning infographic poster titled 20 Common Vegetables. Use a neat 4x5 grid layout, with each card displaying one vegetable. Each card should include: A realistic-style image of the vegetable, the English name in bol",
+      "promptKind": "英文",
+      "sourceLabel": "Fotor blog prompt guide",
+      "sourceUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "githubUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Fotor GPT Image 2 Prompts",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Fotor 20+ prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 31006,
+      "caseCode": "F6",
+      "sourceCaseId": "6",
+      "sourceId": "fotor-blog",
+      "sourceName": "Fotor GPT Image 2 Prompts",
+      "title": "Travel Map",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "2. Educational & Informational Visuals",
+      "styles": [
+        "UI",
+        "Edit",
+        "Text"
+      ],
+      "styleLabels": [
+        "UI/界面",
+        "编辑/换场景",
+        "文字渲染"
+      ],
+      "scenes": [
+        "2. Educational & Informational Visuals",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "2. Educational & Informational Visuals",
+        "网页来源"
+      ],
+      "imageUrl": "https://imgv3.fotor.com/images/blog-richtext-image/Paris-travel-map-poster.png",
+      "imageAlt": "Travel Map example",
+      "prompt": "Generate an advanced technical infographic of Palace of Versailles.Reinterpret the theme in a professional and realistic new photo, the photo is clean and bright, with a more suitable and aesthetic background. Keep the object as a real photo, rather than an illustration. Add a technical blueprint style overlay, containing white lines, arrows, dimensions, labels, and small diagrams of parts, materials, dimensions, and functions. A clear, elegant, and informative article. Place a sketch box in the upper left corner with \"Palace of Versailles\" written on it. 1:1 dimensions.",
+      "promptPreview": "Generate an advanced technical infographic of Palace of Versailles.Reinterpret the theme in a professional and realistic new photo, the photo is clean and bright, with a more suitable and aesthetic background. Keep the object as a real phot",
+      "promptKind": "英文",
+      "sourceLabel": "Fotor blog prompt guide",
+      "sourceUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "githubUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Fotor GPT Image 2 Prompts",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Fotor 20+ prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 31007,
+      "caseCode": "F7",
+      "sourceCaseId": "7",
+      "sourceId": "fotor-blog",
+      "sourceName": "Fotor GPT Image 2 Prompts",
+      "title": "Step-by-step Recipe Poster",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "2. Educational & Informational Visuals",
+      "styles": [
+        "UI",
+        "Text"
+      ],
+      "styleLabels": [
+        "UI/界面",
+        "文字渲染"
+      ],
+      "scenes": [
+        "2. Educational & Informational Visuals",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "2. Educational & Informational Visuals",
+        "网页来源"
+      ],
+      "imageUrl": "https://imgv3.fotor.com/images/blog-richtext-image/A-premium-food-preparation-poster-for-Gambas-al-Ajillo.jpg",
+      "imageAlt": "Step-by-step Recipe Poster example",
+      "prompt": "Create a premium food preparation poster for [ Gambas al Ajillo], with a beautiful hero dish, warm natural lighting, cream background, elegant step-by-step recipe layout, ingredients, cooking process, premium food photography, refined English typography, luxury restaurant advertisement style, clean design, rich colors, highly detailed, visually irresistible, cinematic masterpiece.",
+      "promptPreview": "Create a premium food preparation poster for [ Gambas al Ajillo], with a beautiful hero dish, warm natural lighting, cream background, elegant step-by-step recipe layout, ingredients, cooking process, premium food photography, refined Engli",
+      "promptKind": "英文",
+      "sourceLabel": "Fotor blog prompt guide",
+      "sourceUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "githubUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Fotor GPT Image 2 Prompts",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Fotor 20+ prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 31008,
+      "caseCode": "F8",
+      "sourceCaseId": "8",
+      "sourceId": "fotor-blog",
+      "sourceName": "Fotor GPT Image 2 Prompts",
+      "title": "Infographic",
+      "category": "Charts & Infographics",
+      "categoryLabel": "图表与信息图",
+      "sourceCategory": "2. Educational & Informational Visuals",
+      "styles": [
+        "Infographic",
+        "Text"
+      ],
+      "styleLabels": [
+        "图表/信息图",
+        "文字渲染"
+      ],
+      "scenes": [
+        "2. Educational & Informational Visuals",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "2. Educational & Informational Visuals",
+        "网页来源"
+      ],
+      "imageUrl": "https://imgv3.fotor.com/images/blog-richtext-image/Vintage-botanical-style-infographic-for-Artisan-Brew-Coffee-Beans.png",
+      "imageAlt": "Infographic example",
+      "prompt": "Vintage botanical-style infographic for Artisan Brew Coffee Beans. 19th-century lithograph look, aged parchment tones (brown, beige, muted green). Center: steaming coffee cup + labeled bag, elegant title Premium Coffee Craft Surrounding small illustrations: beans, plant, grinder, kettle, cup. Simple process grid: harvest → dry → roast → grind → brew → pour. Scenic coffee farm footer. Fine ink lines, soft watercolor, rustic, artisanal feel. Style Keywords: Victorian ephemera, botanical illustration, aged parchment, hand-drawn ink, watercolor.",
+      "promptPreview": "Vintage botanical-style infographic for Artisan Brew Coffee Beans. 19th-century lithograph look, aged parchment tones (brown, beige, muted green). Center: steaming coffee cup + labeled bag, elegant title Premium Coffee Craft Surrounding sma",
+      "promptKind": "英文",
+      "sourceLabel": "Fotor blog prompt guide",
+      "sourceUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "githubUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Fotor GPT Image 2 Prompts",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Fotor 20+ prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 31009,
+      "caseCode": "F9",
+      "sourceCaseId": "9",
+      "sourceId": "fotor-blog",
+      "sourceName": "Fotor GPT Image 2 Prompts",
+      "title": "Product Packaging Design",
+      "category": "Products & E-commerce",
+      "categoryLabel": "商品与电商",
+      "sourceCategory": "3. Marketing & Branding Creatives",
+      "styles": [
+        "Product"
+      ],
+      "styleLabels": [
+        "商品商业图"
+      ],
+      "scenes": [
+        "3. Marketing & Branding Creatives",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "3. Marketing & Branding Creatives",
+        "网页来源"
+      ],
+      "imageUrl": "https://imgv3.fotor.com/images/blog-richtext-image/A-realistic-product-packaging-system-for-a-brand-called-Aura-Pure-for-the-Hair-Body-Care-market.png",
+      "imageAlt": "Product Packaging Design example",
+      "prompt": "Create a premium, commercially realistic product packaging system for a brand called Aura Pure, designed for the Hair & Body Care market. The packaging system should feel cohesive across the full range while clearly differentiating each product variant.",
+      "promptPreview": "Create a premium, commercially realistic product packaging system for a brand called Aura Pure, designed for the Hair & Body Care market. The packaging system should feel cohesive across the full range while clearly differentiating each pro",
+      "promptKind": "英文",
+      "sourceLabel": "Fotor blog prompt guide",
+      "sourceUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "githubUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Fotor GPT Image 2 Prompts",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Fotor 20+ prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 31010,
+      "caseCode": "F10",
+      "sourceCaseId": "10",
+      "sourceId": "fotor-blog",
+      "sourceName": "Fotor GPT Image 2 Prompts",
+      "title": "Brand Kit",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "3. Marketing & Branding Creatives",
+      "styles": [
+        "UI",
+        "Edit",
+        "Text",
+        "3D"
+      ],
+      "styleLabels": [
+        "UI/界面",
+        "编辑/换场景",
+        "文字渲染",
+        "3D 渲染"
+      ],
+      "scenes": [
+        "3. Marketing & Branding Creatives",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "3. Marketing & Branding Creatives",
+        "网页来源"
+      ],
+      "imageUrl": "https://imgv3.fotor.com/images/blog-richtext-image/Brand-kits.png",
+      "imageAlt": "Brand Kit example",
+      "prompt": "A premium wellness brand kit presentation board, soft pastel lavender and lilac color palette, glossy translucent materials, floating 3D supplement bottles with gummies, soft gradient background, minimal editorial layout, modern typography, clean grid system, high-end skincare branding style, soft lighting, subtle reflections, airy composition, UI design meets product showcase, elegant and feminine, Apple-style product presentation, Behance portfolio style, ultra detailed, 4k, no watermark.",
+      "promptPreview": "A premium wellness brand kit presentation board, soft pastel lavender and lilac color palette, glossy translucent materials, floating 3D supplement bottles with gummies, soft gradient background, minimal editorial layout, modern typography,",
+      "promptKind": "英文",
+      "sourceLabel": "Fotor blog prompt guide",
+      "sourceUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "githubUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Fotor GPT Image 2 Prompts",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Fotor 20+ prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 31011,
+      "caseCode": "F11",
+      "sourceCaseId": "11",
+      "sourceId": "fotor-blog",
+      "sourceName": "Fotor GPT Image 2 Prompts",
+      "title": "Campaign Photograph",
+      "category": "Products & E-commerce",
+      "categoryLabel": "商品与电商",
+      "sourceCategory": "3. Marketing & Branding Creatives",
+      "styles": [
+        "Product"
+      ],
+      "styleLabels": [
+        "商品商业图"
+      ],
+      "scenes": [
+        "3. Marketing & Branding Creatives",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "3. Marketing & Branding Creatives",
+        "网页来源"
+      ],
+      "imageUrl": "https://imgv3.fotor.com/images/blog-richtext-image/Low-angle-fashion-campaign-photograph-of-a-confident-model-holding-a-large-handheld-action-camera.jpg",
+      "imageAlt": "Campaign Photograph example",
+      "prompt": "Low-angle fashion campaign photograph of a confident model holding a large [Handheld action camera] very close to the camera, exaggerated perspective with the hand and product dominating the foreground, full-body pose visible in the background, wide stance, dynamic",
+      "promptPreview": "Low-angle fashion campaign photograph of a confident model holding a large [Handheld action camera] very close to the camera, exaggerated perspective with the hand and product dominating the foreground, full-body pose visible in the backgro",
+      "promptKind": "英文",
+      "sourceLabel": "Fotor blog prompt guide",
+      "sourceUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "githubUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Fotor GPT Image 2 Prompts",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Fotor 20+ prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 31012,
+      "caseCode": "F12",
+      "sourceCaseId": "12",
+      "sourceId": "fotor-blog",
+      "sourceName": "Fotor GPT Image 2 Prompts",
+      "title": "Motorbikes Poster",
+      "category": "Posters & Typography",
+      "categoryLabel": "海报与排版",
+      "sourceCategory": "3. Marketing & Branding Creatives",
+      "styles": [
+        "Poster"
+      ],
+      "styleLabels": [
+        "海报排版"
+      ],
+      "scenes": [
+        "3. Marketing & Branding Creatives",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "3. Marketing & Branding Creatives",
+        "网页来源"
+      ],
+      "imageUrl": "https://imgv3.fotor.com/images/blog-richtext-image/Racing-motorbikes.png",
+      "imageAlt": "Motorbikes Poster example",
+      "prompt": "Generate an image of a racing motorbikes poster with its spec and pricing.",
+      "promptPreview": "Generate an image of a racing motorbikes poster with its spec and pricing.",
+      "promptKind": "英文",
+      "sourceLabel": "Fotor blog prompt guide",
+      "sourceUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "githubUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Fotor GPT Image 2 Prompts",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Fotor 20+ prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 31013,
+      "caseCode": "F13",
+      "sourceCaseId": "13",
+      "sourceId": "fotor-blog",
+      "sourceName": "Fotor GPT Image 2 Prompts",
+      "title": "UI Design",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "4. UI/UX Mockups & Product Design",
+      "styles": [
+        "UI",
+        "Text"
+      ],
+      "styleLabels": [
+        "UI/界面",
+        "文字渲染"
+      ],
+      "scenes": [
+        "4. UI/UX Mockups & Product Design",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "4. UI/UX Mockups & Product Design",
+        "网页来源"
+      ],
+      "imageUrl": "https://imgv3.fotor.com/images/blog-richtext-image/A-multi-page-design-system.png",
+      "imageAlt": "UI Design example",
+      "prompt": "Generate a multi-page design system where every image follows a strict 8px grid, consistent spacing, typography scale, and color system, showcasing UI components, layouts, and variations with perfect alignment and consistency.",
+      "promptPreview": "Generate a multi-page design system where every image follows a strict 8px grid, consistent spacing, typography scale, and color system, showcasing UI components, layouts, and variations with perfect alignment and consistency.",
+      "promptKind": "英文",
+      "sourceLabel": "Fotor blog prompt guide",
+      "sourceUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "githubUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Fotor GPT Image 2 Prompts",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Fotor 20+ prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 31014,
+      "caseCode": "F14",
+      "sourceCaseId": "14",
+      "sourceId": "fotor-blog",
+      "sourceName": "Fotor GPT Image 2 Prompts",
+      "title": "Landing Page Mockup",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "4. UI/UX Mockups & Product Design",
+      "styles": [
+        "UI"
+      ],
+      "styleLabels": [
+        "UI/界面"
+      ],
+      "scenes": [
+        "4. UI/UX Mockups & Product Design",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "4. UI/UX Mockups & Product Design",
+        "网页来源"
+      ],
+      "imageUrl": "https://imgv3.fotor.com/images/blog-richtext-image/fotor-ai-20260424171353.png",
+      "imageAlt": "Landing Page Mockup example",
+      "prompt": "Design a modern SaaS landing page mockup with a clean hero section, dashboard preview, minimalist UI, soft gradients, professional startup branding.",
+      "promptPreview": "Design a modern SaaS landing page mockup with a clean hero section, dashboard preview, minimalist UI, soft gradients, professional startup branding.",
+      "promptKind": "英文",
+      "sourceLabel": "Fotor blog prompt guide",
+      "sourceUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "githubUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Fotor GPT Image 2 Prompts",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Fotor 20+ prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 31015,
+      "caseCode": "F15",
+      "sourceCaseId": "15",
+      "sourceId": "fotor-blog",
+      "sourceName": "Fotor GPT Image 2 Prompts",
+      "title": "Comic Multi-panel Illustration",
+      "category": "Products & E-commerce",
+      "categoryLabel": "商品与电商",
+      "sourceCategory": "5. Character Art & Creative Assets",
+      "styles": [
+        "Product"
+      ],
+      "styleLabels": [
+        "商品商业图"
+      ],
+      "scenes": [
+        "5. Character Art & Creative Assets",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "5. Character Art & Creative Assets",
+        "网页来源"
+      ],
+      "imageUrl": "https://imgv3.fotor.com/images/blog-richtext-image/fotor-ai-2026042411469.png",
+      "imageAlt": "Comic Multi-panel Illustration example",
+      "prompt": "Generate a**[Power Academy]**American comic multi-panel illustration, diagonal layout, six panels, cinematic storytelling, clear reading flow, with speech bubbles.",
+      "promptPreview": "Generate a**[Power Academy]**American comic multi-panel illustration, diagonal layout, six panels, cinematic storytelling, clear reading flow, with speech bubbles.",
+      "promptKind": "英文",
+      "sourceLabel": "Fotor blog prompt guide",
+      "sourceUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "githubUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "featured": false,
+      "valueScore": 80,
+      "valueTier": "高价值",
+      "author": "Fotor GPT Image 2 Prompts",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Fotor 20+ prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 31016,
+      "caseCode": "F16",
+      "sourceCaseId": "16",
+      "sourceId": "fotor-blog",
+      "sourceName": "Fotor GPT Image 2 Prompts",
+      "title": "Character Reference Sheet",
+      "category": "Characters & People",
+      "categoryLabel": "人物与角色",
+      "sourceCategory": "5. Character Art & Creative Assets",
+      "styles": [
+        "Character"
+      ],
+      "styleLabels": [
+        "人物角色"
+      ],
+      "scenes": [
+        "5. Character Art & Creative Assets",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "5. Character Art & Creative Assets",
+        "网页来源"
+      ],
+      "imageUrl": "https://imgv3.fotor.com/images/blog-richtext-image/fotor-ai-20260424172349-1.png",
+      "imageAlt": "Character Reference Sheet example",
+      "prompt": "Generate a professional character reference sheet for a fantasy female warrior, front view, side view, facial expressions, outfit details, clean concept art style.",
+      "promptPreview": "Generate a professional character reference sheet for a fantasy female warrior, front view, side view, facial expressions, outfit details, clean concept art style.",
+      "promptKind": "英文",
+      "sourceLabel": "Fotor blog prompt guide",
+      "sourceUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "githubUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "featured": false,
+      "valueScore": 68,
+      "valueTier": "可参考",
+      "author": "Fotor GPT Image 2 Prompts",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Fotor 20+ prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 31017,
+      "caseCode": "F17",
+      "sourceCaseId": "17",
+      "sourceId": "fotor-blog",
+      "sourceName": "Fotor GPT Image 2 Prompts",
+      "title": "Six-panel Sketch Storyboard",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "5. Character Art & Creative Assets",
+      "styles": [
+        "UI"
+      ],
+      "styleLabels": [
+        "UI/界面"
+      ],
+      "scenes": [
+        "5. Character Art & Creative Assets",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "5. Character Art & Creative Assets",
+        "网页来源"
+      ],
+      "imageUrl": "https://imgv3.fotor.com/images/blog-richtext-image/fotor-ai-20260424171645.png",
+      "imageAlt": "Six-panel Sketch Storyboard example",
+      "prompt": "Generate a six-panel storyboard illustrating a woman ordering coffee through a mobile app, receiving pickup confirmation, and collecting the drink at a café, cinematic framing, sketch style.",
+      "promptPreview": "Generate a six-panel storyboard illustrating a woman ordering coffee through a mobile app, receiving pickup confirmation, and collecting the drink at a café, cinematic framing, sketch style.",
+      "promptKind": "中文",
+      "sourceLabel": "Fotor blog prompt guide",
+      "sourceUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "githubUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "featured": false,
+      "valueScore": 80,
+      "valueTier": "高价值",
+      "author": "Fotor GPT Image 2 Prompts",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Fotor 20+ prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 31018,
+      "caseCode": "F18",
+      "sourceCaseId": "18",
+      "sourceId": "fotor-blog",
+      "sourceName": "Fotor GPT Image 2 Prompts",
+      "title": "Consistent Multi-portrait Set",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "6. Portraits, Avatars & Personal Branding",
+      "styles": [
+        "UI"
+      ],
+      "styleLabels": [
+        "UI/界面"
+      ],
+      "scenes": [
+        "6. Portraits, Avatars & Personal Branding",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "6. Portraits, Avatars & Personal Branding",
+        "网页来源"
+      ],
+      "imageUrl": "https://imgv3.fotor.com/images/blog-richtext-image/Female-Multi-image-portrait.png",
+      "imageAlt": "Consistent Multi-portrait Set example",
+      "prompt": "Create a highly consistent multi-image set where the same young France woman with long blonde hair, freckles, and a stylish French-chic dress appears in different environments (beach, mountains, grass, street), maintaining exact facial features, proportions, and outfit details, ultra-realistic, cinematic lighting variations.",
+      "promptPreview": "Create a highly consistent multi-image set where the same young France woman with long blonde hair, freckles, and a stylish French-chic dress appears in different environments (beach, mountains, grass, street), maintaining exact facial feat",
+      "promptKind": "英文",
+      "sourceLabel": "Fotor blog prompt guide",
+      "sourceUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "githubUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "featured": false,
+      "valueScore": 80,
+      "valueTier": "高价值",
+      "author": "Fotor GPT Image 2 Prompts",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Fotor 20+ prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 31019,
+      "caseCode": "F19",
+      "sourceCaseId": "19",
+      "sourceId": "fotor-blog",
+      "sourceName": "Fotor GPT Image 2 Prompts",
+      "title": "Playful Portrait with Hand-drawn Outlines",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "6. Portraits, Avatars & Personal Branding",
+      "styles": [
+        "UI",
+        "3D"
+      ],
+      "styleLabels": [
+        "UI/界面",
+        "3D 渲染"
+      ],
+      "scenes": [
+        "6. Portraits, Avatars & Personal Branding",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "6. Portraits, Avatars & Personal Branding",
+        "网页来源"
+      ],
+      "imageUrl": "https://imgv3.fotor.com/images/blog-richtext-image/fotor-ai-2026042417445-1.png",
+      "imageAlt": "Playful Portrait with Hand-drawn Outlines example",
+      "prompt": "High-quality mixed media portrait. A trendy Gen Z teenager (using a photo of the person I uploaded) standing on a night train station platform. The subject poses coolly, holding the strap of an olive-colored backpack with one hand. The clothing is fashionable Gen Z style (oversized streetwear, layered black hoodie, gray sweatpants, chunky sneakers). In the background, a realistic side view of a \"KRL Jabodetabek\" commuter line train is depicted, featuring characteristic red stripes. The train doors are wide open, illuminated by bright, cinematic station lighting and the atmosphere of a city night. Multiple cute 3D-style \"chibi\" versions appear around the realistic main subject, wearing the same clothes and having the same face. The chibis are playfully interacting: - One is sitting on the shoulder - One is climbing on the foot - Another is peeking out from the backpack Overlay vibrant hand-drawn doodle effects across the entire image: White hand-drawn outlines surrounding the subject, playful scribbles, stars, glitter, light sparks, and floating black and white handwritten slogans such as \"forever young\", \"krl\", \"night\", \"gen z vibes\". The style is a seamless fusion of hyper-realistic photography and colorful, flat cartoon illustrations. The face and the silhouette/shape of the person are preserved exactly as they are, without any changes.",
+      "promptPreview": "High-quality mixed media portrait. A trendy Gen Z teenager (using a photo of the person I uploaded) standing on a night train station platform. The subject poses coolly, holding the strap of an olive-colored backpack with one hand. The clot",
+      "promptKind": "英文",
+      "sourceLabel": "Fotor blog prompt guide",
+      "sourceUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "githubUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "featured": true,
+      "valueScore": 86,
+      "valueTier": "精选",
+      "author": "Fotor GPT Image 2 Prompts",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Fotor 20+ prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 31020,
+      "caseCode": "F20",
+      "sourceCaseId": "20",
+      "sourceId": "fotor-blog",
+      "sourceName": "Fotor GPT Image 2 Prompts",
+      "title": "Close-up Candid Portrait",
+      "category": "Products & E-commerce",
+      "categoryLabel": "商品与电商",
+      "sourceCategory": "6. Portraits, Avatars & Personal Branding",
+      "styles": [
+        "Product"
+      ],
+      "styleLabels": [
+        "商品商业图"
+      ],
+      "scenes": [
+        "6. Portraits, Avatars & Personal Branding",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "6. Portraits, Avatars & Personal Branding",
+        "网页来源"
+      ],
+      "imageUrl": "https://imgv3.fotor.com/images/blog-richtext-image/A-close-up-portrait-of-a-young-female.png",
+      "imageAlt": "Close-up Candid Portrait example",
+      "prompt": "A close-up candid portrait of a {argument name=\"subject\" default=\"young woman\"} indoors against a muted beige wall, shot in a 1990s disposable camera snapshot style. She has pale skin, a soft understated smirk, and loose {argument name=\"hair color\" default=\"black\"} hair with natural volume, slightly messy waves, and face-framing strands spreading around her shoulders. She wears a {argument name=\"top color\" default=\"faded mauve\"} oversized sweatshirt with a relaxed fit and softly gathered sleeves. The framing is chest-up and slightly off-center at eye level, with her body angled casually and one arm subtly extending forward as if taking the photo herself. Use direct on-camera flash for flat shadows, a dim ambient room, visible but subtle film grain, soft edge falloff, and a nostalgic casual vibe. The wall behind her is decorated with exactly 8 taped paper items: 4 instant photos, 2 concert flyers, 1 handwritten note, and 1 small dark photo print. One flyer references {argument name=\"band name\" default=\"SONIC YOUTH\"}, another references {argument name=\"second band name\" default=\"NIRVANA\"}. The overall image should feel intimate, imperfect, slightly grainy, and authentically analog.",
+      "promptPreview": "A close-up candid portrait of a {argument name=\"subject\" default=\"young woman\"} indoors against a muted beige wall, shot in a 1990s disposable camera snapshot style. She has pale skin, a soft understated smirk, and loose {argument name=\"hai",
+      "promptKind": "英文",
+      "sourceLabel": "Fotor blog prompt guide",
+      "sourceUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "githubUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "featured": true,
+      "valueScore": 86,
+      "valueTier": "精选",
+      "author": "Fotor GPT Image 2 Prompts",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Fotor 20+ prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 31021,
+      "caseCode": "F21",
+      "sourceCaseId": "21",
+      "sourceId": "fotor-blog",
+      "sourceName": "Fotor GPT Image 2 Prompts",
+      "title": "Keynote Presentation Image",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "7. Presentation & Content Illustrations",
+      "styles": [
+        "UI"
+      ],
+      "styleLabels": [
+        "UI/界面"
+      ],
+      "scenes": [
+        "7. Presentation & Content Illustrations",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "7. Presentation & Content Illustrations",
+        "网页来源"
+      ],
+      "imageUrl": "https://imgv3.fotor.com/images/blog-richtext-image/An-Apple-style-keynote-presentation-image-displaying-a-promotional-page-for-the-latest-generation-3.5-inch-floppy-disk-in-a-BentoCard-layout.png",
+      "imageAlt": "Keynote Presentation Image example",
+      "prompt": "Generate an Apple-style keynote presentation image, displaying a promotional page for the latest generation 3.5-inch floppy disk in a BentoCard layout.",
+      "promptPreview": "Generate an Apple-style keynote presentation image, displaying a promotional page for the latest generation 3.5-inch floppy disk in a BentoCard layout.",
+      "promptKind": "英文",
+      "sourceLabel": "Fotor blog prompt guide",
+      "sourceUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "githubUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "featured": false,
+      "valueScore": 80,
+      "valueTier": "高价值",
+      "author": "Fotor GPT Image 2 Prompts",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Fotor 20+ prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 31022,
+      "caseCode": "F22",
+      "sourceCaseId": "22",
+      "sourceId": "fotor-blog",
+      "sourceName": "Fotor GPT Image 2 Prompts",
+      "title": "Camera Parts Breakdown",
+      "category": "Charts & Infographics",
+      "categoryLabel": "图表与信息图",
+      "sourceCategory": "7. Presentation & Content Illustrations",
+      "styles": [
+        "Infographic"
+      ],
+      "styleLabels": [
+        "图表/信息图"
+      ],
+      "scenes": [
+        "7. Presentation & Content Illustrations",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "7. Presentation & Content Illustrations",
+        "网页来源"
+      ],
+      "imageUrl": "https://imgv3.fotor.com/images/blog-richtext-image/A-detailed-breakdown-of-a-Sony-A7-camera.png",
+      "imageAlt": "Camera Parts Breakdown example",
+      "prompt": "Detailed breakdown (exploded view) of a Sony A7 camera, indicating all its parts and their names.",
+      "promptPreview": "Detailed breakdown (exploded view) of a Sony A7 camera, indicating all its parts and their names.",
+      "promptKind": "英文",
+      "sourceLabel": "Fotor blog prompt guide",
+      "sourceUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "githubUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "featured": false,
+      "valueScore": 80,
+      "valueTier": "高价值",
+      "author": "Fotor GPT Image 2 Prompts",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Fotor 20+ prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 31023,
+      "caseCode": "F23",
+      "sourceCaseId": "23",
+      "sourceId": "fotor-blog",
+      "sourceName": "Fotor GPT Image 2 Prompts",
+      "title": "TikTok FYP",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "8. Entertainment",
+      "styles": [
+        "UI"
+      ],
+      "styleLabels": [
+        "UI/界面"
+      ],
+      "scenes": [
+        "8. Entertainment",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "8. Entertainment",
+        "网页来源"
+      ],
+      "imageUrl": "https://imgv3.fotor.com/images/blog-richtext-image/A-screenshot-of-the-TikTok-FYP-on-the-day-GPT-Image-2-is-released.png",
+      "imageAlt": "TikTok FYP example",
+      "prompt": "Generate a screenshot of the TikTok FYP on the day GPT-Image-2 is released.",
+      "promptPreview": "Generate a screenshot of the TikTok FYP on the day GPT-Image-2 is released.",
+      "promptKind": "英文",
+      "sourceLabel": "Fotor blog prompt guide",
+      "sourceUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "githubUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "featured": false,
+      "valueScore": 80,
+      "valueTier": "高价值",
+      "author": "Fotor GPT Image 2 Prompts",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Fotor 20+ prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 31024,
+      "caseCode": "F24",
+      "sourceCaseId": "24",
+      "sourceId": "fotor-blog",
+      "sourceName": "Fotor GPT Image 2 Prompts",
+      "title": "Glasses Diagnosis Report",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "8. Entertainment",
+      "styles": [
+        "UI"
+      ],
+      "styleLabels": [
+        "UI/界面"
+      ],
+      "scenes": [
+        "8. Entertainment",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "8. Entertainment",
+        "网页来源"
+      ],
+      "imageUrl": "https://imgv3.fotor.com/images/blog-richtext-image/A-glasses-diagnosis-report-for-the-young-woman.png",
+      "imageAlt": "Glasses Diagnosis Report example",
+      "prompt": "Based on this photo, please create a clean, minimalist, and luxurious glasses diagnosis report. Use a white background with a black-based design, incorporating thin lines, rounded-corner cards, and a luxurious, refined impression. Include a simple contour line illustration of the face, and provide a diagnosis based on facial shape analysis (round face, long face, oval, base type, etc.), eye position, distance from eyebrows, nose bridge, and overall contour balance. Particularly important is including multiple \"comparison images of suitable glasses actually worn by the person.\" Instead of a simple list of glasses alone, display 10–12 high-quality composite visuals that naturally show different frames (Wellington, Boston, square, round, crown panto, etc.) fitted onto the person's actual face photo. Each should be at a natural angle from front to slightly diagonal, creating realistic and seamless try-on images without any awkwardness. For each pattern, include a compatibility score, impression (intellectual, elegant, approachable, sharp, etc.), recommended reasons, and a comparison to designs that should be avoided. Clearly analyze frame shape, size, rim thickness, bridge width, material feel, and color tendencies. Also include easy-to-implement styling improvement suggestions, with data-driven content that is visually beautiful and avoids excessive flattery.",
+      "promptPreview": "Based on this photo, please create a clean, minimalist, and luxurious glasses diagnosis report. Use a white background with a black-based design, incorporating thin lines, rounded-corner cards, and a luxurious, refined impression. Include a",
+      "promptKind": "英文",
+      "sourceLabel": "Fotor blog prompt guide",
+      "sourceUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "githubUrl": "https://www.fotor.com/blog/gpt-image-2-prompts/",
+      "featured": true,
+      "valueScore": 94,
+      "valueTier": "精选",
+      "author": "Fotor GPT Image 2 Prompts",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Fotor 20+ prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32001,
+      "caseCode": "M1",
+      "sourceCaseId": "1",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Late-night bodega portrait",
+      "category": "Brand & Logos",
+      "categoryLabel": "品牌与 Logo",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "Brand",
+        "Edit",
+        "Text"
+      ],
+      "styleLabels": [
+        "品牌系统",
+        "编辑/换场景",
+        "文字渲染"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/bodega-man.png",
+      "imageAlt": "Late-night bodega portrait example",
+      "prompt": "35mm film photography inside a Brooklyn bodega at 2am, overhead fluorescent tubes mixed with the red glow of a lottery sign, authentic halation and mild film grain, candid editorial tone, waist-up framing, late-20s man with realistic uneven stubble, tired dark-circled eyes, natural pore-level skin texture on a warm olive undertone, slightly damp hair from light drizzle, wearing a faded navy hoodie under an oversized canvas jacket, leaning on the counter next to a stack of NY Post newspapers and a spinning hot dog warmer, foreground bottles and chip bags slightly out of focus, cold cashier light on his left cheek with warm ambient bounce on the right, honest documentary street feel, no plastic skin, no logo alterations, no watermark, no text overlay",
+      "promptPreview": "35mm film photography inside a Brooklyn bodega at 2am, overhead fluorescent tubes mixed with the red glow of a lottery sign, authentic halation and mild film grain, candid editorial tone, waist-up framing, late-20s man with realistic uneven",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": false,
+      "valueScore": 82,
+      "valueTier": "高价值",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32002,
+      "caseCode": "M2",
+      "sourceCaseId": "2",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Monsoon Istanbul café portrait",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "UI",
+        "Text"
+      ],
+      "styleLabels": [
+        "UI/界面",
+        "文字渲染"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/woman-in-cafe.png",
+      "imageAlt": "Monsoon Istanbul café portrait example",
+      "prompt": "Analog 35mm portrait, rainy afternoon in an Istanbul café along a narrow Beyoğlu side street, warm amber pendant light from inside mixed with cool bluish wet daylight through fogged windows, soft halation around the bulbs, early-30s woman with delicate angular features, natural freckles across the bridge of her nose, loose auburn hair tucked behind one ear with a few strands sticking to her temple from humidity, wearing a cream wool turtleneck and a thin silver chain, cupping a small tulip-shaped tea glass with both hands, steam rising in front of her face, condensation on the window blurring the street behind her, shallow depth of field, muted earth-tone color grading, no oversharpening, no beauty retouch, no text",
+      "promptPreview": "Analog 35mm portrait, rainy afternoon in an Istanbul café along a narrow Beyoğlu side street, warm amber pendant light from inside mixed with cool bluish wet daylight through fogged windows, soft halation around the bulbs, early-30s woman w",
+      "promptKind": "中文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": true,
+      "valueScore": 94,
+      "valueTier": "精选",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32003,
+      "caseCode": "M3",
+      "sourceCaseId": "3",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Rooftop golden hour candid",
+      "category": "Products & E-commerce",
+      "categoryLabel": "商品与电商",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "Product",
+        "Edit",
+        "Text"
+      ],
+      "styleLabels": [
+        "商品商业图",
+        "编辑/换场景",
+        "文字渲染"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/woman-laughing.png",
+      "imageAlt": "Rooftop golden hour candid example",
+      "prompt": "Shot on an iPhone, unedited RAW look, low-contrast golden hour on a Lisbon rooftop just before sunset, mild lens flare from the low sun, subtle chromatic aberration at the frame edges, candid full-body shot of a late-20s woman mid-laugh, wind-tousled dark curls, natural non-dewy skin with visible sun freckles, wearing a washed linen sundress and simple leather sandals, one hand holding a cheap plastic sunglasses by the bridge, the other brushing hair out of her face, terracotta-tiled rooftops and the Tagus river softly blurred in the background, authentic handheld angle slightly tilted, no model-like posing, no polished editing, no watermark, no text",
+      "promptPreview": "Shot on an iPhone, unedited RAW look, low-contrast golden hour on a Lisbon rooftop just before sunset, mild lens flare from the low sun, subtle chromatic aberration at the frame edges, candid full-body shot of a late-20s woman mid-laugh, wi",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32004,
+      "caseCode": "M4",
+      "sourceCaseId": "4",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Seattle autumn city poster",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "UI",
+        "Edit",
+        "Text"
+      ],
+      "styleLabels": [
+        "UI/界面",
+        "编辑/换场景",
+        "文字渲染"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/seattle-autumn-poster.png",
+      "imageAlt": "Seattle autumn city poster example",
+      "prompt": "A 1:1 Autumn 2026 city poster for Seattle with a quiet melancholic elegance and bold modern layout. On a misty slate-grey textured background with generous negative space, a miniature ferry cuts across the lower third of the frame on a ribbon of reflective Puget Sound water. The wake curls upward into a hand-painted ribbon containing iconic Seattle elements: Space Needle silhouetted in fog, Pike Place Market neon sign, layered evergreen hills, Pioneer Square brick facades, a Kingstreet station clock, floatplanes over Lake Union, and drifting rain clouds. Deep forest green, slate blue, and rust orange accents suggest changing leaves. Refined typography bottom-left reads \"AUTUMN 2026\" with a vertical slogan \"SEATTLE, THE CITY BENEATH THE CLOUDS\". Premium editorial design, subtle paper grain, text clear and beautifully composed",
+      "promptPreview": "A 1:1 Autumn 2026 city poster for Seattle with a quiet melancholic elegance and bold modern layout. On a misty slate-grey textured background with generous negative space, a miniature ferry cuts across the lower third of the frame on a ribb",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": true,
+      "valueScore": 94,
+      "valueTier": "精选",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32005,
+      "caseCode": "M5",
+      "sourceCaseId": "5",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Vintage Lisbon tram travel poster",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "UI"
+      ],
+      "styleLabels": [
+        "UI/界面"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/lisbon-travel-poster.png",
+      "imageAlt": "Vintage Lisbon tram travel poster example",
+      "prompt": "Hand-drawn pencil and gouache illustration of a vintage travel poster depicting Lisbon, Portugal, a yellow Tram 28 winding up a steep cobblestone street in Alfama, pastel-colored tiled facades on either side with wrought-iron balconies draped in laundry, glimpses of the Tagus river and the 25 de Abril Bridge between buildings, bright summer sky with scattered sardine-shaped clouds, azulejo tile pattern framing the bottom edge of the poster, warm honeyed sunlight, bold vibrant palette of saffron yellow, terracotta, soft blue, and ivory, 1960s screen-print travel aesthetic, loose inked contours, high contrast, decorative and nostalgic, stylized \"LISBOA\" wordmark in the lower right",
+      "promptPreview": "Hand-drawn pencil and gouache illustration of a vintage travel poster depicting Lisbon, Portugal, a yellow Tram 28 winding up a steep cobblestone street in Alfama, pastel-colored tiled facades on either side with wrought-iron balconies drap",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32006,
+      "caseCode": "M6",
+      "sourceCaseId": "6",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Artisan soda product poster",
+      "category": "Posters & Typography",
+      "categoryLabel": "海报与排版",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "Poster",
+        "Edit",
+        "Text"
+      ],
+      "styleLabels": [
+        "海报排版",
+        "编辑/换场景",
+        "文字渲染"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/yuzu-ginger-soda.png",
+      "imageAlt": "Artisan soda product poster example",
+      "prompt": "Product advertising photo, limited-edition winter beverage, sparkling yuzu and ginger soda, brand name \"NORTH CAPE SODA\", 330ml slim aluminum can in matte navy with copper foil label detailing, condensation droplets running down the can, a halved yuzu and a shard of fresh ginger frozen mid-splash against a deep teal gradient backdrop, studio rim lighting outlining the can, subtle wintry fog in the lower third, crisp commercial photography for a high-end grocery chain, accurate readable typography on the can, 3:4 aspect ratio",
+      "promptPreview": "Product advertising photo, limited-edition winter beverage, sparkling yuzu and ginger soda, brand name \"NORTH CAPE SODA\", 330ml slim aluminum can in matte navy with copper foil label detailing, condensation droplets running down the can, a ",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32007,
+      "caseCode": "M7",
+      "sourceCaseId": "7",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Deep-sea surreal illustration",
+      "category": "Scenes & Storytelling",
+      "categoryLabel": "场景与叙事",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "Edit"
+      ],
+      "styleLabels": [
+        "编辑/换场景"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/octopus-and-diver.png",
+      "imageAlt": "Deep-sea surreal illustration example",
+      "prompt": "A surreal digital illustration with a top-down diving perspective. A giant luminescent octopus glides through a pitch-black trench, its tendrils unfurling into galaxy dust and constellations. A tiny diver with a warm yellow headlamp hovers in the center of the frame, dwarfed by the creature, gazing straight down into the abyss. Dramatic scale contrast, deep midnight blues fading into violet, phosphorescent teal accents along the tentacles, drifting marine snow catching the light. Dreamlike, meditative, slightly unsettling atmosphere. 1:1",
+      "promptPreview": "A surreal digital illustration with a top-down diving perspective. A giant luminescent octopus glides through a pitch-black trench, its tendrils unfurling into galaxy dust and constellations. A tiny diver with a warm yellow headlamp hovers ",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": false,
+      "valueScore": 68,
+      "valueTier": "可参考",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32008,
+      "caseCode": "M8",
+      "sourceCaseId": "8",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Open-world western screenshot",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "UI"
+      ],
+      "styleLabels": [
+        "UI/界面"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/outlaw-on-horseback.png",
+      "imageAlt": "Open-world western screenshot example",
+      "prompt": "In-game screenshot from a fictional AAA open-world western titled \"Horizon & Dust,\" detailed third-person view, close but slightly wide framing, a lone outlaw on horseback silhouetted against a blood-orange dawn rolling across a red-rock canyon, authentic-looking game UI in the bottom-left (minimap disc, health arc, ammo count in a weathered serif font), distance haze on the mesas, realistic fabric physics on the duster coat, subtle motion blur, faint film grain, feels captured mid-gameplay rather than staged cinematic, 1:1",
+      "promptPreview": "In-game screenshot from a fictional AAA open-world western titled \"Horizon & Dust,\" detailed third-person view, close but slightly wide framing, a lone outlaw on horseback silhouetted against a blood-orange dawn rolling across a red-rock ca",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32009,
+      "caseCode": "M9",
+      "sourceCaseId": "9",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Life sim dating screenshot",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "UI",
+        "Text"
+      ],
+      "styleLabels": [
+        "UI/界面",
+        "文字渲染"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/life-simulation-game.png",
+      "imageAlt": "Life sim dating screenshot example",
+      "prompt": "A high-fidelity life-simulation game screenshot in a cozy indie art style, third-person isometric-ish angle, two player characters sitting on a picnic blanket in a park with pastel cherry blossom petals falling, UI elements visible: a \"+12 Friendship\" popup above the characters, an action wheel with options \"Chat\", \"Compliment\", \"Offer Snack\", \"Leave\", a small minimap in the corner, a relationship heart bar at the top of the screen, clear readable sans-serif game UI font, soft bloom lighting, authentic screenshot feel rather than promotional art",
+      "promptPreview": "A high-fidelity life-simulation game screenshot in a cozy indie art style, third-person isometric-ish angle, two player characters sitting on a picnic blanket in a park with pastel cherry blossom petals falling, UI elements visible: a \"+12 ",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32010,
+      "caseCode": "M10",
+      "sourceCaseId": "10",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Stealth mission screenshot",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "UI",
+        "3D"
+      ],
+      "styleLabels": [
+        "UI/界面",
+        "3D 渲染"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/stealth-game.png",
+      "imageAlt": "Stealth mission screenshot example",
+      "prompt": "A stealth-action game screenshot where the player character is sneaking through the lobby of a Michelin-star restaurant after hours, mission name in the top-left \"MAIN OBJECTIVE: Retrieve the chef's recipe binder\", objective tracker panel with sub-objectives ticked off, a detection meter in the corner currently at yellow, crouched first-person-over-shoulder view, warm restaurant ambience with chairs stacked on tables, a single security guard with a visible cone-of-vision marker rendered as a soft orange overlay, realistic game engine lighting, moody and tense",
+      "promptPreview": "A stealth-action game screenshot where the player character is sneaking through the lobby of a Michelin-star restaurant after hours, mission name in the top-left \"MAIN OBJECTIVE: Retrieve the chef's recipe binder\", objective tracker panel w",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": false,
+      "valueScore": 80,
+      "valueTier": "高价值",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32011,
+      "caseCode": "M11",
+      "sourceCaseId": "11",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Donut shop morning cutscene",
+      "category": "Photography & Realism",
+      "categoryLabel": "摄影与写实",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "Realistic",
+        "3D"
+      ],
+      "styleLabels": [
+        "摄影写实",
+        "3D 渲染"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/donut-shop-morning.png",
+      "imageAlt": "Donut shop morning cutscene example",
+      "prompt": "A photorealistic in-game cutscene of three fictional small-town regulars — a retired mailman with wire glasses and a cardigan, a retired high-school music teacher with silver curls, and a former minor-league pitcher with a grey beard — working the morning shift at a roadside donut shop. The mailman mans the register with his tie tucked into an apron, the music teacher frosts donuts with a piping bag, the pitcher stacks trays behind them. A few confused regulars in line hold coffee mugs, dawn light slants through the front window. Playful tone rendered with serious cinematic polish. 1:1",
+      "promptPreview": "A photorealistic in-game cutscene of three fictional small-town regulars — a retired mailman with wire glasses and a cardigan, a retired high-school music teacher with silver curls, and a former minor-league pitcher with a grey beard — work",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": false,
+      "valueScore": 68,
+      "valueTier": "可参考",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32012,
+      "caseCode": "M12",
+      "sourceCaseId": "12",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Running app home screen",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "UI"
+      ],
+      "styleLabels": [
+        "UI/界面"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/running-app-home.png",
+      "imageAlt": "Running app home screen example",
+      "prompt": "Generate a high-fidelity mobile running app home screen screenshot, portrait orientation, clean light mode with accent mint green, iOS-style status bar with 9:41 time and full signal, greeting \"Good morning, Elena\" with a small weather chip \"14°C, light rain — good for a long run\", circular weekly target ring showing 32 / 45 km, horizontal scroll of upcoming workouts (Easy 6k, Threshold intervals, Long run 18k) with color-coded tags, a line chart of the last four weeks of mileage, heart rate zone distribution bars, a \"Start run\" floating action button at the bottom, tab bar with Home, Plans, Community, Profile, pixel-crisp icons and type, realistic whitespace, must look shippable, not concept art",
+      "promptPreview": "Generate a high-fidelity mobile running app home screen screenshot, portrait orientation, clean light mode with accent mint green, iOS-style status bar with 9:41 time and full signal, greeting \"Good morning, Elena\" with a small weather chip",
+      "promptKind": "中文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": true,
+      "valueScore": 86,
+      "valueTier": "精选",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32013,
+      "caseCode": "M13",
+      "sourceCaseId": "13",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Dark-mode podcast player",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "UI"
+      ],
+      "styleLabels": [
+        "UI/界面"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/podcast-player.png",
+      "imageAlt": "Dark-mode podcast player example",
+      "prompt": "High-fidelity podcast player screen, mobile portrait cropped to 1:1, deep charcoal dark mode with warm orange accents, large square episode artwork at the top with subtle glow tinted from the artwork's dominant color, episode title \"The Long Drift — Ep. 47: Cartographers of the Deep\", show name \"Saltwater Notes\", scrubber with current time 23:14 and total 1:08:42, 30-second skip controls flanking a large play button, sleep timer chip, speed toggle at 1.2x, auto-generated transcript expanded below with the current sentence highlighted in orange, chapter list with three chapters, bottom toolbar with queue, cast, and download icons, refined product-ready interface",
+      "promptPreview": "High-fidelity podcast player screen, mobile portrait cropped to 1:1, deep charcoal dark mode with warm orange accents, large square episode artwork at the top with subtle glow tinted from the artwork's dominant color, episode title \"The Lon",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32014,
+      "caseCode": "M14",
+      "sourceCaseId": "14",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "16th-century social feed mockup",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "UI",
+        "Edit",
+        "Text"
+      ],
+      "styleLabels": [
+        "UI/界面",
+        "编辑/换场景",
+        "文字渲染"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/emperor-kerim-i.png",
+      "imageAlt": "16th-century social feed mockup example",
+      "prompt": "A fictional mobile social-feed interface called \"Empire Moments,\" styled as if posted from a 16th-century court. Profile avatar is an illustrated miniature of a fictional sultan named \"Emperor Kerim I,\" handle \"@kerim_the_builder\". Post text \"Campaign notes from the northern front — siege going slowly, weather terrible, bringing home recipes for saffron pilaf.\" Attached image: an original court-miniature style illustration of a royal campaign tent. Likes \"Court Chronicler, Grand Vizier, Chief Architect and 847 others\". Comments \"Chief Architect: Send measurements of the foreign cathedral, I have ideas.\" \"Fleet Admiral: The sea would have been faster.\" Like icon replaced with a stylized tulip. Status bar reads \"Empire Mobile · Year 936\". Ivory parchment background with deep red and gold UI accents, readable calligraphic-inspired type, 1:1",
+      "promptPreview": "A fictional mobile social-feed interface called \"Empire Moments,\" styled as if posted from a 16th-century court. Profile avatar is an illustrated miniature of a fictional sultan named \"Emperor Kerim I,\" handle \"@kerim_the_builder\". Post tex",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": true,
+      "valueScore": 94,
+      "valueTier": "精选",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32015,
+      "caseCode": "M15",
+      "sourceCaseId": "15",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Cartographer character sheet",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "UI",
+        "Text"
+      ],
+      "styleLabels": [
+        "UI/界面",
+        "文字渲染"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/cartographer-character-sheet.png",
+      "imageAlt": "Cartographer character sheet example",
+      "prompt": "Based on the attached character, please create an official-style character reference sheet. Include three-view turnarounds (front, side, back), a 6-variant facial expression row (neutral, smiling, annoyed, embarrassed, determined, tearful), exploded detail callouts for signature equipment (a weathered leather satchel, a compass pendant, a patched travel cloak), a labeled color palette with hex-like swatches, and a short worldbuilding blurb in the corner establishing the character is a cartographer in a post-storm archipelago. Clean white background, organized grid layout, soft pencil under-drawing visible, polished painted finish on top, high resolution, professional concept-art production-book style",
+      "promptPreview": "Based on the attached character, please create an official-style character reference sheet. Include three-view turnarounds (front, side, back), a 6-variant facial expression row (neutral, smiling, annoyed, embarrassed, determined, tearful),",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": true,
+      "valueScore": 94,
+      "valueTier": "精选",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32016,
+      "caseCode": "M16",
+      "sourceCaseId": "16",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Fantasy knight expression grid",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "UI",
+        "Text",
+        "3D"
+      ],
+      "styleLabels": [
+        "UI/界面",
+        "文字渲染",
+        "3D 渲染"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/fantasy-knight-expressions.png",
+      "imageAlt": "Fantasy knight expression grid example",
+      "prompt": "Create a 16-panel expression grid of a young fantasy knight with chin-length silver hair, a thin scar across the left eyebrow, and pale blue eyes. Face shape, hairstyle, and armor collar must stay highly consistent across every panel. The 16 expressions: determined, exhausted, smirking, embarrassed, stoic, wincing, laughing, furious, tender, suspicious, worried, overwhelmed, mischievous, grieving, surprised, and a quiet prideful smile. Soft cel-shaded anime rendering on a neutral cream background, clean labels under each panel",
+      "promptPreview": "Create a 16-panel expression grid of a young fantasy knight with chin-length silver hair, a thin scar across the left eyebrow, and pale blue eyes. Face shape, hairstyle, and armor collar must stay highly consistent across every panel. The 1",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32017,
+      "caseCode": "M17",
+      "sourceCaseId": "17",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "JRPG character introduction page",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "UI"
+      ],
+      "styleLabels": [
+        "UI/界面"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/jrpg-character-page.png",
+      "imageAlt": "JRPG character introduction page example",
+      "prompt": "Using the attached standing portrait and chibi illustration, produce a character introduction webpage that mimics an official JRPG promotional site. Include an expression variation row, a cinematic close-up CG, the chibi version, and a styled info block: Name, Role (e.g. Rear-Guard Archer), Signature Color, Height, Weight, Weapon of Choice, Favorite Food, Voice Actor (leave blank), and a short catchphrase in quotation marks. Layout should feel like a polished title-screen sub-page with subtle animated-looking highlights, drop shadows, and serif headings",
+      "promptPreview": "Using the attached standing portrait and chibi illustration, produce a character introduction webpage that mimics an official JRPG promotional site. Include an expression variation row, a cinematic close-up CG, the chibi version, and a styl",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": false,
+      "valueScore": 80,
+      "valueTier": "高价值",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32018,
+      "caseCode": "M18",
+      "sourceCaseId": "18",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Pet × diner collab poster",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "UI"
+      ],
+      "styleLabels": [
+        "UI/界面"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/pet-goldenfry-diner.png",
+      "imageAlt": "Pet × diner collab poster example",
+      "prompt": "Theme: \"[Pet name] x GoldenFry Diner\" collaboration poster — GoldenFry Diner is a fictional roadside burger chain with a sunset-orange and cream color palette, a stylized sunrise wordmark, and a mid-century booth aesthetic. Generate a commercial-grade poster featuring the same pet (perfectly consistent appearance, coloring, markings) wearing a tiny GoldenFry visor and apron, standing on a stool at the counter, holding a milkshake cup in one paw, a classic burger and crinkle fries on the counter, laughing customers softly blurred in the background. Playful, premium, campaign-grade composition, clean co-brand lockup in the bottom right. 1:1",
+      "promptPreview": "Theme: \"[Pet name] x GoldenFry Diner\" collaboration poster — GoldenFry Diner is a fictional roadside burger chain with a sunset-orange and cream color palette, a stylized sunrise wordmark, and a mid-century booth aesthetic. Generate a comme",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32019,
+      "caseCode": "M19",
+      "sourceCaseId": "19",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Wabi-sabi matcha launch poster",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "UI",
+        "Text",
+        "3D"
+      ],
+      "styleLabels": [
+        "UI/界面",
+        "文字渲染",
+        "3D 渲染"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/kumo-matcha.png",
+      "imageAlt": "Wabi-sabi matcha launch poster example",
+      "prompt": "Design a 1:1 vertical poster for a new ceremonial-grade matcha launch. Brand name: \"Kumo Matcha\". Style: contemporary wabi-sabi, restrained, quietly confident. Colors: soft moss green, unbleached linen, charcoal, a whisper of gold leaf. Use washi paper texture, broad negative space, a single sumi-e brushstroke as a compositional anchor. Center subject: a stoneware chawan with freshly whisked matcha, fine foam on top, a bamboo chasen resting beside it. Poster must cleanly display: brand mark, product name, grade (Ceremonial · First Harvest), tasting notes (umami, fresh grass, stone fruit), origin (Uji, Kyoto), suggested preparation, launch date, limited-batch number, and a small QR module. Elegant not cheap, typography hierarchy clear, small numerals and Japanese characters rendered accurately",
+      "promptPreview": "Design a 1:1 vertical poster for a new ceremonial-grade matcha launch. Brand name: \"Kumo Matcha\". Style: contemporary wabi-sabi, restrained, quietly confident. Colors: soft moss green, unbleached linen, charcoal, a whisper of gold leaf. Use",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": true,
+      "valueScore": 94,
+      "valueTier": "精选",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32020,
+      "caseCode": "M20",
+      "sourceCaseId": "20",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Sourdough process infographic",
+      "category": "Charts & Infographics",
+      "categoryLabel": "图表与信息图",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "Infographic",
+        "Edit",
+        "Text"
+      ],
+      "styleLabels": [
+        "图表/信息图",
+        "编辑/换场景",
+        "文字渲染"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/sourdough-process-infographic.png",
+      "imageAlt": "Sourdough process infographic example",
+      "prompt": "Infographic poster titled \"How a Loaf of Sourdough Becomes a Loaf\". High-end editorial information design, modular card layout with flowing arrows, data chips, tiny spot illustrations, and a cross-section loaf hero in the center. Color scheme: toasted crust brown, flour cream, rye charcoal, a single mustard accent. Must include: 01 Starter (ratio 1:1:1 flour-water-culture, 24h cycle), 02 Autolyse (rest 45 min, hydration 78%), 03 Bulk Fermentation (4 stretch-and-folds, 5h at 24°C), 04 Shaping (tension, seam-down basket), 05 Cold Proof (12–16h at 4°C), 06 Bake (covered Dutch oven 230°C, uncovered 20 min), and a flavor spectrum (tangy / nutty / sweet / earthy). Must read like a premium bakery wall chart, not a textbook diagram",
+      "promptPreview": "Infographic poster titled \"How a Loaf of Sourdough Becomes a Loaf\". High-end editorial information design, modular card layout with flowing arrows, data chips, tiny spot illustrations, and a cross-section loaf hero in the center. Color sche",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": true,
+      "valueScore": 94,
+      "valueTier": "精选",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32021,
+      "caseCode": "M21",
+      "sourceCaseId": "21",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Perspective typography poster",
+      "category": "Posters & Typography",
+      "categoryLabel": "海报与排版",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "Poster",
+        "Text"
+      ],
+      "styleLabels": [
+        "海报排版",
+        "文字渲染"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/bridge-promise.png",
+      "imageAlt": "Perspective typography poster example",
+      "prompt": "Scene: low-angle side view of a curved modernist concrete pedestrian bridge at dusk, dramatic cinematic vanishing point. Giant bold geometric sans-serif letters spelling \"EVERY BRIDGE IS A PROMISE\" painted directly onto the bridge deck, stretched and foreshortened with perspective, letterforms bending precisely to the curvature of the surface, partially occluded by lamp posts in the foreground to suggest depth. Saturated cobalt blue letters outlined in warm amber, city lights just beginning to turn on in the background, faint motion blur from a cyclist crossing, integrated advertising-grade typographic poster, not floating text",
+      "promptPreview": "Scene: low-angle side view of a curved modernist concrete pedestrian bridge at dusk, dramatic cinematic vanishing point. Giant bold geometric sans-serif letters spelling \"EVERY BRIDGE IS A PROMISE\" painted directly onto the bridge deck, str",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32022,
+      "caseCode": "M22",
+      "sourceCaseId": "22",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Clinical skincare hero poster",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "UI",
+        "Text"
+      ],
+      "styleLabels": [
+        "UI/界面",
+        "文字渲染"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/glacier-repair-cream.png",
+      "imageAlt": "Clinical skincare hero poster example",
+      "prompt": "High-end skincare hero poster for \"Glacier Repair Barrier Cream\". Style: clinical, cool, quietly luxurious. A matte ceramic jar with a brushed steel lid sits on a pale blue stone slab, a thin layer of condensation across the glass beside it, microscopic cellular lipid structure illustrations floating in the negative space. Must include readable copy: product name, tagline (rebuild, calm, hydrate for 72 hours), generation label (\"Third-generation bilayer formula\"), hero ingredients (ceramide NP, squalane, beta-glucan, cica), intended skin profile (post-procedure, winter-stressed, reactive), launch price with member price crossed underneath, and a small gift-set block. Fine print: \"Results vary. Introduce gradually.\" High-end magazine beauty-feature aesthetic, not e-commerce banner",
+      "promptPreview": "High-end skincare hero poster for \"Glacier Repair Barrier Cream\". Style: clinical, cool, quietly luxurious. A matte ceramic jar with a brushed steel lid sits on a pale blue stone slab, a thin layer of condensation across the glass beside it",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": true,
+      "valueScore": 94,
+      "valueTier": "精选",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32023,
+      "caseCode": "M23",
+      "sourceCaseId": "23",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Luminescent seashell render",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "UI",
+        "3D"
+      ],
+      "styleLabels": [
+        "UI/界面",
+        "3D 渲染"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/seashell.png",
+      "imageAlt": "Luminescent seashell render example",
+      "prompt": "Create a high detail CGI render of a single procedurally modeled seashell, surface with translucent nacre layers, intricate spiral ridges, tiny water droplets clinging to the outer lip, floating against a deep black background. Single backlight from behind so the shell glows with warm pearlescent tones. Scientific illustration meets luxury product feel. No watermark.",
+      "promptPreview": "Create a high detail CGI render of a single procedurally modeled seashell, surface with translucent nacre layers, intricate spiral ridges, tiny water droplets clinging to the outer lip, floating against a deep black background. Single backl",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32024,
+      "caseCode": "M24",
+      "sourceCaseId": "24",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Emerald resin grand piano",
+      "category": "Brand & Logos",
+      "categoryLabel": "品牌与 Logo",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "Brand",
+        "3D"
+      ],
+      "styleLabels": [
+        "品牌系统",
+        "3D 渲染"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/emerald-grand-piano.png",
+      "imageAlt": "Emerald resin grand piano example",
+      "prompt": "Create a high end 3D product render of a translucent frosted emerald resin grand piano on a seamless cream backdrop. Physically based materials, subtle subsurface scattering, soft single HDRI light, refined contact shadow. Ray traced reflections, gentle bloom on the highlight. No logos, no watermark.",
+      "promptPreview": "Create a high end 3D product render of a translucent frosted emerald resin grand piano on a seamless cream backdrop. Physically based materials, subtle subsurface scattering, soft single HDRI light, refined contact shadow. Ray traced reflec",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": false,
+      "valueScore": 76,
+      "valueTier": "高价值",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32025,
+      "caseCode": "M25",
+      "sourceCaseId": "25",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Geometric still life",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "UI",
+        "3D"
+      ],
+      "styleLabels": [
+        "UI/界面",
+        "3D 渲染"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/geometric-still-life.png",
+      "imageAlt": "Geometric still life example",
+      "prompt": "Create an abstract 3D still life of precisely arranged geometric primitives: a velvet-finish cylinder, a liquid mercury dodecahedron, a smoked obsidian pyramid, a raw sandstone disc. On a warm ivory background with soft directional light. Museum quality composition, physically based materials, subtle contact AO. No watermark.",
+      "promptPreview": "Create an abstract 3D still life of precisely arranged geometric primitives: a velvet-finish cylinder, a liquid mercury dodecahedron, a smoked obsidian pyramid, a raw sandstone disc. On a warm ivory background with soft directional light. M",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32026,
+      "caseCode": "M26",
+      "sourceCaseId": "26",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "White clay kitchen island",
+      "category": "Architecture & Spaces",
+      "categoryLabel": "建筑与空间",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "Text",
+        "3D"
+      ],
+      "styleLabels": [
+        "文字渲染",
+        "3D 渲染"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/kitchen-island.png",
+      "imageAlt": "White clay kitchen island example",
+      "prompt": "Create a neutral white clay render of a modernist kitchen island and dining area with seating, hanging pendants, and open shelving. No textures, no colors, only soft white matte materials, honest lighting from a wide skylight above, subtle AO in the corners. Architectural visualization style, used for form study. No watermark.",
+      "promptPreview": "Create a neutral white clay render of a modernist kitchen island and dining area with seating, hanging pendants, and open shelving. No textures, no colors, only soft white matte materials, honest lighting from a wide skylight above, subtle ",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": false,
+      "valueScore": 76,
+      "valueTier": "高价值",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32027,
+      "caseCode": "M27",
+      "sourceCaseId": "27",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Electric superbike concept render",
+      "category": "Brand & Logos",
+      "categoryLabel": "品牌与 Logo",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "Brand",
+        "3D"
+      ],
+      "styleLabels": [
+        "品牌系统",
+        "3D 渲染"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/electric-superbike.png",
+      "imageAlt": "Electric superbike concept render example",
+      "prompt": "Create a premium CGI concept motorcycle render. Sleek electric superbike in a studio with a polished black floor, soft overhead linear light bar reflected on the fuel tank fairing, subtle caustics. Accurate body panel seams, realistic fork and swingarm depth, honest tire tread pattern. Nameplate bare, no real brand logos, no watermark.",
+      "promptPreview": "Create a premium CGI concept motorcycle render. Sleek electric superbike in a studio with a polished black floor, soft overhead linear light bar reflected on the fuel tank fairing, subtle caustics. Accurate body panel seams, realistic fork ",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": false,
+      "valueScore": 76,
+      "valueTier": "高价值",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32028,
+      "caseCode": "M28",
+      "sourceCaseId": "28",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Otter mascot with pancakes",
+      "category": "Characters & People",
+      "categoryLabel": "人物与角色",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "Character",
+        "3D"
+      ],
+      "styleLabels": [
+        "人物角色",
+        "3D 渲染"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/otter-with-pancakes.png",
+      "imageAlt": "Otter mascot with pancakes example",
+      "prompt": "Create a soft clay render mascot character: a plump cheerful otter balancing a stack of pancakes on one paw. Pastel palette, soft shadows, chunky proportions, a few whisker details catching the light. Rendered on a plain pastel backdrop. Warm, not saccharine. No watermark.",
+      "promptPreview": "Create a soft clay render mascot character: a plump cheerful otter balancing a stack of pancakes on one paw. Pastel palette, soft shadows, chunky proportions, a few whisker details catching the light. Rendered on a plain pastel backdrop. Wa",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": false,
+      "valueScore": 68,
+      "valueTier": "可参考",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32029,
+      "caseCode": "M29",
+      "sourceCaseId": "29",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Minimal awareness poster",
+      "category": "Posters & Typography",
+      "categoryLabel": "海报与排版",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "Poster"
+      ],
+      "styleLabels": [
+        "海报排版"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/sidewalk-awareness-poster.png",
+      "imageAlt": "Minimal awareness poster example",
+      "prompt": "Create a minimal awareness poster. Single large sentence EVERY NEIGHBORHOOD DESERVES A SIDEWALK set in a tall condensed sans across three lines in slightly off white on deep grey background. Subtle icon of a tree-lined walkway silhouetted. Small line at the bottom GOOD DESIGN STARTS AT THE CURB. No campaign branding, no watermark.",
+      "promptPreview": "Create a minimal awareness poster. Single large sentence EVERY NEIGHBORHOOD DESERVES A SIDEWALK set in a tall condensed sans across three lines in slightly off white on deep grey background. Subtle icon of a tree-lined walkway silhouetted. ",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32030,
+      "caseCode": "M30",
+      "sourceCaseId": "30",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Craft coffee bag label",
+      "category": "Posters & Typography",
+      "categoryLabel": "海报与排版",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "Poster",
+        "Text"
+      ],
+      "styleLabels": [
+        "海报排版",
+        "文字渲染"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/coffee-bag-label.png",
+      "imageAlt": "Craft coffee bag label example",
+      "prompt": "Create an illustrated craft coffee bag label. Brand DUSKLIGHT ROASTERS at the top, blend name DRY SEASON ESPRESSO in chunky condensed caps, roast level MEDIUM DARK, tasting note CHERRY, TOASTED WALNUT. A small hand drawn illustration of a hillside coffee farm at sunset. Muted terracotta and cream palette. No real roastery, no watermark.",
+      "promptPreview": "Create an illustrated craft coffee bag label. Brand DUSKLIGHT ROASTERS at the top, blend name DRY SEASON ESPRESSO in chunky condensed caps, roast level MEDIUM DARK, tasting note CHERRY, TOASTED WALNUT. A small hand drawn illustration of a h",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32031,
+      "caseCode": "M31",
+      "sourceCaseId": "31",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Kyoto cycling tour pamphlet",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "UI"
+      ],
+      "styleLabels": [
+        "UI/界面"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/kyoto-cycling-tour.png",
+      "imageAlt": "Kyoto cycling tour pamphlet example",
+      "prompt": "Create a folded pamphlet design for a guided cycling tour of old Kyoto. Cover has hand drawn map illustration, title TEMPLE LOOP RIDE, subtitle A 2 HOUR GUIDED TOUR, price 3500 YEN, meeting point ARASHIYAMA STATION EAST EXIT. Cream and warm indigo palette. Authentic tourism feel, not tacky. No watermark.",
+      "promptPreview": "Create a folded pamphlet design for a guided cycling tour of old Kyoto. Cover has hand drawn map illustration, title TEMPLE LOOP RIDE, subtitle A 2 HOUR GUIDED TOUR, price 3500 YEN, meeting point ARASHIYAMA STATION EAST EXIT. Cream and warm",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32032,
+      "caseCode": "M32",
+      "sourceCaseId": "32",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Minimalist watch case flat lay",
+      "category": "Products & E-commerce",
+      "categoryLabel": "商品与电商",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "Product",
+        "Text"
+      ],
+      "styleLabels": [
+        "商品商业图",
+        "文字渲染"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/watch-case.png",
+      "imageAlt": "Minimalist watch case flat lay example",
+      "prompt": "Create a flat lay photograph of a minimalist watch case on a concrete studio surface. Lid beside the base, suede cushion visible. Brand name MERIDIAN & SONS debossed into the matte slate case lid. Side of the case reads REF: MR-07 / 40MM / ASSEMBLED IN SWITZERLAND. Natural top light, honest linen and leather texture. No watermark.",
+      "promptPreview": "Create a flat lay photograph of a minimalist watch case on a concrete studio surface. Lid beside the base, suede cushion visible. Brand name MERIDIAN & SONS debossed into the matte slate case lid. Side of the case reads REF: MR-07 / 40MM / ",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32033,
+      "caseCode": "M33",
+      "sourceCaseId": "33",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Fashion magazine editorial spread",
+      "category": "Photography & Realism",
+      "categoryLabel": "摄影与写实",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "Realistic",
+        "Edit"
+      ],
+      "styleLabels": [
+        "摄影写实",
+        "编辑/换场景"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/fashion-editorial.png",
+      "imageAlt": "Fashion magazine editorial spread example",
+      "prompt": "Create a fashion magazine editorial spread. Left page is a full bleed portrait photograph of a model in draped linen layers on a sun-bleached terrace. Right page has the feature title THE UNHURRIED SILHOUETTE in a giant condensed serif, small byline by R. CALLEJA, photography by S. MORI, a two paragraph lede in sans serif body. No real publication branding, no watermark.",
+      "promptPreview": "Create a fashion magazine editorial spread. Left page is a full bleed portrait photograph of a model in draped linen layers on a sun-bleached terrace. Right page has the feature title THE UNHURRIED SILHOUETTE in a giant condensed serif, sma",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": false,
+      "valueScore": 76,
+      "valueTier": "高价值",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32034,
+      "caseCode": "M34",
+      "sourceCaseId": "34",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Letterpress bookshop cards",
+      "category": "Posters & Typography",
+      "categoryLabel": "海报与排版",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "Poster"
+      ],
+      "styleLabels": [
+        "海报排版"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/business-cards.png",
+      "imageAlt": "Letterpress bookshop cards example",
+      "prompt": "Create a tight overhead photograph of a stack of business cards for a small bookshop. Top card reads SPINE AND LEAF, tagline BOOKS AND TEA, bottom has an address 14 CANAL LANE, AMSTERDAM, email HELLO@SPINEANDLEAF.NL. Cream recycled cardstock, letterpress printed, subtle deboss on the logo. Natural top light. No watermark.",
+      "promptPreview": "Create a tight overhead photograph of a stack of business cards for a small bookshop. Top card reads SPINE AND LEAF, tagline BOOKS AND TEA, bottom has an address 14 CANAL LANE, AMSTERDAM, email HELLO@SPINEANDLEAF.NL. Cream recycled cardstoc",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": false,
+      "valueScore": 80,
+      "valueTier": "高价值",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32035,
+      "caseCode": "M35",
+      "sourceCaseId": "35",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Minimal olive oil label mockup",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "UI",
+        "Text"
+      ],
+      "styleLabels": [
+        "UI/界面",
+        "文字渲染"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/olive-oil-bottle.png",
+      "imageAlt": "Minimal olive oil label mockup example",
+      "prompt": "Create a clean minimal olive oil label mockup on a dark glass bottle. Brand TERRAVERDE in elegant sans caps, harvest 2023, varietal KORONEIKI, region PUGLIA. Small illustrated motif of an olive branch. Textured cream label paper with subtle foil on the brand name. Single studio light. No real producer branding, no watermark.",
+      "promptPreview": "Create a clean minimal olive oil label mockup on a dark glass bottle. Brand TERRAVERDE in elegant sans caps, harvest 2023, varietal KORONEIKI, region PUGLIA. Small illustrated motif of an olive branch. Textured cream label paper with subtle",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32036,
+      "caseCode": "M36",
+      "sourceCaseId": "36",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Theatre playbill cover",
+      "category": "Posters & Typography",
+      "categoryLabel": "海报与排版",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "Poster"
+      ],
+      "styleLabels": [
+        "海报排版"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/a-long-way-home.png",
+      "imageAlt": "Theatre playbill cover example",
+      "prompt": "Create a theatre playbill cover for a small regional company's new production. Title A LONG WAY HOME across two lines in a classic display serif, below it BY R. KAYA, SPRING SEASON, directed by N. OZMEN. Warm terracotta on cream paper, a single hand drawn ornament of a door half open. Generous margins, serious and unshowy. No watermark.",
+      "promptPreview": "Create a theatre playbill cover for a small regional company's new production. Title A LONG WAY HOME across two lines in a classic display serif, below it BY R. KAYA, SPRING SEASON, directed by N. OZMEN. Warm terracotta on cream paper, a si",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32037,
+      "caseCode": "M37",
+      "sourceCaseId": "37",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Bookstore event poster",
+      "category": "Charts & Infographics",
+      "categoryLabel": "图表与信息图",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "Infographic"
+      ],
+      "styleLabels": [
+        "图表/信息图"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/bookstore-event-poster.png",
+      "imageAlt": "Bookstore event poster example",
+      "prompt": "Create a charming independent bookstore event poster. Hand lettered title READINGS EVERY SATURDAY, below a schedule with four upcoming guests and their book titles in a serif: J. CALLOWAY — SALT AND THE ORCHARD, N. BASTOS — MORNING WITHOUT MAPS, E. LINDGREN — THE BORROWED YEAR, T. OKAFOR — STILL WATER KNOWS. Cream paper, warm ink. No watermark.",
+      "promptPreview": "Create a charming independent bookstore event poster. Hand lettered title READINGS EVERY SATURDAY, below a schedule with four upcoming guests and their book titles in a serif: J. CALLOWAY — SALT AND THE ORCHARD, N. BASTOS — MORNING WITHOUT ",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32038,
+      "caseCode": "M38",
+      "sourceCaseId": "38",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Luxury fountain pen magazine ad",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "UI",
+        "Edit",
+        "Text"
+      ],
+      "styleLabels": [
+        "UI/界面",
+        "编辑/换场景",
+        "文字渲染"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/fountain-pen.png",
+      "imageAlt": "Luxury fountain pen magazine ad example",
+      "prompt": "Create a full page magazine advertisement layout for a luxury fountain pen. Hero photograph of the pen on dark marble, dramatic single light source. Small tagline at the bottom reading WHAT YOU WRITE SHOULD OUTLAST YOU, brand name CLERMONT & HALE set in a delicate serif above. Editorial restraint, no overlay text anywhere else. No real brand, no watermark.",
+      "promptPreview": "Create a full page magazine advertisement layout for a luxury fountain pen. Hero photograph of the pen on dark marble, dramatic single light source. Small tagline at the bottom reading WHAT YOU WRITE SHOULD OUTLAST YOU, brand name CLERMONT ",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32039,
+      "caseCode": "M39",
+      "sourceCaseId": "39",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Loose leaf tea tin mockup",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "UI"
+      ],
+      "styleLabels": [
+        "UI/界面"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/tea-tin-mockup.png",
+      "imageAlt": "Loose leaf tea tin mockup example",
+      "prompt": "Create a product packaging mockup for a specialty loose leaf tea tin. Matte off white canister standing upright, brand name HIGHLAND STEEP in a confident serif, origin JAPAN / URESHINO, tasting notes SWEET RICE, JASMINE, STONE FRUIT on the lower third. A small hand drawn mountain ridge illustration. Studio light, subtle shadow. No watermark.",
+      "promptPreview": "Create a product packaging mockup for a specialty loose leaf tea tin. Matte off white canister standing upright, brand name HIGHLAND STEEP in a confident serif, origin JAPAN / URESHINO, tasting notes SWEET RICE, JASMINE, STONE FRUIT on the ",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 32040,
+      "caseCode": "M40",
+      "sourceCaseId": "40",
+      "sourceId": "morphic",
+      "sourceName": "Morphic GPT Image 2 Prompt Library",
+      "title": "Waterfront real estate brochure",
+      "category": "Charts & Infographics",
+      "categoryLabel": "图表与信息图",
+      "sourceCategory": "Morphic Prompt Library",
+      "styles": [
+        "Infographic",
+        "Text"
+      ],
+      "styleLabels": [
+        "图表/信息图",
+        "文字渲染"
+      ],
+      "scenes": [
+        "Morphic Prompt Library",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Morphic Prompt Library",
+        "网页来源"
+      ],
+      "imageUrl": "https://morphic.com/images/resources/how-to/chatgpt-images-2.0-prompts/harborstone-quarter.png",
+      "imageAlt": "Waterfront real estate brochure example",
+      "prompt": "Create a high end real estate brochure spread for a new waterfront townhouse development. Left page features a hero architectural photograph at golden hour. Right page has the name HARBORSTONE QUARTER in a confident serif at the top, a paragraph of marketing copy, a small site plan diagram, and three key specs: 28 TOWNHOUSES, 3 TO 4 STOREYS, 6 RETAIL UNITS. Muted coastal stone palette. No watermark.",
+      "promptPreview": "Create a high end real estate brochure spread for a new waterfront townhouse development. Left page features a hero architectural photograph at golden hour. Right page has the name HARBORSTONE QUARTER in a confident serif at the top, a para",
+      "promptKind": "英文",
+      "sourceLabel": "Morphic prompt library",
+      "sourceUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "githubUrl": "https://morphic.com/resources/how-to/chatgpt-images-2.0-prompts",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Morphic GPT Image 2 Prompt Library",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Morphic 40 prompt examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 33001,
+      "caseCode": "P1",
+      "sourceCaseId": "1",
+      "sourceId": "picsart-blog",
+      "sourceName": "Picsart GPT Image 2 Prompts",
+      "title": "ceramic cappuccino cup sits on a sunlit wooden cafe table by a window.",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "Picsart Prompt Guide",
+      "styles": [
+        "UI",
+        "Text"
+      ],
+      "styleLabels": [
+        "UI/界面",
+        "文字渲染"
+      ],
+      "scenes": [
+        "Picsart Prompt Guide",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Picsart Prompt Guide",
+        "网页来源"
+      ],
+      "imageUrl": "https://cdnblog.picsart.com/2026/05/gpt-image-2-prompts-create-02.avif?type=webp",
+      "imageAlt": "ceramic cappuccino cup sits on a sunlit wooden cafe table by a window. example",
+      "prompt": "Photorealistic 9:16 vertical photo. A ceramic cappuccino cup sits on a sunlit wooden cafe table by a window. Soft golden-hour light from camera-left, long warm shadow across the saucer, thin steam rising from the foam. Subtle 35mm film grain. No text, no watermark.",
+      "promptPreview": "Photorealistic 9:16 vertical photo. A ceramic cappuccino cup sits on a sunlit wooden cafe table by a window. Soft golden-hour light from camera-left, long warm shadow across the saucer, thin steam rising from the foam. Subtle 35mm film grai",
+      "promptKind": "英文",
+      "sourceLabel": "Picsart blog prompt guide",
+      "sourceUrl": "https://picsart.com/blog/gpt-image-2-prompts/",
+      "githubUrl": "https://picsart.com/blog/gpt-image-2-prompts/",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Picsart GPT Image 2 Prompts",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Picsart prompt + output examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 33002,
+      "caseCode": "P2",
+      "sourceCaseId": "2",
+      "sourceId": "picsart-blog",
+      "sourceName": "Picsart GPT Image 2 Prompts",
+      "title": "Shoot product photos for online shops",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "Picsart Prompt Guide",
+      "styles": [
+        "UI",
+        "Text"
+      ],
+      "styleLabels": [
+        "UI/界面",
+        "文字渲染"
+      ],
+      "scenes": [
+        "Picsart Prompt Guide",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Picsart Prompt Guide",
+        "网页来源"
+      ],
+      "imageUrl": "https://cdnblog.picsart.com/2026/05/gpt-image-2-prompts-create-03.avif?type=webp",
+      "imageAlt": "Shoot product photos for online shops example",
+      "prompt": "Photorealistic 4:5 product shot. A small-batch hot sauce bottle on a charcoal slate surface, clean composition, natural daylight from camera-right, soft contact shadow under the bottle. The label reads “WILD ROOT CHILI HOT SAUCE” in clean sans-serif type. Background fades to dark gray. No extra props, no watermark.",
+      "promptPreview": "Photorealistic 4:5 product shot. A small-batch hot sauce bottle on a charcoal slate surface, clean composition, natural daylight from camera-right, soft contact shadow under the bottle. The label reads “WILD ROOT CHILI HOT SAUCE” in clean s",
+      "promptKind": "中文",
+      "sourceLabel": "Picsart blog prompt guide",
+      "sourceUrl": "https://picsart.com/blog/gpt-image-2-prompts/",
+      "githubUrl": "https://picsart.com/blog/gpt-image-2-prompts/",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Picsart GPT Image 2 Prompts",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Picsart prompt + output examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 33003,
+      "caseCode": "P3",
+      "sourceCaseId": "3",
+      "sourceId": "picsart-blog",
+      "sourceName": "Picsart GPT Image 2 Prompts",
+      "title": "Set aesthetic wallpapers and concept art",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "Picsart Prompt Guide",
+      "styles": [
+        "UI",
+        "Text"
+      ],
+      "styleLabels": [
+        "UI/界面",
+        "文字渲染"
+      ],
+      "scenes": [
+        "Picsart Prompt Guide",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Picsart Prompt Guide",
+        "网页来源"
+      ],
+      "imageUrl": "https://cdnblog.picsart.com/2026/05/gpt-image-2-prompts-create-04.avif?type=webp",
+      "imageAlt": "Set aesthetic wallpapers and concept art example",
+      "prompt": "9:19.5 phone wallpaper. A foggy pine forest at dawn, cool blue-gray mist drifting between trees, faint warm light leaking through the canopy. Palette: cool slate, mossy green, pale gold, soft white. Light film grain, slightly painterly atmosphere. No text, no watermark.",
+      "promptPreview": "9:19.5 phone wallpaper. A foggy pine forest at dawn, cool blue-gray mist drifting between trees, faint warm light leaking through the canopy. Palette: cool slate, mossy green, pale gold, soft white. Light film grain, slightly painterly atmo",
+      "promptKind": "英文",
+      "sourceLabel": "Picsart blog prompt guide",
+      "sourceUrl": "https://picsart.com/blog/gpt-image-2-prompts/",
+      "githubUrl": "https://picsart.com/blog/gpt-image-2-prompts/",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Picsart GPT Image 2 Prompts",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Picsart prompt + output examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 33004,
+      "caseCode": "P4",
+      "sourceCaseId": "4",
+      "sourceId": "picsart-blog",
+      "sourceName": "Picsart GPT Image 2 Prompts",
+      "title": "Swap the background on a photo",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "Picsart Prompt Guide",
+      "styles": [
+        "UI",
+        "Edit"
+      ],
+      "styleLabels": [
+        "UI/界面",
+        "编辑/换场景"
+      ],
+      "scenes": [
+        "Picsart Prompt Guide",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Picsart Prompt Guide",
+        "网页来源"
+      ],
+      "imageUrl": "https://cdnblog.picsart.com/2026/05/gpt-image-2-prompts-edit-07.avif?type=webp",
+      "imageAlt": "Swap the background on a photo example",
+      "prompt": "Replace the background only. Keep the subject’s face, pose, hair, clothing, and lighting direction identical. New background: a sunlit Mediterranean balcony with terracotta tiles and a soft horizon line. Match the original light direction and shadows on the subject. Photorealistic.",
+      "promptPreview": "Replace the background only. Keep the subject’s face, pose, hair, clothing, and lighting direction identical. New background: a sunlit Mediterranean balcony with terracotta tiles and a soft horizon line. Match the original light direction a",
+      "promptKind": "中文",
+      "sourceLabel": "Picsart blog prompt guide",
+      "sourceUrl": "https://picsart.com/blog/gpt-image-2-prompts/",
+      "githubUrl": "https://picsart.com/blog/gpt-image-2-prompts/",
+      "featured": false,
+      "valueScore": 80,
+      "valueTier": "高价值",
+      "author": "Picsart GPT Image 2 Prompts",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Picsart prompt + output examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 33005,
+      "caseCode": "P5",
+      "sourceCaseId": "5",
+      "sourceId": "picsart-blog",
+      "sourceName": "Picsart GPT Image 2 Prompts",
+      "title": "Turn a photo into a new art style",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "Picsart Prompt Guide",
+      "styles": [
+        "UI",
+        "Edit",
+        "Text"
+      ],
+      "styleLabels": [
+        "UI/界面",
+        "编辑/换场景",
+        "文字渲染"
+      ],
+      "scenes": [
+        "Picsart Prompt Guide",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Picsart Prompt Guide",
+        "网页来源"
+      ],
+      "imageUrl": "https://cdnblog.picsart.com/2026/05/gpt-image-2-prompts-edit-05.avif?type=webp",
+      "imageAlt": "Turn a photo into a new art style example",
+      "prompt": "Convert this photo into a watercolor illustration. Soft cold-pressed paper texture, visible brushwork at the edges, muted palette of dusty blue, soft ochre, and ivory. Keep the subject’s pose, composition, and face recognizable. No hard outline, no digital gloss.",
+      "promptPreview": "Convert this photo into a watercolor illustration. Soft cold-pressed paper texture, visible brushwork at the edges, muted palette of dusty blue, soft ochre, and ivory. Keep the subject’s pose, composition, and face recognizable. No hard out",
+      "promptKind": "中文",
+      "sourceLabel": "Picsart blog prompt guide",
+      "sourceUrl": "https://picsart.com/blog/gpt-image-2-prompts/",
+      "githubUrl": "https://picsart.com/blog/gpt-image-2-prompts/",
+      "featured": true,
+      "valueScore": 88,
+      "valueTier": "精选",
+      "author": "Picsart GPT Image 2 Prompts",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Picsart prompt + output examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    },
+    {
+      "id": 33006,
+      "caseCode": "P6",
+      "sourceCaseId": "6",
+      "sourceId": "picsart-blog",
+      "sourceName": "Picsart GPT Image 2 Prompts",
+      "title": "Change the lighting, weather, or time of day",
+      "category": "UI & Interfaces",
+      "categoryLabel": "UI 与界面",
+      "sourceCategory": "Picsart Prompt Guide",
+      "styles": [
+        "UI",
+        "Edit"
+      ],
+      "styleLabels": [
+        "UI/界面",
+        "编辑/换场景"
+      ],
+      "scenes": [
+        "Picsart Prompt Guide",
+        "Web Source"
+      ],
+      "sceneLabels": [
+        "Picsart Prompt Guide",
+        "网页来源"
+      ],
+      "imageUrl": "https://cdnblog.picsart.com/2026/05/gpt-image-2-prompts-edit-06.avif?type=webp",
+      "imageAlt": "Change the lighting, weather, or time of day example",
+      "prompt": "Change the lighting and weather only. Keep the subject, composition, camera angle, and object placement exactly as is. Target: late autumn golden hour after rain, warm low light from camera-right, faint mist in the distance, soft wet reflections on the pavement.",
+      "promptPreview": "Change the lighting and weather only. Keep the subject, composition, camera angle, and object placement exactly as is. Target: late autumn golden hour after rain, warm low light from camera-right, faint mist in the distance, soft wet reflec",
+      "promptKind": "英文",
+      "sourceLabel": "Picsart blog prompt guide",
+      "sourceUrl": "https://picsart.com/blog/gpt-image-2-prompts/",
+      "githubUrl": "https://picsart.com/blog/gpt-image-2-prompts/",
+      "featured": false,
+      "valueScore": 80,
+      "valueTier": "高价值",
+      "author": "Picsart GPT Image 2 Prompts",
+      "aspect": "",
+      "resolution": "",
+      "sourceNote": "Picsart prompt + output examples",
+      "riskNote": "第三方图文案例仅用于学习拆解；发布或商用前回到原页面确认授权。",
+      "publishAngle": "适合沉淀为 Image2 能力边界与复刻提示词样例。"
+    }
+  ]
+}

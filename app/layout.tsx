@@ -3,8 +3,8 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Seedance 2.0 满血版周卡创作台",
-  description: "注册、卡密兑换、每日额度、AI 视频生成队列与成片库 MVP"
+  title: "Image2 作图中控台",
+  description: "面向动作迁移项目的人物穿搭图、视频首帧图、提示词模板与素材矩阵工作台"
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
