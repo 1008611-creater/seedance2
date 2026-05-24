@@ -375,6 +375,31 @@ export function Image2Workbench({ initialData }: { initialData: Image2WorkbenchD
           })}
         </nav>
 
+        <section className="image2-workbench-sidebar-tools" aria-label="作图工具">
+          <label>
+            <span>出图尺寸</span>
+            <select value={size} onChange={(event) => setSize(event.target.value)}>
+              {sizeOptions.map((item) => (
+                <option value={item.value} key={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button type="button" onClick={() => setIsUploadOpen(true)}>
+            <Upload aria-hidden="true" />
+            上传素材
+          </button>
+          <button type="button" onClick={() => setIsFeedbackOpen(true)}>
+            <MessageSquare aria-hidden="true" />
+            体验反馈
+          </button>
+          <button type="button" onClick={() => void refreshData()}>
+            <RotateCcw aria-hidden="true" />
+            刷新素材
+          </button>
+        </section>
+
         <section className="image2-workbench-channel">
           <div>
             <span className="live-dot" />
@@ -397,44 +422,6 @@ export function Image2Workbench({ initialData }: { initialData: Image2WorkbenchD
       </aside>
 
       <section className="image2-workbench-main">
-        <header className="image2-workbench-topbar">
-          <div>
-            <p>{data.sourceLabel}</p>
-            <h1>人物穿搭图到视频首帧图的团队作图网站</h1>
-          </div>
-          <div className="image2-workbench-top-actions">
-            <select value={size} onChange={(event) => setSize(event.target.value)} aria-label="出图尺寸">
-              {sizeOptions.map((item) => (
-                <option value={item.value} key={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-            <button type="button" onClick={() => setIsUploadOpen(true)}>
-              <Upload aria-hidden="true" />
-              上传素材
-            </button>
-            <button type="button" onClick={() => setIsFeedbackOpen(true)}>
-              <MessageSquare aria-hidden="true" />
-              体验反馈
-            </button>
-            <button type="button" onClick={() => void refreshData()}>
-              <RotateCcw aria-hidden="true" />
-              刷新素材
-            </button>
-          </div>
-        </header>
-
-        <section className="image2-workbench-metrics" aria-label="素材概览">
-          {data.metrics.map((item) => (
-            <div key={item.label}>
-              <strong>{item.value}</strong>
-              <span>{item.label}</span>
-              <small>{item.detail}</small>
-            </div>
-          ))}
-        </section>
-
         {activeView === "workflow" ? (
           <WorkflowView
             copied={copied}
@@ -603,33 +590,6 @@ function WorkflowView(props: {
 
   return (
     <section className="image2-workbench-three-window">
-      <div className="image2-flow-rail" aria-label="当前作图进度">
-        <article className={outfitReady ? "ready" : "waiting"}>
-          <span>01</span>
-          <div>
-            <strong>选人物 + 服装</strong>
-            <small>{outfitReady ? "穿搭图可以生成" : "先补齐人物图和服装图"}</small>
-          </div>
-          <BadgeCheck aria-hidden="true" />
-        </article>
-        <article className={props.latestOutfit || props.selectedResultAsset ? "ready" : "waiting"}>
-          <span>02</span>
-          <div>
-            <strong>生成穿搭图</strong>
-            <small>{props.latestOutfit || props.selectedResultAsset ? "可作为首帧主图" : "生成后自动进入结果库"}</small>
-          </div>
-          <Shirt aria-hidden="true" />
-        </article>
-        <article className={frameReady ? "ready" : "waiting"}>
-          <span>03</span>
-          <div>
-            <strong>合成视频首帧</strong>
-            <small>{frameReady ? "首帧图可以生成" : "需要穿搭图和场景图"}</small>
-          </div>
-          <MonitorPlay aria-hidden="true" />
-        </article>
-      </div>
-
       <div className="image2-workflow-layout">
         <div className="image2-workbench-window reference-window">
           <WindowHead index="01" title="参考篮" subtitle="直接从这里换图，不必回头找入口" />
