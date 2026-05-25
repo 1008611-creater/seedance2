@@ -131,6 +131,7 @@ type CaseAssetState = {
 };
 
 type AccountAuthMode = "login" | "signup" | "recover";
+type AccountOtpMode = "signup" | "recovery" | null;
 
 type AccountAuthStatus = {
   message: string;
@@ -615,6 +616,25 @@ const recoverSupabasePassword = async (email: string, redirectTo?: string) => {
     method: "POST",
     body: JSON.stringify({ email })
   });
+};
+
+const verifySupabaseEmailCode = async (email: string, token: string, type: Exclude<AccountOtpMode, null>) =>
+  toAccountSession(
+    await supabaseAuthRequest("verify", {
+      method: "POST",
+      body: JSON.stringify({ email, token, type })
+    })
+  );
+
+const updateSupabasePassword = async (accessToken: string, password: string) => {
+  await supabaseAuthRequest(
+    "user",
+    {
+      method: "PUT",
+      body: JSON.stringify({ password })
+    },
+    accessToken
+  );
 };
 
 const signOutSupabaseSession = async (accessToken: string) => {
@@ -1830,6 +1850,8 @@ export function Image2CaseLibrary() {
   const [accountAuthMode, setAccountAuthMode] = useState<AccountAuthMode>("login");
   const [accountEmail, setAccountEmail] = useState("");
   const [accountPassword, setAccountPassword] = useState("");
+  const [accountOtpCode, setAccountOtpCode] = useState("");
+  const [accountOtpMode, setAccountOtpMode] = useState<AccountOtpMode>(null);
   const [accountPasswordVisible, setAccountPasswordVisible] = useState(false);
   const [accountAuthStatus, setAccountAuthStatus] = useState<AccountAuthStatus>({
     message: isSupabaseAuthConfigured ? "可以使用账号登录" : "账号登录未配置",
@@ -2184,27 +2206,92 @@ export function Image2CaseLibrary() {
     setCaseAssetState((current) => persistCaseAssetState(updater(current)));
   };
 
+  const verifyPersistedSession = (session: Image2AccountSession, fallbackEmail: string) =>
+    persistAccountSession({
+      ...session,
+      user: {
+        ...session.user,
+        email: session.user.email ?? fallbackEmail
+      }
+    });
+
   const submitAccountAuth = async (event: FormEvent) => {
     event.preventDefault();
     if (!isSupabaseAuthConfigured) return;
 
     const email = accountEmail.trim();
     const password = accountPassword.trim();
+
+    if (accountOtpMode === "signup") {
+      const token = accountOtpCode.trim();
+      if (!email || !token) {
+        setAccountAuthStatus({ message: "请输入邮箱验证码", tone: "error" });
+        return;
+      }
+
+      setAccountAuthStatus({ message: "正在验证邮箱验证码...", tone: "busy" });
+      try {
+        const session = verifyPersistedSession(await verifySupabaseEmailCode(email, token, "signup"), email);
+        setAccountSession(session);
+        setAccountEmail(session.user.email ?? email);
+        setAccountPassword("");
+        setAccountOtpCode("");
+        setAccountOtpMode(null);
+        setAccountAuthStatus({ message: "注册并登录成功", tone: "success" });
+        closeAccountModal();
+      } catch (error) {
+        setAccountAuthStatus({
+          message: toUserFacingError(error instanceof Error ? error.message : error, "验证码校验失败。"),
+          tone: "error"
+        });
+      }
+      return;
+    }
+
+    if (accountOtpMode === "recovery") {
+      const token = accountOtpCode.trim();
+      if (!email || !token || password.length < 6) {
+        setAccountAuthStatus({ message: "请输入邮箱验证码和至少 6 位新密码", tone: "error" });
+        return;
+      }
+
+      setAccountAuthStatus({ message: "正在验证并重置密码...", tone: "busy" });
+      try {
+        const session = verifyPersistedSession(await verifySupabaseEmailCode(email, token, "recovery"), email);
+        await updateSupabasePassword(session.accessToken, password);
+        setAccountSession(session);
+        setAccountEmail(session.user.email ?? email);
+        setAccountPassword("");
+        setAccountOtpCode("");
+        setAccountOtpMode(null);
+        setAccountAuthStatus({ message: "密码已重置并登录", tone: "success" });
+        closeAccountModal();
+      } catch (error) {
+        setAccountAuthStatus({
+          message: toUserFacingError(error instanceof Error ? error.message : error, "验证码校验或密码重置失败。"),
+          tone: "error"
+        });
+      }
+      return;
+    }
+
     if (accountAuthMode === "recover") {
       if (!email) {
         setAccountAuthStatus({ message: "请输入要找回密码的邮箱", tone: "error" });
         return;
       }
 
-      setAccountAuthStatus({ message: "正在发送重置邮件...", tone: "busy" });
+      setAccountAuthStatus({ message: "正在发送邮箱验证码...", tone: "busy" });
 
       try {
         await recoverSupabasePassword(email, getAuthCallbackUrl("recovery"));
+        setAccountOtpMode("recovery");
+        setAccountOtpCode("");
         setAccountPassword("");
-        setAccountAuthStatus({ message: "已发送重置邮件，请打开邮箱里的链接修改密码", tone: "success" });
+        setAccountAuthStatus({ message: "验证码已发送，请输入验证码并设置新密码", tone: "success" });
       } catch (error) {
         setAccountAuthStatus({
-          message: toUserFacingError(error instanceof Error ? error.message : error, "重置邮件发送失败。"),
+          message: toUserFacingError(error instanceof Error ? error.message : error, "验证码发送失败。"),
           tone: "error"
         });
       }
@@ -2216,7 +2303,7 @@ export function Image2CaseLibrary() {
       return;
     }
 
-    setAccountAuthStatus({ message: accountAuthMode === "login" ? "正在登录..." : "正在注册...", tone: "busy" });
+    setAccountAuthStatus({ message: accountAuthMode === "login" ? "正在登录..." : "正在发送注册验证码...", tone: "busy" });
 
     try {
       const session =
@@ -2225,13 +2312,13 @@ export function Image2CaseLibrary() {
           : await signUpWithSupabasePassword(email, password, getAuthCallbackUrl("confirm"));
 
       if (!session) {
-        setAccountAuthStatus({ message: "注册成功，请完成邮箱验证后登录", tone: "success" });
-        setAccountAuthMode("login");
-        setAccountPassword("");
+        setAccountOtpMode("signup");
+        setAccountOtpCode("");
+        setAccountAuthStatus({ message: "注册验证码已发送，请查看邮箱并输入验证码", tone: "success" });
         return;
       }
 
-      setAccountSession(persistAccountSession(session));
+      setAccountSession(verifyPersistedSession(session, email));
       setAccountEmail(session.user.email ?? email);
       setAccountPassword("");
       setAccountAuthStatus({ message: accountAuthMode === "login" ? "账号已登录" : "注册并登录成功", tone: "success" });
@@ -2260,6 +2347,8 @@ export function Image2CaseLibrary() {
     setMembership(null);
     setLicenseCodeDraft("");
     setAccountPassword("");
+    setAccountOtpCode("");
+    setAccountOtpMode(null);
     setAccountPasswordVisible(false);
     setAccountAuthStatus({ message: "已退出账号，本地资产仍保留", tone: "success" });
   };
@@ -2655,11 +2744,48 @@ export function Image2CaseLibrary() {
   const membershipSummary = activeMembership
     ? `${activeMembership.plan} · 每日 ${activeMembership.dailyLimit} 次 · ${activeMembership.resolution} · 至 ${formatMembershipDate(activeMembership.endsAt)}`
     : membershipStatus.message;
+  const accountNeedsCode = Boolean(accountOtpMode);
   const accountSubmitLabel =
-    accountAuthMode === "login" ? "登录账号" : accountAuthMode === "signup" ? "注册账号" : "发送重置邮件";
+    accountOtpMode === "signup"
+      ? "验证并完成注册"
+      : accountOtpMode === "recovery"
+        ? "验证并重置密码"
+        : accountAuthMode === "login"
+          ? "登录账号"
+          : accountAuthMode === "signup"
+            ? "发送注册验证码"
+            : "发送找回验证码";
+  const shouldShowAccountPassword =
+    accountOtpMode === "signup" ? false : accountAuthMode !== "recover" || accountOtpMode === "recovery";
+  const accountPasswordPlaceholder =
+    accountOtpMode === "recovery" ? "新密码（至少 6 位）" : accountAuthMode === "signup" ? "设置密码（至少 6 位）" : "密码";
+  const accountPasswordAutocomplete =
+    accountOtpMode === "recovery" || accountAuthMode === "signup" ? "new-password" : "current-password";
+  const accountModalTitle = accountSession
+    ? "账号中心"
+    : accountOtpMode === "signup"
+      ? "输入注册验证码"
+      : accountOtpMode === "recovery"
+        ? "验证邮箱并重置密码"
+        : accountAuthMode === "recover"
+          ? "找回密码"
+          : "登录 / 注册";
+  const accountModalDescription = accountSession
+    ? "退出后可以切换账号，继续使用收藏和权益。"
+    : accountOtpMode === "signup"
+      ? "验证码已发送到邮箱，输入后即可完成注册。"
+      : accountOtpMode === "recovery"
+        ? "验证码已发送到邮箱，输入验证码并设置新密码。"
+        : accountAuthMode === "signup"
+          ? "填写邮箱和密码，下一步通过邮箱验证码完成注册。"
+          : accountAuthMode === "recover"
+            ? "填写邮箱后接收验证码，用验证码设置新密码。"
+            : "登录后可保存收藏、项目夹、备注和会员权益。";
   const openAccountModal = () => {
     if (!accountSession) {
       setAccountAuthMode("login");
+      setAccountOtpMode(null);
+      setAccountOtpCode("");
       setAccountAuthStatus({
         message: isSupabaseAuthConfigured ? "可以使用账号登录" : "账号登录未配置",
         tone: "idle"
@@ -2674,16 +2800,65 @@ export function Image2CaseLibrary() {
   const closeAccountModal = () => {
     setIsAuthModalOpen(false);
     setAccountPassword("");
+    setAccountOtpCode("");
+    setAccountOtpMode(null);
     setAccountPasswordVisible(false);
   };
   const switchAccountMode = (mode: AccountAuthMode) => {
     setAccountAuthMode(mode);
+    setAccountOtpMode(null);
+    setAccountOtpCode("");
     setAccountPassword("");
     setAccountPasswordVisible(false);
     setAccountAuthStatus({
-      message: mode === "login" ? "切换为登录" : mode === "signup" ? "切换为注册" : "输入邮箱接收重置邮件",
+      message:
+        mode === "login"
+          ? "输入邮箱和密码登录"
+          : mode === "signup"
+            ? "输入邮箱和密码后接收验证码"
+            : "输入邮箱接收找回验证码",
       tone: "idle"
     });
+  };
+  const resendAccountOtp = async () => {
+    if (!isSupabaseAuthConfigured || !accountOtpMode) return;
+    const email = accountEmail.trim();
+    if (!email) {
+      setAccountAuthStatus({ message: "请输入邮箱", tone: "error" });
+      return;
+    }
+
+    if (accountOtpMode === "signup") {
+      const password = accountPassword.trim();
+      if (password.length < 6) {
+        setAccountAuthStatus({ message: "请先输入至少 6 位密码", tone: "error" });
+        return;
+      }
+      setAccountAuthStatus({ message: "正在重新发送注册验证码...", tone: "busy" });
+      try {
+        await signUpWithSupabasePassword(email, password, getAuthCallbackUrl("confirm"));
+        setAccountOtpCode("");
+        setAccountAuthStatus({ message: "注册验证码已重新发送", tone: "success" });
+      } catch (error) {
+        setAccountAuthStatus({
+          message: toUserFacingError(error instanceof Error ? error.message : error, "验证码重新发送失败。"),
+          tone: "error"
+        });
+      }
+      return;
+    }
+
+    setAccountAuthStatus({ message: "正在重新发送找回验证码...", tone: "busy" });
+    try {
+      await recoverSupabasePassword(email, getAuthCallbackUrl("recovery"));
+      setAccountOtpCode("");
+      setAccountAuthStatus({ message: "找回验证码已重新发送", tone: "success" });
+    } catch (error) {
+      setAccountAuthStatus({
+        message: toUserFacingError(error instanceof Error ? error.message : error, "验证码重新发送失败。"),
+        tone: "error"
+      });
+    }
   };
   const prepareWorkbenchEntry = () => {
     if (!accountSession) return false;
@@ -3202,8 +3377,8 @@ export function Image2CaseLibrary() {
             <div className="case-auth-modal-head">
               <div className="case-auth-modal-copy">
                 <small>Image2 Account</small>
-                <h2 id="case-auth-title">{accountSession ? "账号中心" : "登录 / 注册"}</h2>
-                <p>{accountSession ? "退出后可以切换账号，继续使用收藏和权益。" : "登录后可保存收藏、项目夹、备注和会员权益。"}</p>
+                <h2 id="case-auth-title">{accountModalTitle}</h2>
+                <p>{accountModalDescription}</p>
               </div>
               <button aria-label="关闭账号中心" type="button" onClick={closeAccountModal}>
                 <X aria-hidden="true" />
@@ -3229,6 +3404,7 @@ export function Image2CaseLibrary() {
                     <button
                       aria-pressed={accountAuthMode === "login"}
                       className={accountAuthMode === "login" ? "active" : ""}
+                      disabled={accountAuthStatus.tone === "busy" || accountNeedsCode}
                       type="button"
                       onClick={() => switchAccountMode("login")}
                     >
@@ -3237,6 +3413,7 @@ export function Image2CaseLibrary() {
                     <button
                       aria-pressed={accountAuthMode === "signup"}
                       className={accountAuthMode === "signup" ? "active" : ""}
+                      disabled={accountAuthStatus.tone === "busy" || accountNeedsCode}
                       type="button"
                       onClick={() => switchAccountMode("signup")}
                     >
@@ -3245,6 +3422,7 @@ export function Image2CaseLibrary() {
                     <button
                       aria-pressed={accountAuthMode === "recover"}
                       className={accountAuthMode === "recover" ? "active" : ""}
+                      disabled={accountAuthStatus.tone === "busy" || accountNeedsCode}
                       type="button"
                       onClick={() => switchAccountMode("recover")}
                     >
@@ -3256,17 +3434,28 @@ export function Image2CaseLibrary() {
                     <input
                       aria-label="账号邮箱"
                       autoComplete="email"
+                      disabled={accountAuthStatus.tone === "busy" || accountNeedsCode}
                       placeholder="邮箱"
                       type="email"
                       value={accountEmail}
                       onChange={(event) => setAccountEmail(event.target.value)}
                     />
-                    {accountAuthMode !== "recover" ? (
+                    {accountNeedsCode ? (
+                      <input
+                        aria-label="邮箱验证码"
+                        autoComplete="one-time-code"
+                        inputMode="numeric"
+                        placeholder="邮箱验证码"
+                        value={accountOtpCode}
+                        onChange={(event) => setAccountOtpCode(event.target.value.replace(/\s+/g, ""))}
+                      />
+                    ) : null}
+                    {shouldShowAccountPassword ? (
                       <div className="case-password-field">
                         <input
-                          aria-label="账号密码"
-                          autoComplete={accountAuthMode === "login" ? "current-password" : "new-password"}
-                          placeholder={accountAuthMode === "signup" ? "设置密码（至少 6 位）" : "密码"}
+                          aria-label={accountOtpMode === "recovery" ? "新密码" : "账号密码"}
+                          autoComplete={accountPasswordAutocomplete}
+                          placeholder={accountPasswordPlaceholder}
                           type={accountPasswordVisible ? "text" : "password"}
                           value={accountPassword}
                           onChange={(event) => setAccountPassword(event.target.value)}
@@ -3285,6 +3474,8 @@ export function Image2CaseLibrary() {
                       <button type="submit" disabled={accountAuthStatus.tone === "busy"}>
                         {accountAuthStatus.tone === "busy" ? (
                           <Loader2 className="spinning" aria-hidden="true" />
+                        ) : accountNeedsCode ? (
+                          <CheckCircle2 aria-hidden="true" />
                         ) : accountAuthMode === "recover" ? (
                           <RotateCcw aria-hidden="true" />
                         ) : (
@@ -3294,12 +3485,23 @@ export function Image2CaseLibrary() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => switchAccountMode(accountAuthMode === "signup" ? "login" : "signup")}
+                        disabled={accountAuthStatus.tone === "busy"}
+                        onClick={() => {
+                          if (accountNeedsCode) {
+                            void resendAccountOtp();
+                            return;
+                          }
+                          switchAccountMode(accountAuthMode === "signup" ? "login" : "signup");
+                        }}
                       >
-                        {accountAuthMode === "signup" ? "去登录" : "去注册"}
+                        {accountNeedsCode ? "重新发送验证码" : accountAuthMode === "signup" ? "去登录" : "去注册"}
                       </button>
                     </div>
-                    {accountAuthMode === "login" ? (
+                    {accountNeedsCode ? (
+                      <button className="case-account-link" type="button" onClick={() => switchAccountMode(accountAuthMode)}>
+                        重新填写邮箱
+                      </button>
+                    ) : accountAuthMode === "login" ? (
                       <button className="case-account-link" type="button" onClick={() => switchAccountMode("recover")}>
                         忘记密码
                       </button>
