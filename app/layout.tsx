@@ -3,8 +3,8 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Image2 作图中控台",
-  description: "面向动作迁移项目的人物穿搭图、视频首帧图、提示词模板与素材矩阵工作台"
+  title: "Image2 案例灵感库",
+  description: "高价值 Image2 案例、提示词结构和视频首帧参考"
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

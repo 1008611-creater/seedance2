@@ -39,14 +39,14 @@ export async function getImage2WorkbenchAccess(request: NextRequest): Promise<Wo
     return {
       isAuthenticated: false,
       isTeamMember: false,
-      message: "团队素材仅对登录且通过白名单的成员开放。",
+      message: "请先登录。",
       mode: "public"
     };
   }
 
   let user: Awaited<ReturnType<typeof getSupabaseUser>>;
   try {
-    user = await getSupabaseUser(request, "请先登录团队账号。");
+    user = await getSupabaseUser(request, "请先登录。");
   } catch (error) {
     throw new Image2WorkbenchAccessError(
       error instanceof Error ? error.message : "登录状态已失效，请重新登录。",
@@ -63,10 +63,10 @@ export async function getImage2WorkbenchAccess(request: NextRequest): Promise<Wo
     isAuthenticated: true,
     isTeamMember,
     message: isTeamMember
-      ? "团队成员已验证。"
+      ? "账号已验证。"
       : hasWhitelist
-        ? "该邮箱尚未加入团队白名单。"
-        : "团队白名单尚未配置。",
+        ? "请返回首页继续浏览。"
+        : "请返回首页继续浏览。",
     mode: isTeamMember ? "team" : "public"
   };
 }
@@ -74,15 +74,15 @@ export async function getImage2WorkbenchAccess(request: NextRequest): Promise<Wo
 export async function requireImage2WorkbenchTeamMember(request: NextRequest) {
   const token = getBearerToken(request);
   if (!token) {
-    throw new Image2WorkbenchAccessError("请先登录团队账号。", 401, "not_authenticated");
+    throw new Image2WorkbenchAccessError("请先登录。", 401, "not_authenticated");
   }
 
   const access = await getImage2WorkbenchAccess(request);
   if (!access.isTeamMember) {
     throw new Image2WorkbenchAccessError(
-      access.message || "该邮箱尚未加入团队白名单。",
+      access.message || "请返回首页继续浏览。",
       403,
-      access.message === "团队白名单尚未配置。" ? "not_configured" : "not_whitelisted"
+      configuredTeamEmails().size > 0 ? "not_whitelisted" : "not_configured"
     );
   }
 
@@ -115,9 +115,9 @@ export async function loadImage2WorkbenchDataForRequest(request: NextRequest) {
   if (!access.isAuthenticated) return loadPublicImage2WorkbenchData(access);
   if (!access.isTeamMember) {
     throw new Image2WorkbenchAccessError(
-      access.message || "该邮箱尚未加入团队白名单。",
+      access.message || "请返回首页继续浏览。",
       403,
-      access.message === "团队白名单尚未配置。" ? "not_configured" : "not_whitelisted"
+      configuredTeamEmails().size > 0 ? "not_whitelisted" : "not_configured"
     );
   }
   return loadImage2WorkbenchData(access);

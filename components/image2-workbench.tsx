@@ -239,9 +239,10 @@ export function Image2Workbench({ initialData }: { initialData: Image2WorkbenchD
   const [accountPassword, setAccountPassword] = useState("");
   const [accountAuthMode, setAccountAuthMode] = useState<AccountAuthMode>("login");
   const [accountAuthStatus, setAccountAuthStatus] = useState<AccountAuthStatus>({
-    message: isSupabaseAuthConfigured ? "团队成员登录后进入工作台。" : "账号入口未配置。",
+    message: isSupabaseAuthConfigured ? "正在检查账号..." : "账号入口未配置。",
     tone: "idle"
   });
+  const [isAccessCheckComplete, setIsAccessCheckComplete] = useState(!isSupabaseAuthConfigured);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [activeView, setActiveView] = useState<WorkbenchView>("workflow");
   const [activeAssetKind, setActiveAssetKind] = useState<WorkbenchAssetKind>("person");
@@ -280,7 +281,7 @@ export function Image2Workbench({ initialData }: { initialData: Image2WorkbenchD
     setData(payload);
     setSelectedIds((current) => ({ ...initialSelections(payload.assets), ...current }));
     setAccountAuthStatus({
-      message: payload.access?.message ?? "团队工作台已解锁。",
+      message: payload.access?.isTeamMember ? "已进入创作界面。" : "正在返回首页。",
       tone: payload.access?.isTeamMember ? "success" : "idle"
     });
     return payload;
@@ -291,10 +292,10 @@ export function Image2Workbench({ initialData }: { initialData: Image2WorkbenchD
     setAccountEmail(session.user.email ?? "");
     try {
       await refreshData(session);
-    } catch (error) {
+    } catch {
       setAccountAuthStatus({
-        message: error instanceof Error ? error.message : "团队权限校验失败。",
-        tone: "error"
+        message: "正在返回首页。",
+        tone: "idle"
       });
     }
   }
@@ -359,7 +360,8 @@ export function Image2Workbench({ initialData }: { initialData: Image2WorkbenchD
     setData(initialData);
     setSelectedIds(initialSelections(initialData.assets));
     setAccountPassword("");
-    setAccountAuthStatus({ message: "已退出团队账号。", tone: "success" });
+    setAccountAuthStatus({ message: "已退出。", tone: "success" });
+    window.location.replace("/");
   }
 
   useEffect(() => {
@@ -377,8 +379,17 @@ export function Image2Workbench({ initialData }: { initialData: Image2WorkbenchD
   useEffect(() => {
     if (!isSupabaseAuthConfigured) return;
     const saved = readAccountSession();
-    if (saved) void restoreTeamSession(saved);
+    if (!saved) {
+      setIsAccessCheckComplete(true);
+      return;
+    }
+    void restoreTeamSession(saved).finally(() => setIsAccessCheckComplete(true));
   }, []);
+
+  useEffect(() => {
+    if (!isAccessCheckComplete || data.access?.isTeamMember) return;
+    window.location.replace("/");
+  }, [data.access?.isTeamMember, isAccessCheckComplete]);
 
   useEffect(() => {
     window.localStorage.setItem(
@@ -578,38 +589,18 @@ export function Image2Workbench({ initialData }: { initialData: Image2WorkbenchD
   const isTeamMember = data.access?.isTeamMember === true;
   if (!isTeamMember) {
     return (
-      <>
-        <PublicWorkbenchGate
-          accountEmail={accountSession?.user.email ?? accountEmail}
-          authStatus={accountAuthStatus}
-          featuredCases={data.featuredCases}
-          isAuthConfigured={isSupabaseAuthConfigured}
-          isAuthenticated={Boolean(accountSession)}
-          onOpenAuth={() => setIsAuthModalOpen(true)}
-          onSignOut={() => void signOutAccount()}
-          referenceLinks={data.referenceLinks}
-        />
-        {isAuthModalOpen ? (
-          <WorkbenchAuthModal
-            authMode={accountAuthMode}
-            authStatus={accountAuthStatus}
-            email={accountEmail}
-            isConfigured={isSupabaseAuthConfigured}
-            onClose={() => setIsAuthModalOpen(false)}
-            onEmailChange={setAccountEmail}
-            onModeChange={(mode) => {
-              setAccountAuthMode(mode);
-              setAccountAuthStatus({
-                message: mode === "recover" ? "输入邮箱后发送重置邮件。" : "团队成员登录后进入工作台。",
-                tone: "idle"
-              });
-            }}
-            onPasswordChange={setAccountPassword}
-            onSubmit={submitAccountAuth}
-            password={accountPassword}
-          />
-        ) : null}
-      </>
+      <main
+        aria-label="正在打开"
+        style={{
+          minHeight: "100vh",
+          display: "grid",
+          placeItems: "center",
+          color: "#142023",
+          background: "#f5f2eb"
+        }}
+      >
+        <p style={{ margin: 0, fontSize: 14, fontWeight: 800 }}>正在打开...</p>
+      </main>
     );
   }
 

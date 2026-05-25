@@ -111,6 +111,11 @@ export type Image2WorkbenchData = {
   access?: WorkbenchAccessState;
 };
 
+export type Image2PublicHomeData = {
+  featuredCases: WorkbenchCase[];
+  updatedAt: string;
+};
+
 export type WorkbenchAccessState = {
   email?: string;
   isAuthenticated: boolean;
@@ -249,7 +254,7 @@ const promptTemplates: WorkbenchPromptTemplate[] = [
     id: "outfit-safe-commercial",
     stage: "outfit",
     title: "安全商业版",
-    summary: "保守但稳，适合团队批量出图和回退。",
+    summary: "保守但稳，适合批量出图和回退。",
     prompt: [
       "参考 {{person}} 和 {{clothing}}，生成稳定、清晰、适合批量交付的人物穿搭图。",
       "要求：识别度优先，服装细节完整，颜色准确，主体居中或略偏三分法，背景简洁，不抢主体，画面真实自然，适合后续做视频首帧。"
@@ -427,6 +432,13 @@ async function readFeaturedWorkbenchCases() {
     }));
 }
 
+export async function loadImage2PublicHomeData(): Promise<Image2PublicHomeData> {
+  return {
+    featuredCases: await readFeaturedWorkbenchCases(),
+    updatedAt: new Date().toISOString()
+  };
+}
+
 export async function loadPublicImage2WorkbenchData(access?: WorkbenchAccessState): Promise<Image2WorkbenchData> {
   return {
     sourceLabel: "Image2 公开入口",
@@ -442,7 +454,7 @@ export async function loadPublicImage2WorkbenchData(access?: WorkbenchAccessStat
     access: access ?? {
       isAuthenticated: false,
       isTeamMember: false,
-      message: "团队素材仅对登录且通过白名单的成员开放。",
+      message: "请登录后继续。",
       mode: "public"
     }
   };
