@@ -22,6 +22,8 @@
   z-index: 10;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 18px;
   padding: 18px clamp(18px, 5vw, 64px);
   border-bottom: 1px solid rgba(20, 32, 35, 0.1);
   background: rgba(245, 242, 235, 0.86);
@@ -50,6 +52,11 @@
   height: 20px;
   color: var(--accent);
 }
+
+.languageToggle {
+  flex: none;
+}
+
 .primaryAction,
 .secondaryAction,
 .loginAction,
@@ -246,8 +253,8 @@
 .caseCard {
   overflow: hidden;
   display: grid;
-  grid-template-rows: 240px auto auto 1fr;
-  min-height: 438px;
+  grid-template-rows: 240px auto auto auto 1fr auto;
+  min-height: 486px;
   border: 1px solid var(--line);
   border-radius: 8px;
   color: inherit;
@@ -258,6 +265,7 @@
 
 .caseCard span,
 .caseCard strong,
+.caseCard em,
 .caseCard small {
   display: block;
   margin-inline: 16px;
@@ -276,12 +284,26 @@
   line-height: 1.35;
 }
 
+.caseCard em {
+  margin-top: 6px;
+  color: rgba(89, 104, 109, 0.78);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 760;
+  line-height: 1.35;
+}
+
 .caseCard small {
   margin-top: 8px;
-  margin-bottom: 16px;
   color: var(--muted);
   font-size: 12px;
   line-height: 1.55;
+}
+
+.caseCard .originalPrompt {
+  margin-top: 7px;
+  margin-bottom: 16px;
+  color: rgba(89, 104, 109, 0.66);
 }
 
 .referenceBand {

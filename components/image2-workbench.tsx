@@ -30,6 +30,8 @@ import {
   X
 } from "lucide-react";
 import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from "react";
+import { Image2LanguageToggle, useImage2LanguagePreference } from "@/components/image2-language";
+import { localizedCaseText, type Image2Language } from "@/lib/image2-language";
 import type {
   Image2WorkbenchData,
   WorkbenchAsset,
@@ -236,6 +238,7 @@ const signOutSupabaseSession = async (accessToken: string) => {
 };
 
 export function Image2Workbench({ initialData }: { initialData: Image2WorkbenchData }) {
+  const { language, setLanguage } = useImage2LanguagePreference("zh");
   const [data, setData] = useState(initialData);
   const [accountSession, setAccountSession] = useState<Image2AccountSession | null>(null);
   const [accountEmail, setAccountEmail] = useState("");
@@ -617,6 +620,7 @@ export function Image2Workbench({ initialData }: { initialData: Image2WorkbenchD
           <strong>Image2 作图中控台</strong>
           <small>动作迁移首帧生产线</small>
         </a>
+        <Image2LanguageToggle className="image2-workbench-language" language={language} onChange={setLanguage} />
 
         <nav className="image2-workbench-nav" aria-label="工作台界面">
           {viewOptions.map((item) => {
@@ -751,7 +755,7 @@ export function Image2Workbench({ initialData }: { initialData: Image2WorkbenchD
         ) : null}
 
         {activeView === "cases" ? (
-          <CasesView cases={data.featuredCases} onPreview={setCasePreview} />
+          <CasesView cases={data.featuredCases} language={language} onPreview={setCasePreview} />
         ) : null}
       </section>
 
@@ -783,7 +787,7 @@ export function Image2Workbench({ initialData }: { initialData: Image2WorkbenchD
         />
       ) : null}
 
-      {casePreview ? <CasePreviewModal caseItem={casePreview} onClose={() => setCasePreview(null)} /> : null}
+      {casePreview ? <CasePreviewModal caseItem={casePreview} language={language} onClose={() => setCasePreview(null)} /> : null}
 
       {isUploadOpen ? (
         <AssetUploadModal
@@ -1254,19 +1258,32 @@ function ResultsView(props: {
   );
 }
 
-function CasesView({ cases, onPreview }: { cases: WorkbenchCase[]; onPreview: (item: WorkbenchCase) => void }) {
+function CasesView({
+  cases,
+  language,
+  onPreview
+}: {
+  cases: WorkbenchCase[];
+  language: Image2Language;
+  onPreview: (item: WorkbenchCase) => void;
+}) {
   return (
     <section className="image2-workbench-section">
       <SectionHead title="案例参考" subtitle="从现有 Image2 案例库抽取高分案例，用来给团队找构图和提示词结构。" />
       <div className="image2-case-strip">
-        {cases.map((item) => (
-          <button className="image2-case-card" key={item.id} type="button" onClick={() => onPreview(item)}>
-            <img alt={item.imageAlt} src={caseImageSrc(item.imageUrl)} />
-            <span>{item.valueTier} · {item.valueScore}</span>
-            <strong>{item.title}</strong>
-            <small>{item.categoryLabel}</small>
-          </button>
-        ))}
+        {cases.map((item) => {
+          const copy = localizedCaseText(item, language);
+          return (
+            <button className="image2-case-card" key={item.id} type="button" onClick={() => onPreview(item)}>
+              <img alt={copy.imageAlt} src={caseImageSrc(item.imageUrl)} />
+              <span>{copy.valueTier || item.valueTier} · {item.valueScore}</span>
+              <strong>{copy.title}</strong>
+              <em>{copy.titleSecondary}</em>
+              <p>{copy.promptPreview}</p>
+              <small>{copy.categoryLabel}</small>
+            </button>
+          );
+        })}
       </div>
     </section>
   );
@@ -1808,14 +1825,25 @@ function PromptModal({
   );
 }
 
-function CasePreviewModal({ caseItem, onClose }: { caseItem: WorkbenchCase; onClose: () => void }) {
+function CasePreviewModal({
+  caseItem,
+  language,
+  onClose
+}: {
+  caseItem: WorkbenchCase;
+  language: Image2Language;
+  onClose: () => void;
+}) {
+  const copy = localizedCaseText(caseItem, language);
   return (
-    <ModalShell title={caseItem.title} kicker={`${caseItem.categoryLabel} · ${caseItem.valueTier}`} onClose={onClose}>
+    <ModalShell title={copy.title} kicker={`${copy.categoryLabel} · ${copy.valueTier || caseItem.valueTier}`} onClose={onClose}>
       <div className="image2-case-modal">
-        <img alt={caseItem.imageAlt} src={caseImageSrc(caseItem.imageUrl)} />
+        <img alt={copy.imageAlt} src={caseImageSrc(caseItem.imageUrl)} />
         <div>
           <strong>{caseItem.valueScore} 分参考案例</strong>
-          <p>{caseItem.promptPreview}</p>
+          <em>{copy.titleSecondary}</em>
+          <p>{copy.promptPreview}</p>
+          <small>{copy.promptPreviewSecondary}</small>
           <a href="/image2-cases">
             <ExternalLink aria-hidden="true" />
             打开完整案例库

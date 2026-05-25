@@ -2,6 +2,8 @@
 
 import { FolderOpen, LogIn, PlayCircle, Search, Sparkles, X } from "lucide-react";
 import { type CSSProperties, type FormEvent, useEffect, useMemo, useState } from "react";
+import { Image2LanguageToggle, useImage2LanguagePreference } from "@/components/image2-language";
+import { localizedCaseText, type Image2Language } from "@/lib/image2-language";
 import type { Image2PublicHomeData, WorkbenchCase } from "@/lib/image2-workbench-data";
 import styles from "./image2-public-home.module.css";
 
@@ -21,6 +23,43 @@ type Image2AccountSession = {
     email?: string;
   };
 };
+
+const publicHomeCopy = {
+  zh: {
+    heroKicker: "Prompt Atlas",
+    heroTitle: "Image2 案例灵感库",
+    heroDescription: "高价值案例、提示词结构和首帧参考，适合做灵感检索与风格拆解。",
+    casesAction: "进入案例库",
+    videoAction: "视频创作",
+    loginAction: "登录",
+    heroPreviewLabel: "精选案例预览",
+    publicContentLabel: "公开内容",
+    featuredKicker: "精选案例",
+    featuredTitle: "从优秀样片开始拆解",
+    promptReferenceLabel: "提示词参考",
+    promptReferenceTitle: "提示词参考",
+    promptReferenceNote: "按类别、价值分和来源快速筛选案例。",
+    firstFrameTitle: "首帧路线",
+    firstFrameNote: "把优秀样片拆成主体、构图、光线和风格锚点。"
+  },
+  en: {
+    heroKicker: "Prompt Atlas",
+    heroTitle: "Image2 Case Library",
+    heroDescription: "High-value cases, prompt structures, and first-frame references for style research and visual breakdowns.",
+    casesAction: "Explore Cases",
+    videoAction: "Video Studio",
+    loginAction: "Log In",
+    heroPreviewLabel: "Featured case preview",
+    publicContentLabel: "Public content",
+    featuredKicker: "Featured Cases",
+    featuredTitle: "Start With Proven Visual Samples",
+    promptReferenceLabel: "Prompt references",
+    promptReferenceTitle: "Prompt References",
+    promptReferenceNote: "Filter cases quickly by category, value score, and source.",
+    firstFrameTitle: "First-frame Route",
+    firstFrameNote: "Break strong samples into subject, composition, lighting, and style anchors."
+  }
+} satisfies Record<Image2Language, Record<string, string>>;
 
 const accountSessionStorageKey = "image2-workbench-team-session:v1";
 const supabaseAuthUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/+$/, "");
@@ -143,6 +182,7 @@ async function hasWorkbenchAccess(session: Image2AccountSession) {
 }
 
 export function Image2PublicHome({ initialData }: { initialData: Image2PublicHomeData }) {
+  const { language, setLanguage } = useImage2LanguagePreference("zh");
   const [accountSession, setAccountSession] = useState<Image2AccountSession | null>(null);
   const [accountEmail, setAccountEmail] = useState("");
   const [accountPassword, setAccountPassword] = useState("");
@@ -155,6 +195,7 @@ export function Image2PublicHome({ initialData }: { initialData: Image2PublicHom
 
   const featuredCases = useMemo(() => initialData.featuredCases.filter((item) => item.imageUrl).slice(0, 6), [initialData.featuredCases]);
   const heroCases = featuredCases.slice(0, 4);
+  const copy = publicHomeCopy[language];
 
   useEffect(() => {
     if (!isSupabaseAuthConfigured) return;
@@ -249,64 +290,68 @@ export function Image2PublicHome({ initialData }: { initialData: Image2PublicHom
           <Sparkles aria-hidden="true" />
           <span>Image2</span>
         </a>
+        <Image2LanguageToggle className={styles.languageToggle} language={language} onChange={setLanguage} />
       </header>
 
-      <section className={styles.hero} aria-label="Image2 案例灵感库">
+      <section className={styles.hero} aria-label={copy.heroTitle}>
         <div className={styles.heroCopy}>
-          <small>Prompt Atlas</small>
-          <h1>Image2 案例灵感库</h1>
-          <p>高价值案例、提示词结构和首帧参考，适合做灵感检索与风格拆解。</p>
+          <small>{copy.heroKicker}</small>
+          <h1>{copy.heroTitle}</h1>
+          <p>{copy.heroDescription}</p>
           <div className={styles.actions}>
             <a className={styles.primaryAction} href="/image2-cases">
               <FolderOpen aria-hidden="true" />
-              进入案例库
+              {copy.casesAction}
             </a>
             <a className={styles.secondaryAction} href="/video-studio">
               <PlayCircle aria-hidden="true" />
-              视频创作
+              {copy.videoAction}
             </a>
             <button className={styles.loginAction} type="button" onClick={() => setIsAuthModalOpen(true)} disabled={!isSupabaseAuthConfigured}>
               <LogIn aria-hidden="true" />
-              登录
+              {copy.loginAction}
             </button>
           </div>
         </div>
 
-        <div className={styles.heroGrid} aria-label="精选案例预览">
-          {heroCases.map((item, index) => (
-            <a className={styles.heroTile} href={`/image2-cases?case=${item.id}`} key={item.id} style={{ "--tile-index": index } as CSSProperties}>
-              <img src={item.imageUrl} alt={item.imageAlt || item.title} loading={index === 0 ? "eager" : "lazy"} />
-              <span>{item.categoryLabel}</span>
-            </a>
-          ))}
+        <div className={styles.heroGrid} aria-label={copy.heroPreviewLabel}>
+          {heroCases.map((item, index) => {
+            const localized = localizedCaseText(item, language);
+            return (
+              <a className={styles.heroTile} href={`/image2-cases?case=${item.id}`} key={item.id} style={{ "--tile-index": index } as CSSProperties}>
+                <img src={item.imageUrl} alt={localized.imageAlt} loading={index === 0 ? "eager" : "lazy"} />
+                <span>{localized.categoryLabel}</span>
+              </a>
+            );
+          })}
         </div>
       </section>
 
-      <section className={styles.sections} aria-label="公开内容">
+      <section className={styles.sections} aria-label={copy.publicContentLabel}>
         <div className={styles.sectionIntro}>
-          <span>精选案例</span>
-          <h2>从优秀样片开始拆解</h2>
+          <span>{copy.featuredKicker}</span>
+          <h2>{copy.featuredTitle}</h2>
         </div>
         <div className={styles.caseGrid}>
           {featuredCases.map((item) => (
-            <PublicCaseCard item={item} key={item.id} />
+            <PublicCaseCard item={item} key={item.id} language={language} />
           ))}
         </div>
       </section>
 
-      <section className={styles.referenceBand} aria-label="提示词参考">
+      <section className={styles.referenceBand} aria-label={copy.promptReferenceLabel}>
         <a href="/image2-cases">
           <Search aria-hidden="true" />
           <span>
-            <strong>提示词参考</strong>
-            <small>按类别、价值分和来源快速筛选案例。</small>
+            <strong>{copy.promptReferenceTitle}</strong>
+            <small>{copy.promptReferenceNote}</small>
           </span>
         </a>
         <a href="/image2-cases">
           <Sparkles aria-hidden="true" />
           <span>
-            <strong>首帧路线</strong>
-            <small>把优秀样片拆成主体、构图、光线和风格锚点。</small>
+            <strong>{copy.firstFrameTitle}</strong>
+            <small>{copy.firstFrameNote}</small>
           </span>
         </a>
       </section>
@@ -335,13 +380,16 @@ export function Image2PublicHome({ initialData }: { initialData: Image2PublicHom
   );
 }
 
-function PublicCaseCard({ item }: { item: WorkbenchCase }) {
+function PublicCaseCard({ item, language }: { item: WorkbenchCase; language: Image2Language }) {
+  const localized = localizedCaseText(item, language);
   return (
     <a className={styles.caseCard} href={`/image2-cases?case=${item.id}`}>
-      <img src={item.imageUrl} alt={item.imageAlt || item.title} loading="lazy" />
-      <span>{item.categoryLabel}</span>
-      <strong>{item.title}</strong>
-      <small>{item.promptPreview}</small>
+      <img src={item.imageUrl} alt={localized.imageAlt} loading="lazy" />
+      <span>{localized.categoryLabel}</span>
+      <strong>{localized.title}</strong>
+      <em>{localized.titleSecondary}</em>
+      <small>{localized.promptPreview}</small>
+      <small className={styles.originalPrompt}>{localized.promptPreviewSecondary}</small>
     </a>
   );
 }

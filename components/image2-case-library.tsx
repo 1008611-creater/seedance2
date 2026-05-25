@@ -34,6 +34,8 @@ import {
   WandSparkles,
   X
 } from "lucide-react";
+import { Image2LanguageToggle, useImage2LanguagePreference } from "@/components/image2-language";
+import { localizedCaseText, localizedCategoryLabel, type Image2Language } from "@/lib/image2-language";
 import { toUserFacingError } from "@/lib/user-facing-error";
 import type { Image2AssetSnapshot } from "@/lib/types";
 import styles from "./image2-case-workbench-bridge.module.css";
@@ -258,6 +260,7 @@ type CaseDetailContentProps = {
   isFavorite: boolean;
   isPromptLoading: boolean;
   item: Image2Case;
+  language: Image2Language;
   onCopy: (item: Image2Case) => void;
   onCopyRewrite: () => void;
   onToggleFavorite: (item: Image2Case) => void;
@@ -307,6 +310,122 @@ type ImagePreview = {
 
 const tierOptions = ["全部", "精选", "高价值", "可参考"] as const;
 const sortOptions = ["价值优先", "最新优先", "案例编号"] as const;
+
+const caseLibraryCopy = {
+  zh: {
+    heroTitle: "从爆款图到可复刻提示词。",
+    heroDescription: "浏览真实案例，复制提示词，点一张图就能拆解结构并生成同款。",
+    account: "登录 / 注册",
+    casesAction: "Explore cases",
+    featuredAction: "精选案例",
+    favoritesAction: (count: number) => `我的收藏 ${count}`,
+    stats: {
+      cases: "案例",
+      categories: "分类",
+      value: "值得复刻",
+      hero: "首屏精选"
+    },
+    bridge: {
+      kicker: "案例接力",
+      title: "把当前灵感带到作图台继续生产",
+      fallback: "先选一张案例，再进入作图台选择人物、服装和场景参考图。",
+      steps: ["看案例", "选参考", "出首帧"],
+      enter: (signedIn: boolean) => (signedIn ? "进入作图台" : "登录后进入")
+    },
+    filters: {
+      search: "搜标题、来源、分类、标签、提示词...",
+      tier: "价值层级",
+      sort: "排序",
+      favorites: "我的收藏",
+      favoritesOnly: "只看收藏中",
+      favoritesAll: "只看收藏",
+      favoritesNote: "收藏保存在当前浏览器，回来看图和提示词更快。",
+      collection: "项目夹",
+      allCollections: "全部项目",
+      newCollection: "新建项目夹",
+      membership: "会员权益",
+      sync: "云端同步",
+      recent: "最近复用",
+      category: "分类",
+      gallery: "案例图库",
+      allCategories: "全部分类",
+      results: (count: number) => `${count} 个匹配案例`,
+      emptyFavorites: "还没有匹配的收藏",
+      emptyResults: "没有匹配案例",
+      emptyFavoritesNote: "点卡片右上角的心形按钮，图片和提示词会留在当前浏览器。",
+      emptyResultsNote: "换个关键词，或者放宽来源、分类和价值筛选。"
+    },
+    detail: {
+      promptTitle: "英文原文提示词",
+      promptSummary: "中文速读",
+      favoriteOn: "已收藏",
+      favoriteOff: "收藏"
+    }
+  },
+  en: {
+    heroTitle: "From viral images to reusable prompts.",
+    heroDescription: "Browse real cases, copy the prompt, and break down structure with one click.",
+    account: "Log in / Sign up",
+    casesAction: "Explore cases",
+    featuredAction: "Featured cases",
+    favoritesAction: (count: number) => `My favorites ${count}`,
+    stats: {
+      cases: "Cases",
+      categories: "Categories",
+      value: "Worth recreating",
+      hero: "Hero picks"
+    },
+    bridge: {
+      kicker: "Case handoff",
+      title: "Carry this idea to the workbench",
+      fallback: "Pick a case first, then enter the workbench to choose person, outfit, and scene references.",
+      steps: ["Review", "Reference", "First frame"],
+      enter: (signedIn: boolean) => (signedIn ? "Open workbench" : "Log in to enter")
+    },
+    filters: {
+      search: "Search title, source, category, tags, prompt...",
+      tier: "Value tier",
+      sort: "Sort",
+      favorites: "My favorites",
+      favoritesOnly: "Favorites only",
+      favoritesAll: "Show favorites",
+      favoritesNote: "Favorites stay in this browser so prompts and images are easy to revisit.",
+      collection: "Collections",
+      allCollections: "All collections",
+      newCollection: "New collection",
+      membership: "Membership perks",
+      sync: "Cloud sync",
+      recent: "Recent reuse",
+      category: "Categories",
+      gallery: "Case library",
+      allCategories: "All categories",
+      results: (count: number) => `${count} matching cases`,
+      emptyFavorites: "No favorite matches yet",
+      emptyResults: "No matching cases",
+      emptyFavoritesNote: "Use the heart button on a card to keep images and prompts in this browser.",
+      emptyResultsNote: "Try another keyword or loosen source, category, and value filters."
+    },
+    detail: {
+      promptTitle: "Original prompt",
+      promptSummary: "Readable summary",
+      favoriteOn: "Saved",
+      favoriteOff: "Save"
+    }
+  }
+} as const;
+
+const tierOptionEnglish: Record<(typeof tierOptions)[number], string> = {
+  全部: "All",
+  精选: "Featured",
+  高价值: "High value",
+  可参考: "Study"
+};
+
+const sortOptionEnglish: Record<(typeof sortOptions)[number], string> = {
+  价值优先: "Best first",
+  最新优先: "Newest first",
+  案例编号: "Case number"
+};
 const image2DataVersion = "20260520-hide-broken-v4";
 const favoriteCaseStorageKey = "image2-case-favorites:v1";
 const generationHistoryStorageKey = "image2-generation-history:v1";
@@ -1241,6 +1360,7 @@ function CaseDetailContent({
   workbenchNote,
   caseNoteDraft,
   caseNoteUpdatedAt,
+  language,
   onCaseNoteChange,
   onClearCaseNote,
   onToggleCaseCollection,
@@ -1248,6 +1368,8 @@ function CaseDetailContent({
   const hasPrompt = Boolean(item.prompt?.trim());
   const quotaIsBlocked = Boolean(freeQuota?.blocked || freeQuota?.remaining === 0);
   const reuse = inferReuseProfile(item);
+  const localized = localizedCaseText(item, language);
+  const pageCopy = caseLibraryCopy[language];
   const currentStage = isGenerating
     ? generationStatus?.stage
       ? {
@@ -1267,7 +1389,7 @@ function CaseDetailContent({
   return (
     <>
       <CaseImage
-        alt={item.imageAlt}
+        alt={localized.imageAlt}
         className="case-detail-cover"
         loading="eager"
         src={item.imageUrl}
@@ -1275,32 +1397,33 @@ function CaseDetailContent({
         onUnavailable={() => onImageUnavailable?.(item)}
         onPreview={() =>
           onPreviewImage({
-            alt: item.imageAlt,
-            meta: [item.caseCode ?? `Case ${item.id}`, item.categoryLabel, item.resolution].filter(Boolean).join(" · "),
+            alt: localized.imageAlt,
+            meta: [item.caseCode ?? `Case ${item.id}`, localized.categoryLabel, item.resolution].filter(Boolean).join(" · "),
             src: item.imageUrl,
-            title: item.title
+            title: localized.title
           })
         }
       />
       <div className="case-detail-body">
         <p className="case-detail-kicker">
-          {item.caseCode ?? `Case ${item.id}`} · {item.sourceName ?? "Canghe"} · {item.valueTier}
+          {item.caseCode ?? `Case ${item.id}`} · {item.sourceName ?? "Canghe"} · {localized.valueTier || item.valueTier}
         </p>
         <div className="case-detail-heading">
-          <h2>{item.title}</h2>
+          <h2>{localized.title}</h2>
           <button
             aria-pressed={isFavorite}
             className={isFavorite ? "case-favorite-detail active" : "case-favorite-detail"}
-            title={isFavorite ? "移出收藏" : "收藏图片与提示词"}
+            title={isFavorite ? (language === "zh" ? "移出收藏" : "Remove favorite") : language === "zh" ? "收藏图片与提示词" : "Save image and prompt"}
             type="button"
             onClick={() => onToggleFavorite(item)}
           >
             <Heart aria-hidden="true" />
-            <span>{isFavorite ? "已收藏" : "收藏"}</span>
+            <span>{isFavorite ? pageCopy.detail.favoriteOn : pageCopy.detail.favoriteOff}</span>
           </button>
         </div>
+        <p className="case-detail-original-title">{localized.titleSecondary}</p>
         <div className="case-tag-row">
-          {[item.categoryLabel, item.sourceCategory, item.promptKind, item.resolution, `价值 ${item.valueScore}`]
+          {[localized.categoryLabel, item.sourceCategory, localized.promptKind || item.promptKind, item.resolution, `${language === "zh" ? "价值" : "Score"} ${item.valueScore}`]
             .filter((tag): tag is string => Boolean(tag))
             .map((tag) => (
               <span key={tag}>{tag}</span>
@@ -1318,7 +1441,11 @@ function CaseDetailContent({
         </section>
 
         <div className="case-prompt-box">
-          <h3>提示词记录</h3>
+          <h3>{pageCopy.detail.promptTitle}</h3>
+          <div className="case-prompt-brief">
+            <strong>{pageCopy.detail.promptSummary}</strong>
+            <p>{localized.promptPreview}</p>
+          </div>
           <pre className={!hasPrompt ? "is-loading" : ""}>
             {hasPrompt
               ? item.prompt
@@ -1761,6 +1888,8 @@ function mergeCasePayloads(base: CasePayload, extra?: Partial<CasePayload> | nul
 }
 
 export function Image2CaseLibrary() {
+  const { language, setLanguage } = useImage2LanguagePreference("zh");
+  const pageCopy = caseLibraryCopy[language];
   const [payload, setPayload] = useState<CasePayload | null>(null);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -2004,8 +2133,11 @@ export function Image2CaseLibrary() {
   const activeCollection = caseAssetState.activeCollectionId
     ? caseAssetState.collections.find((item) => item.id === caseAssetState.activeCollectionId) ?? null
     : null;
-  const activeCategoryLabel = category === "全部" ? "全部分类" : categories.find((item) => item.value === category)?.label;
-  const galleryTitle = [favoritesOnly ? "我的收藏" : null, activeCollection?.name, activeSource?.label, activeCategoryLabel]
+  const activeCategoryLabel =
+    category === "全部"
+      ? pageCopy.filters.allCategories
+      : localizedCategoryLabel(categories.find((item) => item.value === category)?.label ?? category, language);
+  const galleryTitle = [favoritesOnly ? pageCopy.filters.favorites : null, activeCollection?.name, activeSource?.label, activeCategoryLabel]
     .filter(Boolean)
     .join(" · ");
   const heroCases = useMemo(() => {
@@ -2787,9 +2919,10 @@ export function Image2CaseLibrary() {
     <main className="case-library">
       <header className="case-hero">
         <div className="case-hero-toolbar">
+          <Image2LanguageToggle language={language} onChange={setLanguage} />
           <button className="case-auth-launcher" type="button" onClick={openAccountModal}>
             <UserRound aria-hidden="true" />
-            <span>{accountSession ? accountSession.user.email ?? "账号中心" : "登录 / 注册"}</span>
+            <span>{accountSession ? accountSession.user.email ?? (language === "zh" ? "账号中心" : "Account") : pageCopy.account}</span>
           </button>
         </div>
 
@@ -2798,36 +2931,36 @@ export function Image2CaseLibrary() {
             <Sparkles aria-hidden="true" />
             LIVE GPT-IMAGE2 CASE LIBRARY
           </p>
-          <h1>从爆款图到可复刻提示词。</h1>
-          <p>浏览真实案例，复制提示词，点一张图就能拆解结构并生成同款。</p>
+          <h1>{pageCopy.heroTitle}</h1>
+          <p>{pageCopy.heroDescription}</p>
 
           <div className="case-hero-actions" aria-label="快捷操作">
-            <a href="#case-gallery">Explore cases</a>
+            <a href="#case-gallery">{pageCopy.casesAction}</a>
             <button type="button" onClick={() => setTier("精选")}>
-              精选案例
+              {pageCopy.featuredAction}
             </button>
             <button aria-pressed={favoritesOnly} type="button" onClick={() => setFavoritesOnly((value) => !value)}>
               <Heart aria-hidden="true" />
-              我的收藏 {favoriteCount}
+              {pageCopy.favoritesAction(favoriteCount)}
             </button>
           </div>
 
           <div className="case-hero-stats" aria-label="案例统计">
             <span>
               <strong>{payload.totalCases}</strong>
-              <small>案例</small>
+              <small>{pageCopy.stats.cases}</small>
             </span>
             <span>
               <strong>{categories.length}</strong>
-              <small>分类</small>
+              <small>{pageCopy.stats.categories}</small>
             </span>
             <span>
               <strong>{featuredCount + highValueCount}</strong>
-              <small>值得复刻</small>
+              <small>{pageCopy.stats.value}</small>
             </span>
             <span>
               <strong>{heroCases.length}</strong>
-              <small>首屏精选</small>
+              <small>{pageCopy.stats.hero}</small>
             </span>
           </div>
 
@@ -2835,26 +2968,26 @@ export function Image2CaseLibrary() {
             <div className={styles.bridgeCopy}>
               <span>
                 <WandSparkles aria-hidden="true" />
-                案例接力
+                {pageCopy.bridge.kicker}
               </span>
-              <strong>把当前灵感带到作图台继续生产</strong>
+              <strong>{pageCopy.bridge.title}</strong>
               <small>
                 {selectedCase
-                  ? `当前案例：${selectedCase.caseCode ?? `Case ${selectedCase.id}`} · ${selectedCase.title}`
-                  : "先选一张案例，再进入作图台选择人物、服装和场景参考图。"}
+                  ? `${language === "zh" ? "当前案例" : "Current case"}：${selectedCase.caseCode ?? `Case ${selectedCase.id}`} · ${localizedCaseText(selectedCase, language).title}`
+                  : pageCopy.bridge.fallback}
               </small>
             </div>
             <div className={styles.bridgeSteps} aria-label="作图流程">
-              <span>看案例</span>
+              <span>{pageCopy.bridge.steps[0]}</span>
               <i aria-hidden="true" />
-              <span>选参考</span>
+              <span>{pageCopy.bridge.steps[1]}</span>
               <i aria-hidden="true" />
-              <span>出首帧</span>
+              <span>{pageCopy.bridge.steps[2]}</span>
             </div>
             <div className={styles.bridgeActions}>
               <button type="button" onClick={openWorkbenchEntry}>
                 <WandSparkles aria-hidden="true" />
-                {accountSession ? "进入作图台" : "登录后进入"}
+                {pageCopy.bridge.enter(Boolean(accountSession))}
               </button>
             </div>
           </section>
@@ -2873,8 +3006,12 @@ export function Image2CaseLibrary() {
                 type="button"
                 onClick={(event) => handleHeroCardClick(event, item)}
               >
+                {(() => {
+                  const localized = localizedCaseText(item, language);
+                  return (
+                    <>
                 <CaseImage
-                  alt={item.imageAlt}
+                  alt={localized.imageAlt}
                   loading="eager"
                   src={heroImageOverrides[item.id] ?? item.imageUrl}
                   timeoutMs={9000}
@@ -2882,8 +3019,11 @@ export function Image2CaseLibrary() {
                 />
                 <span className="case-hero-card-overlay">
                   <small>{item.caseCode ?? `#${item.id}`}</small>
-                  <strong>{item.title}</strong>
+                  <strong>{localized.title}</strong>
                 </span>
+                    </>
+                  );
+                })()}
               </button>
             ))}
           </div>
@@ -2896,14 +3036,14 @@ export function Image2CaseLibrary() {
             <Search aria-hidden="true" />
             <input
               aria-label="搜索案例"
-              placeholder="搜标题、来源、分类、标签、提示词..."
+              placeholder={pageCopy.filters.search}
               value={query}
               onChange={(event) => setQuery(event.target.value)}
             />
           </div>
 
           <div className="filter-section">
-            <h2>价值层级</h2>
+            <h2>{pageCopy.filters.tier}</h2>
             <div className="filter-buttons">
               {tierOptions.map((option) => (
                 <button
@@ -2912,14 +3052,14 @@ export function Image2CaseLibrary() {
                   type="button"
                   onClick={() => setTier(option)}
                 >
-                  {option}
+                  {language === "zh" ? option : tierOptionEnglish[option]}
                 </button>
               ))}
             </div>
           </div>
 
           <div className="filter-section">
-            <h2>排序</h2>
+            <h2>{pageCopy.filters.sort}</h2>
             <div className="filter-buttons">
               {sortOptions.map((option) => (
                 <button
@@ -2929,14 +3069,14 @@ export function Image2CaseLibrary() {
                   onClick={() => setSort(option)}
                 >
                   <ArrowUpDown aria-hidden="true" />
-                  {option}
+                  {language === "zh" ? option : sortOptionEnglish[option]}
                 </button>
               ))}
             </div>
           </div>
 
           <div className="filter-section">
-            <h2>我的收藏</h2>
+            <h2>{pageCopy.filters.favorites}</h2>
             <button
               aria-pressed={favoritesOnly}
               className={favoritesOnly ? "case-favorites-filter active" : "case-favorites-filter"}
@@ -2944,21 +3084,21 @@ export function Image2CaseLibrary() {
               onClick={() => setFavoritesOnly((value) => !value)}
             >
               <Heart aria-hidden="true" />
-              <span>{favoritesOnly ? "只看收藏中" : "只看收藏"}</span>
+              <span>{favoritesOnly ? pageCopy.filters.favoritesOnly : pageCopy.filters.favoritesAll}</span>
               <b>{favoriteCount}</b>
             </button>
-            <p className="case-favorites-note">收藏保存在当前浏览器，回来看图和提示词更快。</p>
+            <p className="case-favorites-note">{pageCopy.filters.favoritesNote}</p>
           </div>
 
           <div className="filter-section case-assets-panel">
             <div className="case-assets-panel-head">
-              <h2>项目夹</h2>
+              <h2>{pageCopy.filters.collection}</h2>
               <span>{caseAssetState.collections.length}</span>
             </div>
             <form className="case-collection-form" onSubmit={createCollection}>
               <input
                 aria-label="新建项目夹名称"
-                placeholder="新建项目夹"
+                placeholder={pageCopy.filters.newCollection}
                 value={collectionNameDraft}
                 onChange={(event) => setCollectionNameDraft(event.target.value)}
               />
@@ -2972,7 +3112,7 @@ export function Image2CaseLibrary() {
                 type="button"
                 onClick={() => setActiveCollection(null)}
               >
-                <span>全部项目</span>
+                <span>{pageCopy.filters.allCollections}</span>
                 <b>{cases.length}</b>
               </button>
               {caseAssetState.collections.map((collection) => (
@@ -2992,7 +3132,7 @@ export function Image2CaseLibrary() {
               <div className="case-membership-panel-head">
                 <span>
                   <Crown aria-hidden="true" />
-                  <strong>会员权益</strong>
+                  <strong>{pageCopy.filters.membership}</strong>
                 </span>
                 <em>{membershipPanelLabel}</em>
               </div>
@@ -3056,7 +3196,7 @@ export function Image2CaseLibrary() {
           </div>
 
           <div className="filter-section case-recent-panel">
-            <h2>最近复用</h2>
+            <h2>{pageCopy.filters.recent}</h2>
             <div className="case-recent-list">
               {promptReuseHistory.length ? (
                 promptReuseHistory.slice(0, 5).map((record) => (
@@ -3078,14 +3218,14 @@ export function Image2CaseLibrary() {
           </div>
 
           <div className="filter-section category-list case-category-filter">
-            <h2>分类</h2>
+            <h2>{pageCopy.filters.category}</h2>
             <div className="case-filter-scroll">
               <button
                 className={category === "全部" ? "active" : ""}
                 type="button"
                 onClick={() => setCategory("全部")}
               >
-                <span>全部</span>
+                <span>{language === "zh" ? "全部" : "All"}</span>
                 <b>{payload.totalCases}</b>
               </button>
               {categories.map((item) => (
@@ -3095,7 +3235,7 @@ export function Image2CaseLibrary() {
                   type="button"
                   onClick={() => setCategory(item.value)}
                 >
-                  <span>{item.label}</span>
+                  <span>{localizedCategoryLabel(item.label, language)}</span>
                   <b>{item.count}</b>
                 </button>
               ))}
@@ -3103,10 +3243,10 @@ export function Image2CaseLibrary() {
           </div>
         </aside>
 
-        <section className="case-gallery" id="case-gallery" aria-label="案例图库">
+        <section className="case-gallery" id="case-gallery" aria-label={pageCopy.filters.gallery}>
           <div className="case-gallery-head">
             <div>
-              <p>{filteredCases.length} 个匹配案例</p>
+              <p>{pageCopy.filters.results(filteredCases.length)}</p>
               <h2>{galleryTitle}</h2>
             </div>
           </div>
@@ -3117,6 +3257,7 @@ export function Image2CaseLibrary() {
                 const caseKey = getCaseKey(item);
                 const isFavorite = favoriteCaseKeys.has(caseKey);
                 const reuse = inferReuseProfile(item);
+                const localized = localizedCaseText(item, language);
 
                 return (
                   <div className="case-card-shell" key={caseKey}>
@@ -3125,24 +3266,32 @@ export function Image2CaseLibrary() {
                       type="button"
                       onClick={(event) => handleCaseCardClick(event, item)}
                     >
-                      <CaseImage alt={item.imageAlt} src={item.imageUrl} onUnavailable={() => hideUnavailableCase(item)} />
-                      <span className="case-tier">{item.valueTier}</span>
+                      <CaseImage alt={localized.imageAlt} src={item.imageUrl} onUnavailable={() => hideUnavailableCase(item)} />
+                      <span className="case-tier">{localized.valueTier || item.valueTier}</span>
                       <div>
-                        <small>{item.caseCode ?? `Case ${item.id}`} · {item.categoryLabel}</small>
-                        <strong>{item.title}</strong>
-                        <p>{item.promptPreview}</p>
+                        <small>
+                          {item.caseCode ?? `Case ${item.id}`} · {localized.categoryLabel}
+                        </small>
+                        <strong>{localized.title}</strong>
+                        <em className="case-card-original-title">{localized.titleSecondary}</em>
+                        <p>{localized.promptPreview}</p>
+                        <p className="case-card-original-prompt">{localized.promptPreviewSecondary}</p>
                         <footer>
                           <b>{item.valueScore}</b>
-                          <span>{item.promptKind}</span>
+                          <span>{localized.promptKind || item.promptKind}</span>
                           <em>{reuse.label}</em>
                         </footer>
                       </div>
                     </button>
                     <button
-                      aria-label={`${isFavorite ? "移出" : "加入"}收藏：${item.title} 图片与提示词`}
+                      aria-label={
+                        language === "zh"
+                          ? `${isFavorite ? "移出" : "加入"}收藏：${localized.title} 图片与提示词`
+                          : `${isFavorite ? "Remove from" : "Add to"} favorites: ${localized.title}`
+                      }
                       aria-pressed={isFavorite}
                       className={isFavorite ? "case-card-favorite active" : "case-card-favorite"}
-                      title={isFavorite ? "移出收藏" : "收藏图片与提示词"}
+                      title={isFavorite ? (language === "zh" ? "移出收藏" : "Remove favorite") : language === "zh" ? "收藏图片与提示词" : "Save image and prompt"}
                       type="button"
                       onClick={() => toggleFavorite(item)}
                     >
@@ -3155,11 +3304,11 @@ export function Image2CaseLibrary() {
           ) : (
             <div className="case-empty-results">
               <Heart aria-hidden="true" />
-              <strong>{favoritesOnly ? "还没有匹配的收藏" : "没有匹配案例"}</strong>
+              <strong>{favoritesOnly ? pageCopy.filters.emptyFavorites : pageCopy.filters.emptyResults}</strong>
               <p>
                 {favoritesOnly
-                  ? "点卡片右上角的心形按钮，图片和提示词会留在当前浏览器。"
-                  : "换个关键词，或者放宽来源、分类和价值筛选。"}
+                  ? pageCopy.filters.emptyFavoritesNote
+                  : pageCopy.filters.emptyResultsNote}
               </p>
             </div>
           )}
@@ -3179,6 +3328,7 @@ export function Image2CaseLibrary() {
               isPromptLoading={isSelectedPromptLoading}
               isGenerating={isGenerating}
               item={selectedCase}
+              language={language}
               onCopy={copyPrompt}
               onCopyRewrite={copyRewritePrompt}
               onImageUnavailable={hideUnavailableCase}
@@ -3219,11 +3369,11 @@ export function Image2CaseLibrary() {
             type="button"
             onClick={() => setIsDetailOpen(false)}
           />
-          <aside className="case-mobile-detail-panel" role="dialog" aria-modal="true" aria-label={selectedCase.title}>
+          <aside className="case-mobile-detail-panel" role="dialog" aria-modal="true" aria-label={localizedCaseText(selectedCase, language).title}>
             <div className="case-mobile-detail-head">
               <div>
-                <small>案例详情</small>
-                <strong>{selectedCase.title}</strong>
+                <small>{language === "zh" ? "案例详情" : "Case details"}</small>
+                <strong>{localizedCaseText(selectedCase, language).title}</strong>
               </div>
               <button aria-label="关闭案例详情" type="button" onClick={() => setIsDetailOpen(false)}>
                 <X aria-hidden="true" />
@@ -3241,6 +3391,7 @@ export function Image2CaseLibrary() {
               isPromptLoading={isSelectedPromptLoading}
               isGenerating={isGenerating}
               item={selectedCase}
+              language={language}
               onCopy={copyPrompt}
               onCopyRewrite={copyRewritePrompt}
               onImageUnavailable={hideUnavailableCase}
