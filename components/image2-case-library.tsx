@@ -10,6 +10,8 @@ import {
   Crown,
   Database,
   ExternalLink,
+  ChevronLeft,
+  ChevronRight,
   Eye,
   EyeOff,
   FolderOpen,
@@ -37,6 +39,7 @@ import {
 import { Image2LanguageToggle, useImage2LanguagePreference } from "@/components/image2-language";
 import { localizedCaseText, localizedCategoryLabel, type Image2Language } from "@/lib/image2-language";
 import { toUserFacingError } from "@/lib/user-facing-error";
+import filterStyles from "./image2-case-filters.module.css";
 import styles from "./image2-case-workbench-bridge.module.css";
 
 type Image2Case = {
@@ -416,6 +419,7 @@ const promptReuseHistoryStorageKey = "image2-prompt-reuse-history:v1";
 const caseAssetStorageKey = "image2-case-assets:v1";
 const accountSessionStorageKey = "image2-account-session:v1";
 const workbenchAccountSessionStorageKey = "image2-workbench-team-session:v1";
+const caseFiltersCollapsedStorageKey = "image2-case-filters-collapsed:v1";
 const supabaseAuthUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/+$/, "");
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 const isSupabaseAuthConfigured = Boolean(supabaseAuthUrl && supabaseAnonKey);
@@ -1881,6 +1885,11 @@ export function Image2CaseLibrary() {
   const [loadingDetailKey, setLoadingDetailKey] = useState<string | null>(null);
   const [isRadarOpen, setIsRadarOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isFiltersCollapsed, setIsFiltersCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    if (window.matchMedia("(max-width: 980px)").matches) return false;
+    return window.localStorage.getItem(caseFiltersCollapsedStorageKey) === "1";
+  });
   const [unavailableImageKeys, setUnavailableImageKeys] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
@@ -1955,6 +1964,25 @@ export function Image2CaseLibrary() {
   useEffect(() => {
     setCaseAssetState(readCaseAssetState());
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const media = window.matchMedia("(max-width: 980px)");
+    const syncViewport = () => {
+      if (media.matches) {
+        setIsFiltersCollapsed(false);
+      }
+    };
+
+    syncViewport();
+    media.addEventListener("change", syncViewport);
+    return () => media.removeEventListener("change", syncViewport);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(caseFiltersCollapsedStorageKey, isFiltersCollapsed ? "1" : "0");
+  }, [isFiltersCollapsed]);
 
   useEffect(() => {
     if (!isSupabaseAuthConfigured) return;
@@ -2969,187 +2997,216 @@ export function Image2CaseLibrary() {
         </div>
       </header>
 
-      <section className="case-layout">
-        <aside className="case-filters" aria-label="案例筛选">
-          <div className="case-search">
-            <Search aria-hidden="true" />
-            <input
-              aria-label="搜索案例"
-              placeholder={pageCopy.filters.search}
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-            />
-          </div>
-
-          <div className="filter-section">
-            <h2>{pageCopy.filters.tier}</h2>
-            <div className="filter-buttons">
-              {tierOptions.map((option) => (
-                <button
-                  className={tier === option ? "active" : ""}
-                  key={option}
-                  type="button"
-                  onClick={() => setTier(option)}
-                >
-                  {language === "zh" ? option : tierOptionEnglish[option]}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="filter-section">
-            <h2>{pageCopy.filters.sort}</h2>
-            <div className="filter-buttons">
-              {sortOptions.map((option) => (
-                <button
-                  className={sort === option ? "active" : ""}
-                  key={option}
-                  type="button"
-                  onClick={() => setSort(option)}
-                >
-                  <ArrowUpDown aria-hidden="true" />
-                  {language === "zh" ? option : sortOptionEnglish[option]}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="filter-section">
-            <h2>{pageCopy.filters.favorites}</h2>
+      <section className={`case-layout ${isFiltersCollapsed ? filterStyles.filtersCollapsed : ""}`}>
+        <aside
+          className={`case-filters ${isFiltersCollapsed ? filterStyles.sidebarCollapsed : ""}`}
+          aria-label="案例筛选"
+        >
+          <div className={filterStyles.topbar}>
             <button
-              aria-pressed={favoritesOnly}
-              className={favoritesOnly ? "case-favorites-filter active" : "case-favorites-filter"}
+              aria-expanded={!isFiltersCollapsed}
+              aria-label={isFiltersCollapsed ? "展开筛选栏" : "收起筛选栏"}
+              className={filterStyles.toggleButton}
+              title={isFiltersCollapsed ? "展开筛选栏" : "收起筛选栏"}
               type="button"
-              onClick={() => setFavoritesOnly((value) => !value)}
+              onClick={() => setIsFiltersCollapsed((value) => !value)}
             >
-              <Heart aria-hidden="true" />
-              <span>{favoritesOnly ? pageCopy.filters.favoritesOnly : pageCopy.filters.favoritesAll}</span>
-              <b>{favoriteCount}</b>
+              {isFiltersCollapsed ? <ChevronRight aria-hidden="true" /> : <ChevronLeft aria-hidden="true" />}
+              <span className={filterStyles.toggleLabel}>{isFiltersCollapsed ? "展开筛选" : "收起筛选"}</span>
             </button>
-            <p className="case-favorites-note">{pageCopy.filters.favoritesNote}</p>
           </div>
 
-          <div className="filter-section case-assets-panel">
-            <div className="case-assets-panel-head">
-              <h2>{pageCopy.filters.collection}</h2>
-              <span>{caseAssetState.collections.length}</span>
-            </div>
-            <form className="case-collection-form" onSubmit={createCollection}>
-              <input
-                aria-label="新建项目夹名称"
-                placeholder={pageCopy.filters.newCollection}
-                value={collectionNameDraft}
-                onChange={(event) => setCollectionNameDraft(event.target.value)}
-              />
-              <button type="submit" title="新建项目夹">
-                <FolderPlus aria-hidden="true" />
-              </button>
-            </form>
-            <div className="case-collection-list" aria-label="项目夹筛选">
-              <button
-                className={!activeCollection ? "active" : ""}
-                type="button"
-                onClick={() => setActiveCollection(null)}
-              >
-                <span>{pageCopy.filters.allCollections}</span>
-                <b>{cases.length}</b>
-              </button>
-              {caseAssetState.collections.map((collection) => (
-                <button
-                  className={activeCollection?.id === collection.id ? "active" : ""}
-                  key={collection.id}
-                  type="button"
-                  onClick={() => setActiveCollection(collection.id)}
-                >
-                  <span>{collection.name}</span>
-                  <b>{collection.caseKeys.length}</b>
-                  </button>
-              ))}
-            </div>
-
-            <div className={`case-membership-panel ${membershipStatus.tone}`} aria-label="会员权益">
-              <div className="case-membership-panel-head">
-                <span>
-                  <Crown aria-hidden="true" />
-                  <strong>{pageCopy.filters.membership}</strong>
-                </span>
-                <em>{membershipPanelLabel}</em>
+          {!isFiltersCollapsed ? (
+            <div className={filterStyles.body}>
+              <div className="case-search">
+                <Search aria-hidden="true" />
+                <input
+                  aria-label="搜索案例"
+                  placeholder={pageCopy.filters.search}
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                />
               </div>
-              <p>{membershipSummary}</p>
-              {activeMembership ? (
-                <div className="case-membership-features" aria-label="已开启权益">
-                  <span>收藏备份</span>
-                  <span>{activeMembership.canPromptWorkbench ? "高级工作台" : "基础工作台"}</span>
-                  <span>{activeMembership.canBulkExport ? "批量导出" : "单条复用"}</span>
+
+              <div className="filter-section">
+                <h2>{pageCopy.filters.tier}</h2>
+                <div className="filter-buttons">
+                  {tierOptions.map((option) => (
+                    <button
+                      className={tier === option ? "active" : ""}
+                      key={option}
+                      type="button"
+                      onClick={() => setTier(option)}
+                    >
+                      {language === "zh" ? option : tierOptionEnglish[option]}
+                    </button>
+                  ))}
                 </div>
-              ) : null}
-              {activeMembership ? <small>{membershipStatus.message}</small> : null}
-              {isSupabaseAuthConfigured && accountSession ? (
-                <form className="case-membership-form" onSubmit={submitLicenseRedeem}>
+              </div>
+
+              <div className="filter-section">
+                <h2>{pageCopy.filters.sort}</h2>
+                <div className="filter-buttons">
+                  {sortOptions.map((option) => (
+                    <button
+                      className={sort === option ? "active" : ""}
+                      key={option}
+                      type="button"
+                      onClick={() => setSort(option)}
+                    >
+                      <ArrowUpDown aria-hidden="true" />
+                      {language === "zh" ? option : sortOptionEnglish[option]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="filter-section">
+                <h2>{pageCopy.filters.favorites}</h2>
+                <button
+                  aria-pressed={favoritesOnly}
+                  className={favoritesOnly ? "case-favorites-filter active" : "case-favorites-filter"}
+                  type="button"
+                  onClick={() => setFavoritesOnly((value) => !value)}
+                >
+                  <Heart aria-hidden="true" />
+                  <span>{favoritesOnly ? pageCopy.filters.favoritesOnly : pageCopy.filters.favoritesAll}</span>
+                  <b>{favoriteCount}</b>
+                </button>
+                <p className="case-favorites-note">{pageCopy.filters.favoritesNote}</p>
+              </div>
+
+              <div className="filter-section case-assets-panel">
+                <div className="case-assets-panel-head">
+                  <h2>{pageCopy.filters.collection}</h2>
+                  <span>{caseAssetState.collections.length}</span>
+                </div>
+                <form className="case-collection-form" onSubmit={createCollection}>
                   <input
-                    aria-label="Image2 卡密"
-                    autoComplete="off"
-                    placeholder="输入卡密"
-                    value={licenseCodeDraft}
-                    onChange={(event) => setLicenseCodeDraft(event.target.value)}
+                    aria-label="新建项目夹名称"
+                    placeholder={pageCopy.filters.newCollection}
+                    value={collectionNameDraft}
+                    onChange={(event) => setCollectionNameDraft(event.target.value)}
                   />
-                  <button type="submit" disabled={membershipStatus.tone === "busy"}>
-                    {membershipStatus.tone === "busy" ? <Loader2 className="spinning" aria-hidden="true" /> : <KeyRound aria-hidden="true" />}
-                    兑换
+                  <button type="submit" title="新建项目夹">
+                    <FolderPlus aria-hidden="true" />
                   </button>
                 </form>
-              ) : (
-                <small>{isSupabaseAuthConfigured ? "登录后可兑换卡密并查看权益。" : "账号登录启用后可接入卡密权益。"}</small>
-              )}
-            </div>
-          </div>
-
-          <div className="filter-section case-recent-panel">
-            <h2>{pageCopy.filters.recent}</h2>
-            <div className="case-recent-list">
-              {promptReuseHistory.length ? (
-                promptReuseHistory.slice(0, 5).map((record) => (
-                  <button key={record.id} type="button" onClick={() => selectReuseRecord(record)}>
-                    <span>
-                      <strong>{record.caseTitle}</strong>
-                      <small>
-                        {record.action === "saved" ? "保存变体" : record.action === "generated" ? "生成改写" : "复制提示词"} ·{" "}
-                        {formatHistoryTime(record.createdAt)}
-                      </small>
-                    </span>
-                    <History aria-hidden="true" />
+                <div className="case-collection-list" aria-label="项目夹筛选">
+                  <button
+                    className={!activeCollection ? "active" : ""}
+                    type="button"
+                    onClick={() => setActiveCollection(null)}
+                  >
+                    <span>{pageCopy.filters.allCollections}</span>
+                    <b>{cases.length}</b>
                   </button>
-                ))
-              ) : (
-                <p>复制、保存或生成后，这里会出现最近用过的案例。</p>
-              )}
-            </div>
-          </div>
+                  {caseAssetState.collections.map((collection) => (
+                    <button
+                      className={activeCollection?.id === collection.id ? "active" : ""}
+                      key={collection.id}
+                      type="button"
+                      onClick={() => setActiveCollection(collection.id)}
+                    >
+                      <span>{collection.name}</span>
+                      <b>{collection.caseKeys.length}</b>
+                    </button>
+                  ))}
+                </div>
 
-          <div className="filter-section category-list case-category-filter">
-            <h2>{pageCopy.filters.category}</h2>
-            <div className="case-filter-scroll">
-              <button
-                className={category === "全部" ? "active" : ""}
-                type="button"
-                onClick={() => setCategory("全部")}
-              >
-                <span>{language === "zh" ? "全部" : "All"}</span>
-                <b>{payload.totalCases}</b>
-              </button>
-              {categories.map((item) => (
-                <button
-                  className={category === item.value ? "active" : ""}
-                  key={item.value}
-                  type="button"
-                  onClick={() => setCategory(item.value)}
-                >
-                  <span>{localizedCategoryLabel(item.label, language)}</span>
-                  <b>{item.count}</b>
-                </button>
-              ))}
+                <div className={`case-membership-panel ${membershipStatus.tone}`} aria-label="会员权益">
+                  <div className="case-membership-panel-head">
+                    <span>
+                      <Crown aria-hidden="true" />
+                      <strong>{pageCopy.filters.membership}</strong>
+                    </span>
+                    <em>{membershipPanelLabel}</em>
+                  </div>
+                  <p>{membershipSummary}</p>
+                  {activeMembership ? (
+                    <div className="case-membership-features" aria-label="已开启权益">
+                      <span>收藏备份</span>
+                      <span>{activeMembership.canPromptWorkbench ? "高级工作台" : "基础工作台"}</span>
+                      <span>{activeMembership.canBulkExport ? "批量导出" : "单条复用"}</span>
+                    </div>
+                  ) : null}
+                  {activeMembership ? <small>{membershipStatus.message}</small> : null}
+                  {isSupabaseAuthConfigured && accountSession ? (
+                    <form className="case-membership-form" onSubmit={submitLicenseRedeem}>
+                      <input
+                        aria-label="Image2 卡密"
+                        autoComplete="off"
+                        placeholder="输入卡密"
+                        value={licenseCodeDraft}
+                        onChange={(event) => setLicenseCodeDraft(event.target.value)}
+                      />
+                      <button type="submit" disabled={membershipStatus.tone === "busy"}>
+                        {membershipStatus.tone === "busy" ? (
+                          <Loader2 className="spinning" aria-hidden="true" />
+                        ) : (
+                          <KeyRound aria-hidden="true" />
+                        )}
+                        兑换
+                      </button>
+                    </form>
+                  ) : (
+                    <small>{isSupabaseAuthConfigured ? "登录后可兑换卡密并查看权益。" : "账号登录启用后可接入卡密权益。"}</small>
+                  )}
+                </div>
+              </div>
+
+              <div className="filter-section case-recent-panel">
+                <h2>{pageCopy.filters.recent}</h2>
+                <div className="case-recent-list">
+                  {promptReuseHistory.length ? (
+                    promptReuseHistory.slice(0, 5).map((record) => (
+                      <button key={record.id} type="button" onClick={() => selectReuseRecord(record)}>
+                        <span>
+                          <strong>{record.caseTitle}</strong>
+                          <small>
+                            {record.action === "saved"
+                              ? "保存变体"
+                              : record.action === "generated"
+                                ? "生成改写"
+                                : "复制提示词"}{" "}
+                            · {formatHistoryTime(record.createdAt)}
+                          </small>
+                        </span>
+                        <History aria-hidden="true" />
+                      </button>
+                    ))
+                  ) : (
+                    <p>复制、保存或生成后，这里会出现最近用过的案例。</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="filter-section category-list case-category-filter">
+                <h2>{pageCopy.filters.category}</h2>
+                <div className="case-filter-scroll">
+                  <button
+                    className={category === "全部" ? "active" : ""}
+                    type="button"
+                    onClick={() => setCategory("全部")}
+                  >
+                    <span>{language === "zh" ? "全部" : "All"}</span>
+                    <b>{payload.totalCases}</b>
+                  </button>
+                  {categories.map((item) => (
+                    <button
+                      className={category === item.value ? "active" : ""}
+                      key={item.value}
+                      type="button"
+                      onClick={() => setCategory(item.value)}
+                    >
+                      <span>{localizedCategoryLabel(item.label, language)}</span>
+                      <b>{item.count}</b>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
+          ) : null}
         </aside>
 
         <section className="case-gallery" id="case-gallery" aria-label={pageCopy.filters.gallery}>
