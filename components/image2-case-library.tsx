@@ -306,18 +306,13 @@ const sortOptions = ["价值优先", "最新优先", "案例编号"] as const;
 
 const caseLibraryCopy = {
   zh: {
+    heroKicker: "Image2 案例库",
     heroTitle: "从爆款图到可复刻提示词。",
     heroDescription: "浏览真实案例，复制提示词，点一张图就能拆解结构并生成同款。",
     account: "登录 / 注册",
-    casesAction: "Explore cases",
+    casesAction: "浏览案例",
     featuredAction: "精选案例",
     favoritesAction: (count: number) => `我的收藏 ${count}`,
-    stats: {
-      cases: "案例",
-      categories: "分类",
-      value: "值得复刻",
-      hero: "首屏精选"
-    },
     bridge: {
       kicker: "案例接力",
       title: "把当前灵感带到作图台继续生产",
@@ -355,18 +350,13 @@ const caseLibraryCopy = {
     }
   },
   en: {
+    heroKicker: "Live GPT-Image2 Case Library",
     heroTitle: "From viral images to reusable prompts.",
     heroDescription: "Browse real cases, copy the prompt, and break down structure with one click.",
     account: "Log in / Sign up",
     casesAction: "Explore cases",
     featuredAction: "Featured cases",
     favoritesAction: (count: number) => `My favorites ${count}`,
-    stats: {
-      cases: "Cases",
-      categories: "Categories",
-      value: "Worth recreating",
-      hero: "Hero picks"
-    },
     bridge: {
       kicker: "Case handoff",
       title: "Carry this idea to the workbench",
@@ -2131,8 +2121,6 @@ export function Image2CaseLibrary() {
     () => (selectedCaseKey ? promptReuseHistory.filter((item) => item.caseKey === selectedCaseKey).slice(0, 3) : []),
     [promptReuseHistory, selectedCaseKey]
   );
-  const featuredCount = cases.filter((item) => item.valueTier === "精选").length;
-  const highValueCount = cases.filter((item) => item.valueTier === "高价值").length;
   const generationElapsedSeconds =
     isGenerating && generationStartedAt
       ? Math.max(0, Math.floor(((generationTick || Date.now()) - generationStartedAt) / 1000))
@@ -2724,7 +2712,7 @@ export function Image2CaseLibrary() {
         <div className="case-hero-copy">
           <p className="case-kicker">
             <Sparkles aria-hidden="true" />
-            LIVE GPT-IMAGE2 CASE LIBRARY
+            {pageCopy.heroKicker}
           </p>
           <h1>{pageCopy.heroTitle}</h1>
           <p>{pageCopy.heroDescription}</p>
@@ -2738,25 +2726,6 @@ export function Image2CaseLibrary() {
               <Heart aria-hidden="true" />
               {pageCopy.favoritesAction(favoriteCount)}
             </button>
-          </div>
-
-          <div className="case-hero-stats" aria-label="案例统计">
-            <span>
-              <strong>{payload.totalCases}</strong>
-              <small>{pageCopy.stats.cases}</small>
-            </span>
-            <span>
-              <strong>{categories.length}</strong>
-              <small>{pageCopy.stats.categories}</small>
-            </span>
-            <span>
-              <strong>{featuredCount + highValueCount}</strong>
-              <small>{pageCopy.stats.value}</small>
-            </span>
-            <span>
-              <strong>{heroCases.length}</strong>
-              <small>{pageCopy.stats.hero}</small>
-            </span>
           </div>
 
           <section className={styles.bridge} aria-label="案例到作图台">
