@@ -2782,20 +2782,11 @@ export function Image2CaseLibrary() {
     }
     window.location.assign("/workbench");
   };
-  const handleWorkbenchLink = (event: MouseEvent<HTMLAnchorElement>) => {
-    if (prepareWorkbenchEntry()) return;
-    event.preventDefault();
-    openAccountModal();
-  };
 
   return (
     <main className="case-library">
       <header className="case-hero">
         <div className="case-hero-toolbar">
-          <a className={styles.topWorkbenchLink} href="/workbench" onClick={handleWorkbenchLink}>
-            <WandSparkles aria-hidden="true" />
-            <span>进入作图台</span>
-          </a>
           <button className="case-auth-launcher" type="button" onClick={openAccountModal}>
             <UserRound aria-hidden="true" />
             <span>{accountSession ? accountSession.user.email ?? "账号中心" : "登录 / 注册"}</span>
@@ -2865,10 +2856,6 @@ export function Image2CaseLibrary() {
                 <WandSparkles aria-hidden="true" />
                 {accountSession ? "进入作图台" : "登录后进入"}
               </button>
-              <a href="/workbench" onClick={handleWorkbenchLink}>
-                <ExternalLink aria-hidden="true" />
-                打开流程
-              </a>
             </div>
           </section>
         </div>
