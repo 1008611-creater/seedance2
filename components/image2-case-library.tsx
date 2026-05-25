@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { toUserFacingError } from "@/lib/user-facing-error";
 import type { Image2AssetSnapshot } from "@/lib/types";
+import styles from "./image2-case-workbench-bridge.module.css";
 
 type Image2Case = {
   id: number;
@@ -314,6 +315,7 @@ const promptReuseHistoryStorageKey = "image2-prompt-reuse-history:v1";
 const caseAssetStorageKey = "image2-case-assets:v1";
 const assetUserStorageKey = "image2-asset-user-id:v1";
 const accountSessionStorageKey = "image2-account-session:v1";
+const workbenchAccountSessionStorageKey = "image2-workbench-team-session:v1";
 const supabaseAuthUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/+$/, "");
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 const isSupabaseAuthConfigured = Boolean(supabaseAuthUrl && supabaseAnonKey);
@@ -415,11 +417,13 @@ const readAccountSession = () => {
 
 const persistAccountSession = (session: Image2AccountSession) => {
   window.localStorage.setItem(accountSessionStorageKey, JSON.stringify(session));
+  window.localStorage.setItem(workbenchAccountSessionStorageKey, JSON.stringify(session));
   return session;
 };
 
 const clearAccountSession = () => {
   window.localStorage.removeItem(accountSessionStorageKey);
+  window.localStorage.removeItem(workbenchAccountSessionStorageKey);
 };
 
 const supabaseAuthHeaders = (accessToken?: string) => ({
@@ -2766,11 +2770,32 @@ export function Image2CaseLibrary() {
       tone: "idle"
     });
   };
+  const prepareWorkbenchEntry = () => {
+    if (!accountSession) return false;
+    persistAccountSession(accountSession);
+    return true;
+  };
+  const openWorkbenchEntry = () => {
+    if (!prepareWorkbenchEntry()) {
+      openAccountModal();
+      return;
+    }
+    window.location.assign("/workbench");
+  };
+  const handleWorkbenchLink = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (prepareWorkbenchEntry()) return;
+    event.preventDefault();
+    openAccountModal();
+  };
 
   return (
     <main className="case-library">
       <header className="case-hero">
         <div className="case-hero-toolbar">
+          <a className={styles.topWorkbenchLink} href="/workbench" onClick={handleWorkbenchLink}>
+            <WandSparkles aria-hidden="true" />
+            <span>进入作图台</span>
+          </a>
           <button className="case-auth-launcher" type="button" onClick={openAccountModal}>
             <UserRound aria-hidden="true" />
             <span>{accountSession ? accountSession.user.email ?? "账号中心" : "登录 / 注册"}</span>
@@ -2814,6 +2839,38 @@ export function Image2CaseLibrary() {
               <small>首屏精选</small>
             </span>
           </div>
+
+          <section className={styles.bridge} aria-label="案例到作图台">
+            <div className={styles.bridgeCopy}>
+              <span>
+                <WandSparkles aria-hidden="true" />
+                案例接力
+              </span>
+              <strong>把当前灵感带到作图台继续生产</strong>
+              <small>
+                {selectedCase
+                  ? `当前案例：${selectedCase.caseCode ?? `Case ${selectedCase.id}`} · ${selectedCase.title}`
+                  : "先选一张案例，再进入作图台选择人物、服装和场景参考图。"}
+              </small>
+            </div>
+            <div className={styles.bridgeSteps} aria-label="作图流程">
+              <span>看案例</span>
+              <i aria-hidden="true" />
+              <span>选参考</span>
+              <i aria-hidden="true" />
+              <span>出首帧</span>
+            </div>
+            <div className={styles.bridgeActions}>
+              <button type="button" onClick={openWorkbenchEntry}>
+                <WandSparkles aria-hidden="true" />
+                {accountSession ? "进入作图台" : "登录后进入"}
+              </button>
+              <a href="/workbench" onClick={handleWorkbenchLink}>
+                <ExternalLink aria-hidden="true" />
+                打开流程
+              </a>
+            </div>
+          </section>
         </div>
 
         <div className="case-hero-visual" aria-label="精选封面预览">

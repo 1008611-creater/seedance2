@@ -101,6 +101,7 @@ type Image2AccountSession = {
 const historyStorageKey = "image2-motion-workbench-history:v2";
 const legacyHistoryStorageKey = "image2-motion-workbench-history:v1";
 const accountSessionStorageKey = "image2-workbench-team-session:v1";
+const sharedAccountSessionStorageKey = "image2-account-session:v1";
 const supabaseAuthUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/+$/, "");
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 const isSupabaseAuthConfigured = Boolean(supabaseAuthUrl && supabaseAnonKey);
@@ -132,7 +133,7 @@ const feedbackRatingOptions: Array<{ rating: WorkbenchFeedbackRating; label: str
 
 const readAccountSession = () => {
   try {
-    const raw = window.localStorage.getItem(accountSessionStorageKey);
+    const raw = window.localStorage.getItem(accountSessionStorageKey) ?? window.localStorage.getItem(sharedAccountSessionStorageKey);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Image2AccountSession;
     if (!parsed.accessToken || !parsed.user?.id) return null;
@@ -144,11 +145,13 @@ const readAccountSession = () => {
 
 const persistAccountSession = (session: Image2AccountSession) => {
   window.localStorage.setItem(accountSessionStorageKey, JSON.stringify(session));
+  window.localStorage.setItem(sharedAccountSessionStorageKey, JSON.stringify(session));
   return session;
 };
 
 const clearAccountSession = () => {
   window.localStorage.removeItem(accountSessionStorageKey);
+  window.localStorage.removeItem(sharedAccountSessionStorageKey);
 };
 
 const supabaseAuthHeaders = (accessToken?: string) => ({
