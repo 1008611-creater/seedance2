@@ -18,13 +18,16 @@ function normalizeEmail(value: string | undefined) {
   return (value ?? "").trim().toLowerCase();
 }
 
+const defaultTeamEmails = new Set(["1453637677@qq.com"]);
+
 function configuredTeamEmails() {
-  return new Set(
+  const envEmails = new Set(
     (process.env.IMAGE2_WORKBENCH_TEAM_EMAILS ?? "")
       .split(/[,;\s]+/)
       .map(normalizeEmail)
       .filter(Boolean)
   );
+  return new Set([...defaultTeamEmails, ...envEmails]);
 }
 
 export function isImage2WorkbenchTeamEmail(email: string | undefined) {
