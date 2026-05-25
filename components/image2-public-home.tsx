@@ -249,19 +249,6 @@ export function Image2PublicHome({ initialData }: { initialData: Image2PublicHom
           <Sparkles aria-hidden="true" />
           <span>Image2</span>
         </a>
-        <nav className={styles.nav} aria-label="公开导航">
-          <a href="/image2-cases">案例库</a>
-          <a href="/video-studio">视频创作</a>
-          {accountSession ? (
-            <button type="button" onClick={() => void signOutAccount()}>
-              退出
-            </button>
-          ) : (
-            <button type="button" onClick={() => setIsAuthModalOpen(true)} disabled={!isSupabaseAuthConfigured}>
-              登录
-            </button>
-          )}
-        </nav>
       </header>
 
       <section className={styles.hero} aria-label="Image2 案例灵感库">
