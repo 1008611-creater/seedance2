@@ -37,7 +37,6 @@ import {
 import { Image2LanguageToggle, useImage2LanguagePreference } from "@/components/image2-language";
 import { localizedCaseText, localizedCategoryLabel, type Image2Language } from "@/lib/image2-language";
 import { toUserFacingError } from "@/lib/user-facing-error";
-import type { Image2AssetSnapshot } from "@/lib/types";
 import styles from "./image2-case-workbench-bridge.module.css";
 
 type Image2Case = {
@@ -129,12 +128,6 @@ type CaseAssetState = {
   activeCollectionId: string | null;
   collections: CaseCollection[];
   notes: Record<string, CaseNote>;
-};
-
-type AssetSyncStatus = {
-  message: string;
-  storageMode?: string;
-  tone: "idle" | "busy" | "success" | "error";
 };
 
 type AccountAuthMode = "login" | "signup" | "recover";
@@ -344,7 +337,6 @@ const caseLibraryCopy = {
       allCollections: "全部项目",
       newCollection: "新建项目夹",
       membership: "会员权益",
-      sync: "云端同步",
       recent: "最近复用",
       category: "分类",
       gallery: "案例图库",
@@ -394,7 +386,6 @@ const caseLibraryCopy = {
       allCollections: "All collections",
       newCollection: "New collection",
       membership: "Membership perks",
-      sync: "Cloud sync",
       recent: "Recent reuse",
       category: "Categories",
       gallery: "Case library",
@@ -432,7 +423,6 @@ const generationHistoryStorageKey = "image2-generation-history:v1";
 const promptWorkbenchStorageKey = "image2-prompt-workbench:v1";
 const promptReuseHistoryStorageKey = "image2-prompt-reuse-history:v1";
 const caseAssetStorageKey = "image2-case-assets:v1";
-const assetUserStorageKey = "image2-asset-user-id:v1";
 const accountSessionStorageKey = "image2-account-session:v1";
 const workbenchAccountSessionStorageKey = "image2-workbench-team-session:v1";
 const supabaseAuthUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/+$/, "");
@@ -919,72 +909,6 @@ const persistCaseAssetState = (state: CaseAssetState) => {
   }
 
   return state;
-};
-
-const uniqueById = <T extends { id: string }>(items: T[]) => {
-  const seen = new Set<string>();
-  return items.filter((item) => {
-    if (!item.id || seen.has(item.id)) return false;
-    seen.add(item.id);
-    return true;
-  });
-};
-
-const newerIso = (left?: string, right?: string) => {
-  const leftTime = left ? new Date(left).getTime() : 0;
-  const rightTime = right ? new Date(right).getTime() : 0;
-  return leftTime >= rightTime ? left : right;
-};
-
-const mergeCaseAssetSnapshots = (local: Image2AssetSnapshot, remote: Image2AssetSnapshot): Image2AssetSnapshot => {
-  const collectionMap = new Map<string, CaseCollection>();
-  for (const collection of [...remote.collections, ...local.collections]) {
-    const existing = collectionMap.get(collection.id);
-    if (!existing) {
-      collectionMap.set(collection.id, {
-        ...collection,
-        caseKeys: [...new Set(collection.caseKeys)]
-      });
-      continue;
-    }
-
-    const updatedAt = newerIso(existing.updatedAt, collection.updatedAt) ?? new Date().toISOString();
-    collectionMap.set(collection.id, {
-      ...existing,
-      name: updatedAt === collection.updatedAt ? collection.name : existing.name,
-      caseKeys: [...new Set([...existing.caseKeys, ...collection.caseKeys])],
-      updatedAt
-    });
-  }
-
-  const notes: Record<string, CaseNote> = { ...remote.notes };
-  for (const [key, note] of Object.entries(local.notes)) {
-    const existing = notes[key];
-    if (!existing || (new Date(note.updatedAt).getTime() >= new Date(existing.updatedAt).getTime())) {
-      notes[key] = note;
-    }
-  }
-
-  const promptDrafts: Record<string, PromptWorkbenchDraft> = { ...remote.promptDrafts };
-  for (const [key, draft] of Object.entries(local.promptDrafts)) {
-    const existing = promptDrafts[key];
-    if (!existing || (new Date(draft.updatedAt).getTime() >= new Date(existing.updatedAt).getTime())) {
-      promptDrafts[key] = draft;
-    }
-  }
-
-  return {
-    version: "image2-assets-v1",
-    favoriteCaseKeys: [...new Set([...remote.favoriteCaseKeys, ...local.favoriteCaseKeys])],
-    activeCollectionId: local.activeCollectionId ?? remote.activeCollectionId,
-    collections: [...collectionMap.values()],
-    notes,
-    promptDrafts,
-    promptReuseHistory: uniqueById([...local.promptReuseHistory, ...remote.promptReuseHistory])
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, maxPromptReuseHistoryItems),
-    updatedAt: new Date().toISOString()
-  };
 };
 
 const progressForStage = (stage?: string, elapsedSeconds = 0) => {
@@ -1911,11 +1835,6 @@ export function Image2CaseLibrary() {
     collections: [],
     notes: {}
   });
-  const [assetUserId, setAssetUserId] = useState("");
-  const [assetSyncStatus, setAssetSyncStatus] = useState<AssetSyncStatus>({
-    message: "等待同步",
-    tone: "idle"
-  });
   const [accountSession, setAccountSession] = useState<Image2AccountSession | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [accountAuthMode, setAccountAuthMode] = useState<AccountAuthMode>("login");
@@ -1923,7 +1842,7 @@ export function Image2CaseLibrary() {
   const [accountPassword, setAccountPassword] = useState("");
   const [accountPasswordVisible, setAccountPasswordVisible] = useState(false);
   const [accountAuthStatus, setAccountAuthStatus] = useState<AccountAuthStatus>({
-    message: isSupabaseAuthConfigured ? "可登录云端账号" : "未配置云端账号",
+    message: isSupabaseAuthConfigured ? "可以使用账号登录" : "账号登录未配置",
     tone: "idle"
   });
   const [membership, setMembership] = useState<Image2Membership | null>(null);
@@ -2023,15 +1942,6 @@ export function Image2CaseLibrary() {
 
   useEffect(() => {
     setCaseAssetState(readCaseAssetState());
-  }, []);
-
-  useEffect(() => {
-    let saved = window.localStorage.getItem(assetUserStorageKey);
-    if (!saved) {
-      saved = crypto.randomUUID();
-      window.localStorage.setItem(assetUserStorageKey, saved);
-    }
-    setAssetUserId(saved);
   }, []);
 
   useEffect(() => {
@@ -2400,107 +2310,6 @@ export function Image2CaseLibrary() {
     }
   };
 
-  const buildAssetSnapshot = (): Image2AssetSnapshot => ({
-    version: "image2-assets-v1",
-    favoriteCaseKeys: [...favoriteCaseKeys],
-    activeCollectionId: caseAssetState.activeCollectionId,
-    collections: caseAssetState.collections,
-    notes: caseAssetState.notes,
-    promptDrafts,
-    promptReuseHistory,
-    updatedAt: new Date().toISOString()
-  });
-
-  const applyAssetSnapshot = (snapshot: Image2AssetSnapshot) => {
-    setFavoriteCaseKeys(persistFavoriteCaseKeys(new Set(snapshot.favoriteCaseKeys)));
-    setPromptDrafts(persistPromptWorkbenchDrafts(snapshot.promptDrafts));
-    setPromptReuseHistory(persistPromptReuseHistory(snapshot.promptReuseHistory));
-    setCaseAssetState(
-      persistCaseAssetState({
-        activeCollectionId: snapshot.activeCollectionId,
-        collections: snapshot.collections,
-        notes: snapshot.notes
-      })
-    );
-  };
-
-  const syncAssetsToTemporaryAccount = async () => {
-    if (isSupabaseAuthConfigured && !accountSession) {
-      setAssetSyncStatus({ message: "请先登录账号后再同步云端资产", tone: "error" });
-      return;
-    }
-
-    const accountUserId = accountSession?.user.id ?? assetUserId;
-    if (!accountUserId) return;
-    setAssetSyncStatus({ message: accountSession ? "正在同步云端资产..." : "正在同步本地资产...", tone: "busy" });
-
-    try {
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-        "x-image2-user": accountUserId
-      };
-      if (accountSession?.accessToken) headers.Authorization = `Bearer ${accountSession.accessToken}`;
-
-      const response = await fetch("/api/image2/assets", {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          userId: accountUserId,
-          snapshot: buildAssetSnapshot()
-        })
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? "同步失败。");
-      setAssetSyncStatus({
-        message: `已同步 ${formatHistoryTime(data.updatedAt ?? data.snapshot?.updatedAt ?? new Date().toISOString())}`,
-        storageMode: data.storageMode,
-        tone: "success"
-      });
-    } catch (error) {
-      setAssetSyncStatus({
-        message: toUserFacingError(error instanceof Error ? error.message : error, "同步失败。"),
-        tone: "error"
-      });
-    }
-  };
-
-  const mergeAssetsFromTemporaryAccount = async () => {
-    if (isSupabaseAuthConfigured && !accountSession) {
-      setAssetSyncStatus({ message: "请先登录账号后再合并云端资产", tone: "error" });
-      return;
-    }
-
-    const accountUserId = accountSession?.user.id ?? assetUserId;
-    if (!accountUserId) return;
-    setAssetSyncStatus({ message: accountSession ? "正在合并云端资产..." : "正在合并临时账号资产...", tone: "busy" });
-
-    try {
-      const headers: Record<string, string> = {
-        "x-image2-user": accountUserId
-      };
-      if (accountSession?.accessToken) headers.Authorization = `Bearer ${accountSession.accessToken}`;
-
-      const response = await fetch(`/api/image2/assets?userId=${encodeURIComponent(accountUserId)}`, {
-        headers,
-        cache: "no-store"
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? "读取失败。");
-      const merged = mergeCaseAssetSnapshots(buildAssetSnapshot(), data.snapshot as Image2AssetSnapshot);
-      applyAssetSnapshot(merged);
-      setAssetSyncStatus({
-        message: `已合并 ${formatHistoryTime(merged.updatedAt)}`,
-        storageMode: data.storageMode,
-        tone: "success"
-      });
-    } catch (error) {
-      setAssetSyncStatus({
-        message: toUserFacingError(error instanceof Error ? error.message : error, "合并失败。"),
-        tone: "error"
-      });
-    }
-  };
-
   const createCollection = (event: FormEvent) => {
     event.preventDefault();
     const name = collectionNameDraft.trim();
@@ -2853,20 +2662,6 @@ export function Image2CaseLibrary() {
     );
   }
 
-  const syncRequiresAccount = isSupabaseAuthConfigured && !accountSession;
-  const syncPanelLabel = accountSession || isSupabaseAuthConfigured ? "云端账号同步" : "临时账号同步";
-  const syncIdentityLabel = accountSession
-    ? accountSession.user.email ?? `ID ${accountSession.user.id.slice(0, 8)}`
-    : isSupabaseAuthConfigured
-      ? "请先登录"
-      : assetUserId
-        ? `ID ${assetUserId.slice(0, 8)}`
-        : "生成临时 ID 中";
-  const syncStatusMessage = syncRequiresAccount
-    ? "登录后可同步收藏、项目夹、备注和提示词变体"
-    : assetSyncStatus.message;
-  const syncActionDisabled =
-    assetSyncStatus.tone === "busy" || syncRequiresAccount || !(accountSession?.user.id ?? assetUserId);
   const activeMembership = membership?.activeEntitlement;
   const membershipPanelLabel = activeMembership ? "生效中" : accountSession ? "未激活" : "登录后兑换";
   const membershipSummary = activeMembership
@@ -2878,7 +2673,7 @@ export function Image2CaseLibrary() {
     if (!accountSession) {
       setAccountAuthMode("login");
       setAccountAuthStatus({
-        message: isSupabaseAuthConfigured ? "可登录云端账号" : "未配置云端账号",
+        message: isSupabaseAuthConfigured ? "可以使用账号登录" : "账号登录未配置",
         tone: "idle"
       });
     } else {
@@ -3139,7 +2934,7 @@ export function Image2CaseLibrary() {
               <p>{membershipSummary}</p>
               {activeMembership ? (
                 <div className="case-membership-features" aria-label="已开启权益">
-                  <span>云端同步</span>
+                  <span>收藏备份</span>
                   <span>{activeMembership.canPromptWorkbench ? "高级工作台" : "基础工作台"}</span>
                   <span>{activeMembership.canBulkExport ? "批量导出" : "单条复用"}</span>
                 </div>
@@ -3160,38 +2955,8 @@ export function Image2CaseLibrary() {
                   </button>
                 </form>
               ) : (
-                <small>{isSupabaseAuthConfigured ? "登录后可兑换卡密并同步权益。" : "云端账号启用后可接入卡密权益。"}</small>
+                <small>{isSupabaseAuthConfigured ? "登录后可兑换卡密并查看权益。" : "账号登录启用后可接入卡密权益。"}</small>
               )}
-            </div>
-
-            <div
-              className={`case-asset-sync ${assetSyncStatus.tone}`}
-              aria-label={syncPanelLabel}
-            >
-              <div>
-                <strong>{syncPanelLabel}</strong>
-                <small>{syncStatusMessage}</small>
-                <em>{syncIdentityLabel}</em>
-              </div>
-              <div className="case-asset-sync-actions">
-                <button
-                  disabled={syncActionDisabled}
-                  type="button"
-                  onClick={syncAssetsToTemporaryAccount}
-                >
-                  <Database aria-hidden="true" />
-                  {syncRequiresAccount ? "登录后同步" : accountSession ? "同步到云端" : "同步到临时账号"}
-                </button>
-                <button
-                  disabled={syncActionDisabled}
-                  type="button"
-                  onClick={mergeAssetsFromTemporaryAccount}
-                >
-                  <RotateCcw aria-hidden="true" />
-                  {syncRequiresAccount ? "登录后合并" : accountSession ? "从云端合并" : "从临时账号合并"}
-                </button>
-              </div>
-              {assetSyncStatus.storageMode && <p>{assetSyncStatus.storageMode}</p>}
             </div>
           </div>
 
@@ -3469,7 +3234,7 @@ export function Image2CaseLibrary() {
               <div className="case-auth-modal-copy">
                 <small>Image2 Account</small>
                 <h2 id="case-auth-title">{accountSession ? "账号中心" : "登录 / 注册"}</h2>
-                <p>{accountSession ? "退出后可以切换账号，继续同步或兑换。" : "登录后可同步收藏、项目夹、备注和会员权益。"}</p>
+                <p>{accountSession ? "退出后可以切换账号，继续使用收藏和权益。" : "登录后可保存收藏、项目夹、备注和会员权益。"}</p>
               </div>
               <button aria-label="关闭账号中心" type="button" onClick={closeAccountModal}>
                 <X aria-hidden="true" />
@@ -3579,7 +3344,7 @@ export function Image2CaseLibrary() {
                 </>
               )
             ) : (
-              <p className="case-auth-config-note">云端账号未配置，当前继续使用浏览器临时 ID。</p>
+              <p className="case-auth-config-note">账号登录未配置，当前继续使用本机浏览记录。</p>
             )}
           </div>
         </section>
