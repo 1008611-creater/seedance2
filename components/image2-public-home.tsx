@@ -283,7 +283,6 @@ export function Image2PublicHome({ initialData }: { initialData: Image2PublicHom
               登录
             </button>
           </div>
-          <p className={`${styles.authStatus} ${styles[authStatus.tone]}`}>{authStatus.message}</p>
         </div>
 
         <div className={styles.heroGrid} aria-label="精选案例预览">

@@ -156,23 +156,6 @@
   height: 17px;
 }
 
-.authStatus {
-  width: fit-content;
-  min-height: 34px;
-  margin-top: 18px !important;
-  border: 1px solid rgba(20, 32, 35, 0.1);
-  border-radius: 8px;
-  padding: 8px 11px;
-  color: #647378 !important;
-  background: rgba(255, 253, 250, 0.72);
-  font-size: 12px !important;
-  line-height: 1.4 !important;
-}
-
-.authStatus:empty {
-  display: none;
-}
-
 .busy {
   border-color: #c9d4d1;
 }
