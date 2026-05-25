@@ -470,6 +470,23 @@
   background: var(--accent-dark);
 }
 
+.linkButton {
+  width: fit-content;
+  border: 0;
+  padding: 0;
+  color: var(--accent-dark);
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 850;
+  text-align: left;
+}
+
+.linkButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 @media (max-width: 980px) {
   .hero {
     grid-template-columns: 1fr;

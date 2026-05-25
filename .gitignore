@@ -21,3 +21,4 @@ prompts/
 # Local-only plaintext card batches; generated SQL should contain hashes only.
 .license-codes*.txt
 .license-codes*.sql
+artifacts/liandong-image2-card-packs/**/plaintext-codes.csv

@@ -6,10 +6,11 @@ const favoriteStorageKey = 'image2-case-favorites:v1';
 const promptWorkbenchStorageKey = 'image2-prompt-workbench:v1';
 const reuseStorageKey = 'image2-prompt-reuse-history:v1';
 const accountSessionStorageKey = 'image2-account-session:v1';
+const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3012';
 
 test('image2 cases can save and sync local asset snapshots', async ({ page }) => {
   const testUserId = `pw-image2-assets-${Date.now()}`;
-  await page.goto('http://localhost:3000/image2-cases');
+  await page.goto(`${baseUrl}/image2-cases`);
   await page.evaluate(
     ([assetKey, assetUserKey, favoriteKey, promptKey, reuseKey, accountKey, userId]) => {
       window.localStorage.removeItem(assetKey);
@@ -33,11 +34,12 @@ test('image2 cases can save and sync local asset snapshots', async ({ page }) =>
 
   await expect(page.getByRole('heading', { name: /从爆款图到可复刻提示词/ })).toBeVisible();
   await expect(page.locator('.case-card-shell').first()).toBeVisible();
-  await expect(page.locator('.case-account-panel')).toBeVisible();
 
-  const collectionName = `测试项目夹 ${Date.now()}`;
-  await page.getByLabel('新建项目夹名称').fill(collectionName);
-  await page.getByTitle('新建项目夹').click();
+  const collectionName = `测试收藏夹 ${Date.now()}`;
+  await page.getByRole('button', { name: '管理收藏夹' }).click();
+  await page.getByLabel('新建收藏夹名称').fill(collectionName);
+  await page.getByTitle('新建收藏夹').click();
+  await page.getByRole('button', { name: '关闭收藏夹选择器' }).last().click();
 
   await expect(page.locator('.case-gallery-head h2')).toContainText(collectionName);
   await expect(page.locator('.case-asset-collection-list button.active').filter({ hasText: collectionName })).toBeVisible();
@@ -50,24 +52,12 @@ test('image2 cases can save and sync local asset snapshots', async ({ page }) =>
   await page.getByRole('button', { name: '保存变体' }).click();
   await expect(page.locator('.case-recent-list')).toContainText('保存变体');
 
-  const loginForm = page.locator('.case-account-form');
-  if (await loginForm.isVisible()) {
-    await expect(page.getByRole('button', { name: '登录后同步' })).toBeDisabled();
-    await expect(page.getByRole('button', { name: '登录后合并' })).toBeDisabled();
+  await page.reload();
+  await expect(page.locator('.case-gallery-head h2')).toContainText(collectionName);
+  await expect(page.getByLabel('案例备注')).toHaveValue(note);
 
-    const apiResponse = await page.request.get('http://localhost:3000/api/image2/assets');
-    expect(apiResponse.status()).toBe(401);
-    await expect(page.locator('.case-asset-sync')).toContainText('请先登录');
-  } else {
-    await page.getByRole('button', { name: '同步到临时账号' }).click();
-    await expect(page.locator('.case-asset-sync')).toContainText('已同步');
-
-    const apiResponse = await page.request.get(`http://localhost:3000/api/image2/assets?userId=${encodeURIComponent(testUserId)}`);
-    expect(apiResponse.ok()).toBeTruthy();
-    const apiPayload = await apiResponse.json();
-    expect(apiPayload.snapshot.collections.some((item: { name: string }) => item.name === collectionName)).toBeTruthy();
-    expect(apiPayload.snapshot.notes).not.toEqual({});
-  }
+  const apiResponse = await page.request.get(`${baseUrl}/api/image2/assets`);
+  expect(apiResponse.status()).toBe(401);
 
   await page.evaluate(
     ([assetKey, favoriteKey, promptKey, reuseKey]) => {
@@ -80,14 +70,4 @@ test('image2 cases can save and sync local asset snapshots', async ({ page }) =>
   );
   await page.reload();
   await expect(page.locator('.case-gallery-head h2')).not.toContainText(collectionName);
-
-  if (!(await loginForm.isVisible())) {
-    await page.getByRole('button', { name: '从临时账号合并' }).click();
-    await expect(page.locator('.case-asset-sync')).toContainText('已合并');
-    await expect(page.locator('.case-gallery-head h2')).toContainText(collectionName);
-
-    await page.reload();
-    await expect(page.locator('.case-gallery-head h2')).toContainText(collectionName);
-    await expect(page.getByLabel('案例备注')).toHaveValue(note);
-  }
 });

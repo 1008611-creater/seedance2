@@ -26,8 +26,14 @@ This package prepares `/image2-cases` for real account-backed sync without break
   - Live smoke test for the shared workbench bucket/tables. It writes a tiny temporary image, asset row, and feedback row, reads them back, then cleans them up.
 - `tools/generate-image2-license-batch.mjs`
   - Generates a local plaintext card batch and a matching Supabase insert SQL file containing only `code_hash` values.
+- `tools/generate-image2-balance-packs.mjs`
+  - Generates the Chain Xiaowu/链动小屋 manual listing package for 10 / 50 / 100 Image2 balance cards, plus hashed Supabase insert SQL.
+- `tools/check-image2-wallet-migration.mjs`
+  - Static guard for the Image2 wallet balance tables, wallet transactions, card-code credit RPC, and service-role-only write boundary.
 - `tools/smoke-image2-license-redemption.mjs`
   - Creates a temporary confirmed user and hashed license code, verifies `/api/image2/redeem`, verifies duplicate redemption rejection, then cleans test data.
+- `tools/smoke-image2-wallet-redemption.mjs`
+  - Creates a temporary confirmed user and a temporary 10-image balance card, verifies `/api/image2/redeem` credits the wallet, verifies `/api/image2/balance`, then cleans test data.
 - `.env.example`
   - Adds Supabase placeholders and `IMAGE2_ASSET_SYNC_BACKEND`.
 
@@ -68,6 +74,8 @@ This package prepares `/image2-cases` for real account-backed sync without break
 - Supported card states are `active`, `used`, `expired`, and `disabled`.
 - `/api/image2/entitlements` reads the current authenticated user's entitlement rows and returns the active one for the `/image2-cases` membership panel.
 - The first Image2 membership rollout uses `weekly_free`: 7 days, 2 daily uses, 720p, 15 seconds. Advanced flags are present for later Prompt Workbench/export/member-case gating.
+- The current paid rollout adds Image2 account balance cards: 10 images for ¥2.99, 50 images for ¥12.99, and 100 images for ¥24.99. The UI keeps two free images first, then spends one paid balance per successful generation. Failed generations refund the reserved balance.
+- Old `weekly_free` cards remain supported by `/api/image2/redeem` as a legacy path, but the primary UI now presents image balance instead of weekly membership.
 
 ## Vercel Environment Variables
 
@@ -91,7 +99,6 @@ In Supabase Dashboard, add these Redirect URLs before asking real users to verif
 
 ```text
 https://image2.lsb0713.online/auth/callback
-https://ai.lsb0713.online/auth/callback
 http://localhost:3012/auth/callback
 ```
 
@@ -174,6 +181,7 @@ Run:
 ```powershell
 npm run check:supabase-migration
 npm run check:image2-license-migration
+npm run check:image2-wallet-migration
 npm run check:image2-workbench-migration
 npm run typecheck
 npm run build
@@ -192,3 +200,12 @@ npm run smoke:image2-license
 The smoke test creates a temporary confirmed Supabase Auth user, logs in, uploads an `image2-assets-v1` snapshot, reads it back through `/api/image2/assets`, verifies the API ignores spoofed `userId` values, and deletes the temporary user. It does not print API keys, access tokens, or the generated password.
 
 The license smoke test creates a temporary confirmed Supabase Auth user, inserts a temporary hashed license code, redeems it through `/api/image2/redeem`, verifies duplicate redemption is rejected, and cleans the temporary user and license row.
+
+After applying `202605260001_image2_wallet_balance.sql`, verify the wallet-backed balance flow:
+
+```powershell
+$env:IMAGE2_SMOKE_BASE_URL="http://127.0.0.1:3020"
+npm run smoke:image2-wallet
+```
+
+The wallet smoke test uses a temporary 10-image card, confirms the account balance increases, and deletes the temporary user, wallet rows, and license row.

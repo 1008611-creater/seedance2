@@ -6,6 +6,9 @@ import {
   Check,
   ChevronDown,
   Clock,
+  Copy,
+  Download,
+  ExternalLink,
   Film,
   Gift,
   ImageIcon,
@@ -159,6 +162,8 @@ export function CreatorApp() {
   const activeJobs = dashboard?.jobs ?? [];
   const gallery = dashboard?.gallery ?? [];
   const providerMode = dashboard?.providerMode ?? "manual";
+  const currentRatio = (dashboard?.ratios ?? []).find((item) => item.value === ratio);
+  const currentDuration = (dashboard?.durations ?? []).find((item) => item.value === durationSeconds);
   const [channelStatus, setChannelStatus] = useState<Doubao2ApiStatus | null>(null);
   const [channelLoading, setChannelLoading] = useState(false);
   const doubaoCooldownUntil = Math.max(
@@ -441,39 +446,19 @@ export function CreatorApp() {
         <nav className="nav-list" aria-label="功能导航">
           <a className="active" href="#composer">
             <Film />
-            <span>创作台</span>
+            <span>做视频</span>
           </a>
           <a href="#gallery">
             <ImageIcon />
-            <span>成片库</span>
-          </a>
-          <a href="#doubao-image">
-            <ImageIcon />
-            <span>文生图</span>
-          </a>
-          <a href="#music">
-            <Music2 />
-            <span>文生音乐</span>
-          </a>
-          <a href="#channel">
-            <KeyRound />
-            <span>本地通道</span>
+            <span>作品</span>
           </a>
           <a href="#queue">
             <ListVideo />
-            <span>生成队列</span>
+            <span>任务</span>
           </a>
-          <a href="#redeem">
-            <Ticket />
-            <span>卡密兑换</span>
-          </a>
-          <a href="#account">
-            <UserRound />
-            <span>账号</span>
-          </a>
-          <a href="#settings">
+          <a href="#tools">
             <Settings />
-            <span>参数</span>
+            <span>工具</span>
           </a>
         </nav>
 
@@ -536,27 +521,14 @@ export function CreatorApp() {
 
         <main className="content">
           <section className="page-title">
-            <h1>Seedance 2.0 满血版周卡创作台</h1>
-            <p>稳定高效的 AI 视频创作体验</p>
+            <h1>Seedance 视频创作台</h1>
+            <p>写提示词，选模式和规格，然后提交生成。</p>
           </section>
 
           {notice ? <section className={`notice ${notice.tone === "error" ? "error" : ""}`}>{notice.text}</section> : null}
 
           <section className="work-grid">
             <div className="main-column">
-              <section className="campaign-card">
-                <div className="campaign-icon">
-                  <Gift />
-                </div>
-                <div>
-                  <h2>免费周卡活动进行中</h2>
-                  <p>新账号领取后，每天可生成 2 段 720p 视频。</p>
-                </div>
-                <button className="primary-button" type="button" onClick={handleClaim} disabled={busy === "/api/claim"}>
-                  领取周卡
-                </button>
-              </section>
-
               <form id="composer" className="panel composer" onSubmit={handleSubmit}>
                 <div className="section-head">
                   <h2>开始创作</h2>
@@ -571,6 +543,10 @@ export function CreatorApp() {
                     </button>
                     <button className="soft-button danger" type="button" onClick={() => setPrompt("")}>
                       清空
+                    </button>
+                    <button className="primary-button generate-button top-generate-button" type="submit" disabled={busy === "/api/generations" || doubaoCoolingDown}>
+                      {busy === "/api/generations" ? <Loader2 className="spin" /> : <Sparkles />}
+                      <span>{doubaoCoolingDown ? "冷却中" : "开始生成"}</span>
                     </button>
                   </div>
                 </div>
@@ -627,6 +603,22 @@ export function CreatorApp() {
                     </div>
                   </section>
                 ) : null}
+
+                <div className="composer-footer">
+                  <p>
+                    <Clock /> 今日额度：
+                    <strong>
+                      {dashboard?.quota.remaining ?? 0} / {dashboard?.quota.limit ?? 0} 次
+                    </strong>
+                    <span className="composer-spec">
+                      {currentRatio?.label ?? ratio} · {currentDuration?.label ?? `${durationSeconds}s`}
+                    </span>
+                  </p>
+                  <button className="primary-button generate-button" type="submit" disabled={busy === "/api/generations" || doubaoCoolingDown}>
+                    {busy === "/api/generations" ? <Loader2 className="spin" /> : <Sparkles />}
+                    <span>{doubaoCoolingDown ? "通道冷却中" : "开始生成"}</span>
+                  </button>
+                </div>
 
                 <section id="settings" className="settings-block">
                   <div className="section-head compact">
@@ -689,22 +681,15 @@ export function CreatorApp() {
                     </label>
                   </div>
                 </section>
-
-                <div className="composer-footer">
-                  <p>
-                    <Clock /> 今日额度：
-                    <strong>
-                      {dashboard?.quota.remaining ?? 0} / {dashboard?.quota.limit ?? 0} 次
-                    </strong>
-                  </p>
-                  <button className="primary-button generate-button" type="submit" disabled={busy === "/api/generations" || doubaoCoolingDown}>
-                    {busy === "/api/generations" ? <Loader2 className="spin" /> : <Sparkles />}
-                    <span>{doubaoCoolingDown ? "通道冷却中" : "开始生成"}</span>
-                  </button>
-                </div>
               </form>
 
-              <section id="doubao-image" className="panel doubao-image-panel">
+              <details id="tools" className="tool-drawer">
+                <summary>
+                  扩展工具
+                  <strong>图片生成 / 音乐生成</strong>
+                </summary>
+                <div className="tool-drawer-grid">
+              <section id="doubao-image" className="mini-panel doubao-image-panel">
                 <div className="section-head">
                   <h2>文生图 / 图生图</h2>
                   <span className="provider-chip compact">
@@ -789,7 +774,7 @@ export function CreatorApp() {
                 </div>
               </section>
 
-              <section id="music" className="panel music-panel">
+              <section id="music" className="mini-panel music-panel">
                 <div className="section-head">
                   <h2>文生音乐</h2>
                   <span className="provider-chip compact">
@@ -853,11 +838,13 @@ export function CreatorApp() {
                   )}
                 </div>
               </section>
+                </div>
+              </details>
 
               <section id="gallery" className="panel gallery-panel">
                 <div className="section-head">
                   <div>
-                    <h2>成片库</h2>
+                    <h2>作品区</h2>
                     <div className="filter-tabs">
                       <button className="active" type="button">
                         全部
@@ -866,22 +853,31 @@ export function CreatorApp() {
                       <button type="button">分享</button>
                     </div>
                   </div>
-                  <button className="text-button" type="button">
-                    批量管理
+                  <button className="text-button" type="button" onClick={() => void refreshDashboard()}>
+                    刷新
                   </button>
                 </div>
                 <div className="gallery-grid">
                   {gallery.length ? (
                     gallery.map((item) => <GalleryCard key={item.id} item={item} />)
                   ) : (
-                    <div className="empty-state">暂无成片</div>
+                    <div className="empty-state">
+                      <strong>暂无作品</strong>
+                      <span>任务发布成片后，会在这里播放、下载和复制链接。</span>
+                    </div>
                   )}
                 </div>
               </section>
             </div>
 
             <aside className="right-column">
-              <section id="channel" className="panel channel-panel">
+              <details id="channel" className="side-drawer">
+                <summary>
+                  本地通道
+                  <strong>登录与状态</strong>
+                </summary>
+                <div className="side-drawer-content">
+              <section className="mini-panel channel-panel">
                 <div className="section-head">
                   <h2>本地通道</h2>
                   <button className="text-button" type="button" onClick={() => void refreshDoubao2ApiStatus()}>
@@ -922,6 +918,8 @@ export function CreatorApp() {
                   <div className="empty-mini">当前不是 doubao2api 通道</div>
                 )}
               </section>
+                </div>
+              </details>
 
               <section className="panel quota-panel">
                 <div className="section-head">
@@ -956,7 +954,13 @@ export function CreatorApp() {
                 </div>
               </section>
 
-              <section id="redeem" className="panel redeem-panel">
+              <details id="account-tools" className="side-drawer">
+                <summary>
+                  权益与账号
+                  <strong>卡密 / 资料</strong>
+                </summary>
+                <div className="side-drawer-content">
+              <section id="redeem" className="mini-panel redeem-panel">
                 <div className="section-head">
                   <h2>卡密兑换</h2>
                 </div>
@@ -971,7 +975,7 @@ export function CreatorApp() {
                 </button>
               </section>
 
-              <section id="account" className="panel account-panel">
+              <section id="account" className="mini-panel account-panel">
                 <div className="section-head">
                   <h2>账号</h2>
                 </div>
@@ -996,6 +1000,8 @@ export function CreatorApp() {
                   </button>
                 </form>
               </section>
+                </div>
+              </details>
 
               <section id="queue" className="panel queue-panel">
                 <div className="section-head">
@@ -1049,19 +1055,75 @@ function QueueItem({ item }: { item: DashboardResponse["jobs"][number] }) {
 }
 
 function GalleryCard({ item }: { item: DashboardResponse["gallery"][number] }) {
+  const [copied, setCopied] = useState(false);
+  const hasVideo = Boolean(item.videoUrl);
+  const hasReviewNote = Boolean(item.operatorNote || item.userMessage);
+  const videoUrl = item.videoUrl ?? "";
+
+  async function copyVideoLink() {
+    if (!videoUrl) return;
+    await navigator.clipboard.writeText(videoUrl);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1600);
+  }
+
   return (
     <article className="gallery-card">
-      <a className="thumb" href={item.videoUrl ?? "#"} target="_blank" rel="noreferrer">
-        <img src={item.coverUrl} alt={item.title} />
-        <span className="play-mark">
-          <Play />
-        </span>
+      <div className="thumb">
+        {videoUrl ? (
+          <video className="gallery-video" controls preload="metadata" poster={item.coverUrl} src={videoUrl} />
+        ) : (
+          <img src={item.coverUrl} alt={item.title} />
+        )}
+        {!videoUrl ? (
+          <span className="play-mark">
+            <Play />
+          </span>
+        ) : null}
         <span className="duration-mark">{item.durationSeconds === -1 ? "AUTO" : `00:${String(item.durationSeconds).padStart(2, "0")}`}</span>
-      </a>
+      </div>
+      <div className="gallery-badges">
+        <span className={`gallery-badge ${hasVideo ? "live" : "pending"}`}>{hasVideo ? "已发布" : "待发布"}</span>
+        {item.operatorName ? <span className="gallery-badge subtle">后台 {item.operatorName}</span> : null}
+      </div>
       <h3>{item.title}</h3>
       <p>
         {item.resolution}　{item.ratio}　{formatChinaDateTime(item.createdAt)}
       </p>
+      {hasReviewNote ? (
+        <div className="gallery-meta">
+          {item.externalAccount ? <span>账号 {item.externalAccount}</span> : null}
+          {item.sourceTaskUrl ? <span>任务已留痕</span> : null}
+          {item.operatorNote ? <span>{item.operatorNote}</span> : null}
+          {item.userMessage ? <span>{item.userMessage}</span> : null}
+        </div>
+      ) : null}
+      <div className="gallery-actions">
+        {item.videoUrl ? (
+          <a className="gallery-action" href={item.videoUrl} target="_blank" rel="noreferrer" aria-label="打开成片">
+            <ExternalLink />
+            打开
+          </a>
+        ) : null}
+        {item.videoUrl ? (
+          <a className="gallery-action" href={item.videoUrl} download aria-label="下载成片">
+            <Download />
+            下载
+          </a>
+        ) : null}
+        {item.videoUrl ? (
+          <button className="gallery-action" type="button" onClick={() => void copyVideoLink()} aria-label="复制成片链接">
+            <Copy />
+            {copied ? "已复制" : "复制链接"}
+          </button>
+        ) : null}
+        {item.sourceTaskUrl ? (
+          <a className="gallery-action" href={item.sourceTaskUrl} target="_blank" rel="noreferrer">
+            <ExternalLink />
+            打开任务
+          </a>
+        ) : null}
+      </div>
     </article>
   );
 }

@@ -8,6 +8,8 @@ import type { Image2PublicHomeData, WorkbenchCase } from "@/lib/image2-workbench
 import styles from "./image2-public-home.module.css";
 
 type AccountAuthMode = "login" | "signup" | "recover";
+type AccountOtpMode = "signup" | "recovery" | null;
+type SupabaseOtpType = Exclude<AccountOtpMode, null> | "email";
 
 type AccountAuthStatus = {
   message: string;
@@ -164,6 +166,24 @@ const recoverSupabasePassword = async (email: string, redirectTo?: string) => {
   });
 };
 
+const verifySupabaseEmailCode = async (email: string, token: string, type: SupabaseOtpType) =>
+  toAccountSession(
+    await supabaseAuthRequest("verify", {
+      method: "POST",
+      body: JSON.stringify({ email, token, type })
+    })
+  );
+
+const verifySupabaseSignupCode = async (email: string, token: string) => {
+  try {
+    return await verifySupabaseEmailCode(email, token, "signup");
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (!/type|otp|token|invalid|verify/i.test(message)) throw error;
+    return verifySupabaseEmailCode(email, token, "email");
+  }
+};
+
 const signOutSupabaseSession = async (accessToken: string) => {
   await supabaseAuthRequest("logout", { method: "POST" }, accessToken);
 };
@@ -186,6 +206,8 @@ export function Image2PublicHome({ initialData }: { initialData: Image2PublicHom
   const [accountSession, setAccountSession] = useState<Image2AccountSession | null>(null);
   const [accountEmail, setAccountEmail] = useState("");
   const [accountPassword, setAccountPassword] = useState("");
+  const [accountOtpCode, setAccountOtpCode] = useState("");
+  const [accountOtpMode, setAccountOtpMode] = useState<AccountOtpMode>(null);
   const [accountAuthMode, setAccountAuthMode] = useState<AccountAuthMode>("login");
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authStatus, setAuthStatus] = useState<AccountAuthStatus>({
@@ -222,42 +244,106 @@ export function Image2PublicHome({ initialData }: { initialData: Image2PublicHom
     event.preventDefault();
     if (!isSupabaseAuthConfigured) return;
     const email = accountEmail.trim();
+    const password = accountPassword.trim();
+
+    if (accountOtpMode === "signup") {
+      const token = accountOtpCode.trim();
+      if (!email || !token) {
+        setAuthStatus({ message: "请输入邮箱验证码。", tone: "error" });
+        return;
+      }
+      setAuthStatus({ message: "正在验证邮箱验证码...", tone: "busy" });
+      try {
+        const session = await verifySupabaseSignupCode(email, token);
+        persistAccountSession(session);
+        setAccountSession(session);
+        setAccountEmail(session.user.email ?? email);
+        setAccountPassword("");
+        setAccountOtpCode("");
+        setAccountOtpMode(null);
+        setAuthStatus({ message: "注册并登录成功。", tone: "success" });
+        if (await hasWorkbenchAccess(session)) {
+          window.location.assign("/workbench");
+          return;
+        }
+        setIsAuthModalOpen(false);
+      } catch (error) {
+        setAuthStatus({ message: error instanceof Error ? error.message : "验证码校验失败。", tone: "error" });
+      }
+      return;
+    }
+
+    if (accountOtpMode === "recovery") {
+      const token = accountOtpCode.trim();
+      if (!email || !token || password.length < 6) {
+        setAuthStatus({ message: "请输入验证码和至少 6 位新密码。", tone: "error" });
+        return;
+      }
+      setAuthStatus({ message: "正在验证并重置密码...", tone: "busy" });
+      try {
+        const session = await verifySupabaseEmailCode(email, token, "recovery");
+        await supabaseAuthRequest(
+          "user",
+          {
+            method: "PUT",
+            body: JSON.stringify({ password })
+          },
+          session.accessToken
+        );
+        persistAccountSession(session);
+        setAccountSession(session);
+        setAccountEmail(session.user.email ?? email);
+        setAccountPassword("");
+        setAccountOtpCode("");
+        setAccountOtpMode(null);
+        setAuthStatus({ message: "密码已重置。", tone: "success" });
+      } catch (error) {
+        setAuthStatus({ message: error instanceof Error ? error.message : "密码重置失败。", tone: "error" });
+      }
+      return;
+    }
 
     if (accountAuthMode === "recover") {
       if (!email) {
         setAuthStatus({ message: "请输入要找回密码的邮箱。", tone: "error" });
         return;
       }
-      setAuthStatus({ message: "正在发送重置邮件...", tone: "busy" });
+      setAuthStatus({ message: "正在发送邮箱验证码...", tone: "busy" });
       try {
         await recoverSupabasePassword(email, getAuthCallbackUrl("recovery"));
-        setAuthStatus({ message: "已发送重置邮件，请查看邮箱。", tone: "success" });
+        setAccountOtpMode("recovery");
+        setAccountOtpCode("");
+        setAccountPassword("");
+        setAuthStatus({ message: "验证码已发送，请输入验证码并设置新密码。", tone: "success" });
       } catch (error) {
-        setAuthStatus({ message: error instanceof Error ? error.message : "重置邮件发送失败。", tone: "error" });
+        setAuthStatus({ message: error instanceof Error ? error.message : "验证码发送失败。", tone: "error" });
       }
       return;
     }
 
-    if (!email || accountPassword.length < 6) {
+    if (!email || password.length < 6) {
       setAuthStatus({ message: "请输入邮箱和至少 6 位密码。", tone: "error" });
       return;
     }
 
-    setAuthStatus({ message: accountAuthMode === "login" ? "正在登录..." : "正在注册...", tone: "busy" });
+    setAuthStatus({ message: accountAuthMode === "login" ? "正在登录..." : "正在发送注册验证码...", tone: "busy" });
     try {
       const session =
         accountAuthMode === "login"
-          ? await signInWithSupabasePassword(email, accountPassword)
-          : await signUpWithSupabasePassword(email, accountPassword, getAuthCallbackUrl("confirm"));
+          ? await signInWithSupabasePassword(email, password)
+          : await signUpWithSupabasePassword(email, password, getAuthCallbackUrl("confirm"));
       if (!session) {
-        setAccountAuthMode("login");
-        setAuthStatus({ message: "注册成功，请完成邮箱验证后再登录。", tone: "success" });
+        setAccountOtpMode("signup");
+        setAccountOtpCode("");
+        setAuthStatus({ message: "注册验证码已发送，请查看邮箱并输入验证码。", tone: "success" });
         return;
       }
 
       persistAccountSession(session);
       setAccountSession(session);
       setAccountPassword("");
+      setAccountOtpCode("");
+      setAccountOtpMode(null);
       if (await hasWorkbenchAccess(session)) {
         window.location.assign("/workbench");
         return;
@@ -266,6 +352,41 @@ export function Image2PublicHome({ initialData }: { initialData: Image2PublicHom
       setAuthStatus({ message: "欢迎回来。", tone: "success" });
     } catch (error) {
       setAuthStatus({ message: error instanceof Error ? error.message : "账号请求失败。", tone: "error" });
+    }
+  }
+
+  async function resendAccountOtp() {
+    if (!isSupabaseAuthConfigured || !accountOtpMode) return;
+    const email = accountEmail.trim();
+    if (!email) {
+      setAuthStatus({ message: "请输入邮箱。", tone: "error" });
+      return;
+    }
+
+    if (accountOtpMode === "signup") {
+      const password = accountPassword.trim();
+      if (password.length < 6) {
+        setAuthStatus({ message: "请先输入至少 6 位密码。", tone: "error" });
+        return;
+      }
+      setAuthStatus({ message: "正在重新发送注册验证码...", tone: "busy" });
+      try {
+        await signUpWithSupabasePassword(email, password, getAuthCallbackUrl("confirm"));
+        setAccountOtpCode("");
+        setAuthStatus({ message: "注册验证码已重新发送。", tone: "success" });
+      } catch (error) {
+        setAuthStatus({ message: error instanceof Error ? error.message : "验证码重新发送失败。", tone: "error" });
+      }
+      return;
+    }
+
+    setAuthStatus({ message: "正在重新发送找回验证码...", tone: "busy" });
+    try {
+      await recoverSupabasePassword(email, getAuthCallbackUrl("recovery"));
+      setAccountOtpCode("");
+      setAuthStatus({ message: "找回验证码已重新发送。", tone: "success" });
+    } catch (error) {
+      setAuthStatus({ message: error instanceof Error ? error.message : "验证码重新发送失败。", tone: "error" });
     }
   }
 
@@ -280,6 +401,8 @@ export function Image2PublicHome({ initialData }: { initialData: Image2PublicHom
     clearAccountSession();
     setAccountSession(null);
     setAccountPassword("");
+    setAccountOtpCode("");
+    setAccountOtpMode(null);
     setAuthStatus({ message: "已退出。", tone: "success" });
   }
 
@@ -366,14 +489,26 @@ export function Image2PublicHome({ initialData }: { initialData: Image2PublicHom
           onEmailChange={setAccountEmail}
           onModeChange={(mode) => {
             setAccountAuthMode(mode);
+            setAccountOtpMode(null);
+            setAccountOtpCode("");
+            setAccountPassword("");
             setAuthStatus({
-              message: mode === "recover" ? "输入邮箱后发送重置邮件。" : "可以使用账号登录。",
+              message:
+                mode === "recover"
+                  ? "输入邮箱后接收验证码。"
+                  : mode === "signup"
+                    ? "填写邮箱和密码后接收验证码。"
+                    : "可以使用账号登录。",
               tone: "idle"
             });
           }}
           onPasswordChange={setAccountPassword}
+          onOtpCodeChange={setAccountOtpCode}
+          onResendOtp={resendAccountOtp}
           onSubmit={submitAccountAuth}
           password={accountPassword}
+          otpCode={accountOtpCode}
+          otpMode={accountOtpMode}
         />
       ) : null}
     </main>
@@ -403,7 +538,11 @@ function AccountAuthModal({
   onEmailChange,
   onModeChange,
   onPasswordChange,
+  onOtpCodeChange,
+  onResendOtp,
   onSubmit,
+  otpCode,
+  otpMode,
   password
 }: {
   authMode: AccountAuthMode;
@@ -414,10 +553,24 @@ function AccountAuthModal({
   onEmailChange: (value: string) => void;
   onModeChange: (mode: AccountAuthMode) => void;
   onPasswordChange: (value: string) => void;
+  onOtpCodeChange: (value: string) => void;
+  onResendOtp: () => void;
   onSubmit: (event: FormEvent) => void;
+  otpCode: string;
+  otpMode: AccountOtpMode;
   password: string;
 }) {
-  const submitLabel = authMode === "login" ? "登录" : authMode === "signup" ? "注册账号" : "发送重置邮件";
+  const submitLabel =
+    otpMode === "signup"
+      ? "验证并完成注册"
+      : otpMode === "recovery"
+        ? "验证并重置密码"
+        : authMode === "login"
+          ? "登录"
+          : authMode === "signup"
+            ? "发送注册验证码"
+            : "发送找回验证码";
+  const showPassword = otpMode === "signup" ? false : authMode !== "recover" || otpMode === "recovery";
   return (
     <div className={styles.modalBackdrop} role="presentation">
       <section className={styles.modal} role="dialog" aria-modal="true" aria-label="账号登录">
@@ -435,6 +588,7 @@ function AccountAuthModal({
                 <button
                   aria-pressed={authMode === mode}
                   className={authMode === mode ? styles.active : ""}
+                  disabled={Boolean(otpMode)}
                   key={mode}
                   type="button"
                   onClick={() => onModeChange(mode)}
@@ -445,13 +599,31 @@ function AccountAuthModal({
             </div>
             <label>
               <span>邮箱</span>
-              <input autoComplete="email" type="email" value={email} onChange={(event) => onEmailChange(event.target.value)} />
+              <input
+                autoComplete="email"
+                disabled={Boolean(otpMode)}
+                type="email"
+                value={email}
+                onChange={(event) => onEmailChange(event.target.value)}
+              />
             </label>
-            {authMode !== "recover" ? (
+            {otpMode ? (
               <label>
-                <span>密码</span>
+                <span>邮箱验证码</span>
                 <input
-                  autoComplete={authMode === "login" ? "current-password" : "new-password"}
+                  autoComplete="one-time-code"
+                  inputMode="numeric"
+                  type="text"
+                  value={otpCode}
+                  onChange={(event) => onOtpCodeChange(event.target.value.replace(/\s+/g, ""))}
+                />
+              </label>
+            ) : null}
+            {showPassword ? (
+              <label>
+                <span>{otpMode === "recovery" ? "新密码" : "密码"}</span>
+                <input
+                  autoComplete={otpMode === "recovery" || authMode === "signup" ? "new-password" : "current-password"}
                   type="password"
                   value={password}
                   onChange={(event) => onPasswordChange(event.target.value)}
@@ -467,6 +639,11 @@ function AccountAuthModal({
                 {authStatus.tone === "busy" ? "处理中" : submitLabel}
               </button>
             </div>
+            {otpMode ? (
+              <button type="button" className={styles.linkButton} onClick={onResendOtp} disabled={authStatus.tone === "busy"}>
+                重新发送验证码
+              </button>
+            ) : null}
           </form>
         ) : (
           <p className={`${styles.authMessage} ${styles.error}`}>当前环境暂不支持账号登录。</p>

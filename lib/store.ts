@@ -21,10 +21,15 @@ import {
   type UserProfile
 } from "./types";
 import { configuredVideoProvider } from "./provider";
+import {
+  isSeedanceSupabaseStoreEnabled,
+  readSeedanceSupabaseStore,
+  writeSeedanceSupabaseStore
+} from "./seedance-supabase-store";
 import { addDaysIso, nextShanghaiMidnightIso, nowIso, shanghaiDateKey } from "./time";
 import { toUserFacingError } from "./user-facing-error";
 
-type StoreState = {
+export type StoreState = {
   users: UserProfile[];
   licenseCodes: LicenseCode[];
   entitlements: Entitlement[];
@@ -76,6 +81,13 @@ function createDefaultStore(): StoreState {
 }
 
 async function readStore(): Promise<StoreState> {
+  if (isSeedanceSupabaseStoreEnabled()) {
+    const state = await readSeedanceSupabaseStore();
+    normalizeStoreShape(state);
+    fallbackStore.state = state;
+    return structuredClone(state);
+  }
+
   const file = storeFilePath();
   try {
     const raw = await readFile(file, "utf8");
@@ -95,6 +107,11 @@ async function readStore(): Promise<StoreState> {
 
 async function writeStore(state: StoreState) {
   fallbackStore.state = structuredClone(state);
+  if (isSeedanceSupabaseStoreEnabled()) {
+    await writeSeedanceSupabaseStore(state);
+    return;
+  }
+
   const file = storeFilePath();
   try {
     await mkdir(path.dirname(file), { recursive: true });
@@ -471,9 +488,10 @@ export function updateManualGeneration(
   if (!generation) throw new Error("任务不存在。");
 
   const previousStatus = generation.status;
+  const nextVideoUrl = patch.videoUrl?.trim() || generation.videoUrl;
   generation.status = patch.status ?? generation.status;
   generation.progress = patch.progress ?? generation.progress;
-  generation.videoUrl = patch.videoUrl?.trim() || generation.videoUrl;
+  generation.videoUrl = nextVideoUrl;
   generation.coverUrl = patch.coverUrl?.trim() || generation.coverUrl;
   generation.operatorName = patch.operatorName?.trim() || generation.operatorName;
   generation.externalAccount = patch.externalAccount?.trim() || generation.externalAccount;
@@ -487,10 +505,12 @@ export function updateManualGeneration(
 
   if (generation.status === "running") {
     generation.progress = Math.max(generation.progress, 18);
+    generation.userMessage ||= "制作中，管理员已接手。";
   }
 
   if (generation.status === "succeeded") {
     if (!generation.videoUrl) throw new Error("发布成片前需要填写视频链接。");
+    if (!isPublicHttpUrl(generation.videoUrl)) throw new Error("成片链接必须是 http(s) 可打开地址。");
     generation.progress = 100;
     generation.completedAt = generation.updatedAt;
     generation.errorMessage = undefined;
@@ -498,10 +518,32 @@ export function updateManualGeneration(
 
   if ((generation.status === "failed" || generation.status === "expired") && previousStatus !== generation.status) {
     generation.progress = 100;
+    if (generation.errorMessage) {
+      const hasRefundNote = /退额|退回|已退/i.test(generation.errorMessage);
+      if (!hasRefundNote) {
+        generation.errorMessage = `${generation.errorMessage}；今日额度已退回。`;
+      }
+    } else {
+      generation.errorMessage = "任务处理失败，今日额度已退回。";
+    }
+    if (!generation.userMessage) {
+      generation.userMessage = "任务失败，今日额度已退回。";
+    } else if (!/退额|退回|已退/i.test(generation.userMessage)) {
+      generation.userMessage = `${generation.userMessage}；今日额度已退回。`;
+    }
     refundQuota(state, generation);
   }
 
   return generation;
+}
+
+function isPublicHttpUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
 }
 
 export function quotaForUser(state: StoreState, userId: string, entitlement?: Entitlement): QuotaSummary {

@@ -1,10 +1,11 @@
 import { NextRequest } from "next/server";
 import {
-  image2FreeQuotaExceededPayload,
-  isImage2FreeQuotaExceeded,
-  refundImage2FreeQuota,
-  reserveImage2FreeQuota
-} from "@/lib/image2-free-quota";
+  image2GenerationAccessPayload,
+  image2UsagePayload,
+  refundImage2GenerationUsage,
+  reserveImage2GenerationUsage,
+  type Image2GenerationUsageReservation
+} from "@/lib/image2-wallet";
 import { generateImage2, sanitizeImage2ProviderMessage } from "@/lib/image2-generation";
 import { toUserFacingError } from "@/lib/user-facing-error";
 
@@ -20,14 +21,12 @@ function eventChunk(event: string, data: unknown) {
 export async function POST(request: NextRequest) {
   const body = await request.json();
   const startedAt = Date.now();
-  let reservation: Awaited<ReturnType<typeof reserveImage2FreeQuota>>;
+  let reservation: Image2GenerationUsageReservation;
 
   try {
-    reservation = await reserveImage2FreeQuota(request);
+    reservation = await reserveImage2GenerationUsage(request);
   } catch (error) {
-    const payload = isImage2FreeQuotaExceeded(error)
-      ? image2FreeQuotaExceededPayload(error)
-      : { error: "额度检查失败，请稍后重试。" };
+    const payload = image2GenerationAccessPayload(error) ?? { error: "额度检查失败，请稍后重试。" };
 
     return new Response(eventChunk("quota", payload), {
       headers: {
@@ -76,15 +75,15 @@ export async function POST(request: NextRequest) {
       generateImage2(body)
         .then((result) => {
           clearInterval(timer);
-          send("done", { ...result, quota: reservation.quota });
+          send("done", { ...result, ...image2UsagePayload(reservation) });
           controller.close();
         })
         .catch(async (error) => {
           clearInterval(timer);
-          const quota = await refundImage2FreeQuota(reservation);
+          const refund = await refundImage2GenerationUsage(reservation);
           send("error", {
             error: toUserFacingError(sanitizeImage2ProviderMessage(error), "作图失败。"),
-            quota
+            ...refund
           });
           controller.close();
         });

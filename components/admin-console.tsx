@@ -5,6 +5,7 @@ import {
   Clipboard,
   ExternalLink,
   Film,
+  KeyRound,
   Loader2,
   Lock,
   RefreshCw,
@@ -28,6 +29,33 @@ type Draft = {
   errorMessage: string;
 };
 
+type Doubao2ApiAccountStatus = {
+  id: string;
+  adminUrl: string;
+  reachable: boolean;
+  loggedIn: boolean;
+  status: string;
+  needsCaptcha: boolean;
+  inFlight: boolean;
+  cooldownUntil?: number;
+  loginRequiredUntil?: number;
+  lastError?: string;
+};
+
+type Doubao2ApiStatus = {
+  configured: boolean;
+  reachable: boolean;
+  providerType: string;
+  rootUrl: string;
+  error?: string;
+  pool?: {
+    cooldownUntil?: number;
+    lastError?: string;
+    lastRateLimitAt?: number;
+  };
+  accounts: Doubao2ApiAccountStatus[];
+};
+
 const tokenKey = "seedance-admin-token";
 
 export function AdminConsole() {
@@ -39,6 +67,8 @@ export function AdminConsole() {
   const [filter, setFilter] = useState<GenerationStatus | "all">("queued");
   const [query, setQuery] = useState("");
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
+  const [channelStatus, setChannelStatus] = useState<Doubao2ApiStatus | null>(null);
+  const [channelLoading, setChannelLoading] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem(tokenKey) ?? "";
@@ -60,6 +90,16 @@ export function AdminConsole() {
     });
   }, [queue]);
 
+  useEffect(() => {
+    if (queue?.providerMode !== "doubao2api") {
+      setChannelStatus(null);
+      return;
+    }
+    void refreshChannelStatus();
+    const timer = window.setInterval(() => void refreshChannelStatus(), 10000);
+    return () => window.clearInterval(timer);
+  }, [queue?.providerMode]);
+
   const jobs = useMemo(() => {
     const all = queue?.jobs ?? [];
     return all.filter((job) => {
@@ -68,6 +108,22 @@ export function AdminConsole() {
       return matchStatus && text.includes(query.trim().toLowerCase());
     });
   }, [queue, filter, query]);
+
+  const filterTabs = useMemo(() => {
+    const totals = queue?.totals ?? { queued: 0, running: 0, succeeded: 0, failed: 0, expired: 0 };
+    return [
+      { value: "queued" as const, label: "待制作", count: totals.queued },
+      { value: "running" as const, label: "制作中", count: totals.running },
+      { value: "succeeded" as const, label: "已完成", count: totals.succeeded },
+      { value: "failed" as const, label: "失败", count: totals.failed },
+      { value: "expired" as const, label: "已过期", count: totals.expired },
+      {
+        value: "all" as const,
+        label: "全部",
+        count: totals.queued + totals.running + totals.succeeded + totals.failed + totals.expired
+      }
+    ];
+  }, [queue]);
 
   async function refresh(activeToken = token) {
     if (!activeToken) return;
@@ -81,10 +137,37 @@ export function AdminConsole() {
       const json = await response.json();
       if (!response.ok) throw new Error(json.error ?? "后台加载失败。");
       setQueue(json);
+      if (json.providerMode === "doubao2api") {
+        void refreshChannelStatus();
+      } else {
+        setChannelStatus(null);
+      }
     } catch (error) {
       flash(toUserFacingError(error instanceof Error ? error.message : error, "后台加载失败。"), "error");
     } finally {
       setBusy("");
+    }
+  }
+
+  async function refreshChannelStatus() {
+    setChannelLoading(true);
+    try {
+      const response = await fetch("/api/provider/doubao2api/status", { cache: "no-store" });
+      const json = await response.json();
+      if (!response.ok) throw new Error(json.error ?? "通道状态读取失败。");
+      setChannelStatus(json);
+    } catch (error) {
+      setChannelStatus({
+        configured: false,
+        reachable: false,
+        providerType: "doubao2api-proxy",
+        rootUrl: "",
+        error: error instanceof Error ? error.message : "通道状态读取失败。",
+        pool: {},
+        accounts: []
+      });
+    } finally {
+      setChannelLoading(false);
     }
   }
 
@@ -186,22 +269,67 @@ export function AdminConsole() {
         <Stat label="失败/过期" value={queue.totals.failed + queue.totals.expired} />
       </section>
 
+      <section className="admin-channel-health" aria-label="通道健康状态">
+        <div className="admin-channel-head">
+          <div>
+            <span className="admin-eyebrow">通道健康</span>
+            <h2>{providerModeLabel(queue.providerMode)}</h2>
+            <p>{providerModeDescription(queue.providerMode, channelStatus)}</p>
+          </div>
+          {queue.providerMode === "doubao2api" ? (
+            <button className="light-button admin-refresh" type="button" onClick={() => void refreshChannelStatus()} disabled={channelLoading}>
+              {channelLoading ? <Loader2 className="spin" /> : <RefreshCw />}
+              刷新通道
+            </button>
+          ) : null}
+        </div>
+
+        {queue.providerMode === "doubao2api" ? (
+          <div className="admin-channel-body">
+            {channelStatus?.pool?.cooldownUntil && channelStatus.pool.cooldownUntil > Date.now() ? (
+              <div className="admin-channel-alert">
+                <KeyRound />
+                通道冷却到 {formatLocalTime(channelStatus.pool.cooldownUntil)}
+              </div>
+            ) : null}
+            {channelStatus?.error ? <div className="admin-channel-alert error">{channelStatus.error}</div> : null}
+            {(channelStatus?.accounts ?? []).length ? (
+              <div className="admin-channel-accounts">
+                {channelStatus?.accounts.map((account) => (
+                  <article className="admin-channel-account" key={account.id}>
+                    <span className={`status-dot ${accountStatusTone(account)}`} />
+                    <div>
+                      <strong>{account.id}</strong>
+                      <small>{accountStatusText(account)}</small>
+                      {account.lastError ? <em>{account.lastError}</em> : null}
+                    </div>
+                    {account.adminUrl ? (
+                      <a className="soft-link" href={account.adminUrl} target="_blank" rel="noreferrer">
+                        <ExternalLink />
+                        登录
+                      </a>
+                    ) : null}
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="empty-mini">暂无账号状态，确认 doubao2api 代理已启动。</div>
+            )}
+          </div>
+        ) : null}
+      </section>
+
       <section className="admin-toolbar">
         <div className="admin-tabs">
-          {[
-            ["queued", "待制作"],
-            ["running", "制作中"],
-            ["succeeded", "已完成"],
-            ["failed", "失败"],
-            ["all", "全部"]
-          ].map(([value, label]) => (
+          {filterTabs.map(({ value, label, count }) => (
             <button
               className={filter === value ? "active" : ""}
               type="button"
               key={value}
               onClick={() => setFilter(value as GenerationStatus | "all")}
             >
-              {label}
+              <span>{label}</span>
+              <strong>{count}</strong>
             </button>
           ))}
         </div>
@@ -215,6 +343,7 @@ export function AdminConsole() {
         {jobs.length ? (
           jobs.map((job) => {
             const draft = drafts[job.id] ?? draftFromJob(job);
+            const videoUrlReady = isPublicHttpUrl(draft.videoUrl);
             return (
               <article className="admin-job" key={job.id}>
                 <div className="admin-job-main">
@@ -279,6 +408,13 @@ export function AdminConsole() {
                       placeholder="上传到 R2/对象存储后的 URL"
                     />
                   </label>
+                  {draft.videoUrl.trim() ? (
+                    <a className="soft-link" href={draft.videoUrl.trim()} target="_blank" rel="noreferrer">
+                      <ExternalLink />
+                      打开成片
+                    </a>
+                  ) : null}
+                  {!videoUrlReady ? <p className="admin-inline-hint">发布前需要填写 http(s) 成片链接。</p> : null}
                   <label>
                     <span>用户提示</span>
                     <input
@@ -305,12 +441,17 @@ export function AdminConsole() {
                       className="primary-button"
                       type="button"
                       onClick={() => void updateJob(job, "succeeded", 100)}
-                      disabled={busy === `${job.id}-succeeded`}
+                      disabled={busy === `${job.id}-succeeded` || !videoUrlReady}
                     >
                       {busy === `${job.id}-succeeded` ? <Loader2 className="spin" /> : <Send />}
                       发布成片
                     </button>
-                    <button className="danger-button" type="button" onClick={() => void updateJob(job, "failed", 100)}>
+                    <button
+                      className="danger-button"
+                      type="button"
+                      onClick={() => void updateJob(job, "failed", 100)}
+                      disabled={busy === `${job.id}-failed`}
+                    >
                       <XCircle />
                       失败退额
                     </button>
@@ -390,6 +531,46 @@ function statusLabel(status: GenerationStatus) {
   }[status];
 }
 
+function providerModeLabel(mode: AdminQueueResponse["providerMode"]) {
+  if (mode === "doubao2api") return "doubao2api 本地通道";
+  if (mode === "seedance") return "Seedance 实时通道";
+  return "人工制作通道";
+}
+
+function providerModeDescription(mode: AdminQueueResponse["providerMode"], status: Doubao2ApiStatus | null) {
+  if (mode === "manual") return "复制任务包到外部平台制作，拿到成片链接后回填发布。";
+  if (mode === "seedance") return "当前使用 Seedance 实时 API，后台主要负责异常复核与发布记录。";
+  if (!status) return "正在读取本地通道账号状态。";
+  if (!status.configured || !status.reachable) return "本地代理暂不可达，请检查 doubao2api 服务。";
+  const readyCount = status.accounts.filter((account) => account.reachable && account.loggedIn && !account.needsCaptcha).length;
+  return `${readyCount} / ${status.accounts.length} 个账号可接单。`;
+}
+
+function accountStatusTone(account: Doubao2ApiAccountStatus) {
+  if (!account.reachable) return "offline";
+  if (account.needsCaptcha) return "warn";
+  if (account.cooldownUntil && account.cooldownUntil > Date.now()) return "warn";
+  if (account.loggedIn) return "live";
+  return "";
+}
+
+function accountStatusText(account: Doubao2ApiAccountStatus) {
+  if (!account.reachable) return "服务未连接";
+  if (account.needsCaptcha) return "需要人工验证";
+  if (account.cooldownUntil && account.cooldownUntil > Date.now()) return `冷却到 ${formatLocalTime(account.cooldownUntil)}`;
+  if (account.loginRequiredUntil && account.loginRequiredUntil > Date.now()) return "需要扫码登录";
+  if (account.loggedIn) return account.inFlight ? "生成中" : "已登录可用";
+  return account.status === "not_ready" ? "待扫码登录" : account.status;
+}
+
+function formatLocalTime(value: number) {
+  return new Intl.DateTimeFormat("zh-CN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  }).format(new Date(value));
+}
+
 function modeLabel(mode: Generation["mode"]) {
   return {
     text: "文生视频",
@@ -397,4 +578,13 @@ function modeLabel(mode: Generation["mode"]) {
     "first-last": "首尾帧",
     references: "参考素材"
   }[mode];
+}
+
+function isPublicHttpUrl(value: string) {
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
 }

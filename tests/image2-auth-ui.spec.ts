@@ -34,11 +34,11 @@ test('image2 account panel can request a password recovery email', async ({ page
   await expect(passwordInput).toHaveAttribute('type', 'text');
 
   await page.getByRole('button', { name: '忘记密码' }).click();
-  await expect(page.getByRole('button', { name: '发送重置邮件' })).toBeVisible();
+  await expect(page.getByRole('button', { name: '发送找回验证码' })).toBeVisible();
   await page.getByLabel('账号邮箱').fill(`reset-${Date.now()}@example.com`);
-  await page.getByRole('button', { name: '发送重置邮件' }).click();
+  await page.getByRole('button', { name: '发送找回验证码' }).click();
 
-  await expect(page.locator('.case-auth-modal-panel')).toContainText('已发送重置邮件');
+  await expect(page.locator('.case-auth-modal-panel')).toContainText('验证码已发送');
   expect(recoverUrl).toContain('/auth/v1/recover');
   expect(decodeURIComponent(recoverUrl)).toContain('/auth/callback?mode=recovery');
 });
@@ -91,9 +91,8 @@ test('auth callback handles missing and recovery tokens', async ({ page }) => {
   expect(session.user.id).toBe('auth-ui-user');
 });
 
-test('image2 account panel can display and redeem membership codes', async ({ page }) => {
+test('image2 account panel can display and redeem balance codes', async ({ page }) => {
   let redeemPayload: { code?: string } = {};
-  const endsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
   await page.route('**/auth/v1/user', async (route) => {
     await route.fulfill({
@@ -103,14 +102,14 @@ test('image2 account panel can display and redeem membership codes', async ({ pa
     });
   });
 
-  await page.route('**/api/image2/entitlements', async (route) => {
+  await page.route('**/api/image2/balance', async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
         storageMode: 'supabase-postgres',
-        active: false,
-        entitlements: [],
+        wallet: { balance: 0, lifetimeCredited: 0, lifetimeSpent: 0, updatedAt: new Date().toISOString() },
+        recentTransactions: [],
         user: { id: 'membership-user', email: 'member@example.com' }
       })
     });
@@ -122,27 +121,11 @@ test('image2 account panel can display and redeem membership codes', async ({ pa
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
-        redemption: { ok: true, plan: 'weekly_free', endsAt },
-        membership: {
+        redemption: { ok: true, plan: 'image2_credits_10', credits: 10 },
+        wallet: {
           storageMode: 'supabase-postgres',
-          active: true,
-          activeEntitlement: {
-            id: 'entitlement-test',
-            source: 'license',
-            plan: 'weekly_free',
-            status: 'active',
-            startsAt: new Date().toISOString(),
-            endsAt,
-            dailyLimit: 2,
-            resolution: '720p',
-            maxDurationSeconds: 15,
-            canCloudSync: true,
-            canPromptWorkbench: false,
-            canBulkExport: false,
-            canMemberCases: false,
-            createdAt: new Date().toISOString()
-          },
-          entitlements: [],
+          wallet: { balance: 10, lifetimeCredited: 10, lifetimeSpent: 0, updatedAt: new Date().toISOString() },
+          recentTransactions: [],
           user: { id: 'membership-user', email: 'member@example.com' }
         }
       })
@@ -162,23 +145,23 @@ test('image2 account panel can display and redeem membership codes', async ({ pa
 
   await page.goto(`${baseUrl}/image2-cases`);
   await expect(page.getByRole('heading', { name: /从爆款图到可复刻提示词/ })).toBeVisible();
-  await expect(page.locator('.case-membership-panel')).toContainText('会员权益');
-  await expect(page.locator('.case-membership-panel')).toContainText('当前账号还没有生效权益');
+  await expect(page.locator('.case-membership-panel')).toContainText('图片余额');
+  await expect(page.locator('.case-membership-panel')).toContainText('当前余额为 0');
 
-  await page.getByLabel('Image2 卡密').fill('TEST-WEEKLY-CODE');
+  await page.getByLabel('Image2 卡密').fill('TEST-10-CREDITS');
   await page.locator('.case-membership-form').getByRole('button', { name: '兑换' }).click();
 
-  expect(redeemPayload.code).toBe('TEST-WEEKLY-CODE');
-  await expect(page.locator('.case-membership-panel')).toContainText('卡密兑换成功');
-  await expect(page.locator('.case-membership-panel')).toContainText('weekly_free');
+  expect(redeemPayload.code).toBe('TEST-10-CREDITS');
+  await expect(page.locator('.case-membership-panel')).toContainText('兑换成功');
+  await expect(page.locator('.case-membership-panel')).toContainText('10 张');
 });
 
-test('image2 membership APIs require login', async ({ page }) => {
-  const entitlements = await page.request.get(`${baseUrl}/api/image2/entitlements`);
-  expect(entitlements.status()).toBe(401);
+test('image2 balance APIs require login', async ({ page }) => {
+  const balance = await page.request.get(`${baseUrl}/api/image2/balance`);
+  expect(balance.status()).toBe(401);
 
   const redeem = await page.request.post(`${baseUrl}/api/image2/redeem`, {
-    data: { code: 'TEST-WEEKLY-CODE' }
+    data: { code: 'TEST-10-CREDITS' }
   });
   expect(redeem.status()).toBe(401);
   expect((await redeem.json()).error).toContain('兑换卡密');

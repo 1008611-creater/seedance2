@@ -4,10 +4,12 @@
 .env
 .env.*
 node_modules
+.npm-cache/
 output
 outputs
 prompts
 *.log
+seedance-start-*.ps1
 tsconfig.tsbuildinfo
 docs/agent-team/
 browser_history_exports/
@@ -17,6 +19,7 @@ wechat_wxgf_extracts/
 analysis/
 downloads/
 automation/
+artifacts/
 tools/video-subtitle-remover/
 tools/wechat-decrypt/
 tools/__pycache__/

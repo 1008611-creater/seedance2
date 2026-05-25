@@ -2,12 +2,10 @@
 
 import { type FormEvent, type MouseEvent, type SyntheticEvent, useEffect, useMemo, useState } from "react";
 import {
-  ArrowUpDown,
   CheckCircle2,
   Clock3,
   Clipboard,
   ClipboardCheck,
-  Crown,
   Database,
   ExternalLink,
   ChevronLeft,
@@ -33,6 +31,7 @@ import {
   Sparkles,
   Trash2,
   UserRound,
+  WalletCards,
   WandSparkles,
   X
 } from "lucide-react";
@@ -135,6 +134,7 @@ type CaseAssetState = {
 
 type AccountAuthMode = "login" | "signup" | "recover";
 type AccountOtpMode = "signup" | "recovery" | null;
+type SupabaseOtpType = Exclude<AccountOtpMode, null> | "email";
 
 type AccountAuthStatus = {
   message: string;
@@ -143,28 +143,27 @@ type AccountAuthStatus = {
 
 type MembershipStatus = AccountAuthStatus;
 
-type Image2MembershipEntitlement = {
-  id: string;
-  source: string;
-  plan: string;
-  status: string;
-  startsAt: string;
-  endsAt: string;
-  dailyLimit: number;
-  resolution: string;
-  maxDurationSeconds: number;
-  canCloudSync: boolean;
-  canPromptWorkbench: boolean;
-  canBulkExport: boolean;
-  canMemberCases: boolean;
-  createdAt: string;
+type Image2WalletSummary = {
+  balance: number;
+  lifetimeCredited: number;
+  lifetimeSpent: number;
+  updatedAt?: string;
 };
 
-type Image2Membership = {
-  active: boolean;
-  activeEntitlement?: Image2MembershipEntitlement;
-  entitlements: Image2MembershipEntitlement[];
+type Image2WalletTransaction = {
+  id: string;
+  amount: number;
+  balanceAfter: number;
+  createdAt: string;
+  source?: string;
+  status: string;
+  type: string;
+};
+
+type Image2WalletStatus = {
+  recentTransactions: Image2WalletTransaction[];
   storageMode: string;
+  wallet: Image2WalletSummary;
 };
 
 type Image2AccountSession = {
@@ -221,6 +220,7 @@ type GenerationResult = {
   images: GeneratedImage[];
   elapsedSeconds?: number;
   quota?: Image2FreeQuota;
+  wallet?: Image2WalletSummary;
 };
 
 type Image2FreeQuota = {
@@ -248,6 +248,7 @@ type GenerationHistoryItem = GenerationResult & {
 type CaseDetailContentProps = {
   copiedId: number | null;
   freeQuota: Image2FreeQuota | null;
+  wallet: Image2WalletSummary | null;
   generation: GenerationResult | null;
   generationError: string;
   generationElapsedSeconds: number;
@@ -305,8 +306,11 @@ type ImagePreview = {
   title: string;
 };
 
-const tierOptions = ["全部", "精选", "高价值", "可参考"] as const;
-const sortOptions = ["价值优先", "最新优先", "案例编号"] as const;
+const image2BalancePacks = [
+  { credits: 10, label: "10 张图", price: "¥2.99", plan: "image2_credits_10" },
+  { credits: 50, label: "50 张图", price: "¥12.99", plan: "image2_credits_50" },
+  { credits: 100, label: "100 张图", price: "¥24.99", plan: "image2_credits_100" }
+] as const;
 
 const caseLibraryCopy = {
   zh: {
@@ -314,9 +318,6 @@ const caseLibraryCopy = {
     heroTitle: "从爆款图到可复刻提示词。",
     heroDescription: "浏览真实案例，复制提示词，点一张图就能拆解结构并生成同款。",
     account: "登录 / 注册",
-    casesAction: "浏览案例",
-    featuredAction: "精选案例",
-    favoritesAction: (count: number) => `我的收藏 ${count}`,
     bridge: {
       kicker: "案例接力",
       title: "把当前灵感带到作图台继续生产",
@@ -326,16 +327,14 @@ const caseLibraryCopy = {
     },
     filters: {
       search: "搜标题、来源、分类、标签、提示词...",
-      tier: "价值层级",
-      sort: "排序",
       favorites: "我的收藏",
       favoritesOnly: "只看收藏中",
       favoritesAll: "只看收藏",
       favoritesNote: "收藏保存在当前浏览器，回来看图和提示词更快。",
-      collection: "项目夹",
-      allCollections: "全部项目",
-      newCollection: "新建项目夹",
-      membership: "会员权益",
+      collection: "收藏夹",
+      allCollections: "全部收藏夹",
+      newCollection: "新建收藏夹",
+      membership: "图片余额",
       recent: "最近复用",
       category: "分类",
       gallery: "案例图库",
@@ -358,9 +357,6 @@ const caseLibraryCopy = {
     heroTitle: "From viral images to reusable prompts.",
     heroDescription: "Browse real cases, copy the prompt, and break down structure with one click.",
     account: "Log in / Sign up",
-    casesAction: "Explore cases",
-    featuredAction: "Featured cases",
-    favoritesAction: (count: number) => `My favorites ${count}`,
     bridge: {
       kicker: "Case handoff",
       title: "Carry this idea to the workbench",
@@ -370,8 +366,6 @@ const caseLibraryCopy = {
     },
     filters: {
       search: "Search title, source, category, tags, prompt...",
-      tier: "Value tier",
-      sort: "Sort",
       favorites: "My favorites",
       favoritesOnly: "Favorites only",
       favoritesAll: "Show favorites",
@@ -379,7 +373,7 @@ const caseLibraryCopy = {
       collection: "Collections",
       allCollections: "All collections",
       newCollection: "New collection",
-      membership: "Membership perks",
+      membership: "Image balance",
       recent: "Recent reuse",
       category: "Categories",
       gallery: "Case library",
@@ -388,7 +382,7 @@ const caseLibraryCopy = {
       emptyFavorites: "No favorite matches yet",
       emptyResults: "No matching cases",
       emptyFavoritesNote: "Use the heart button on a card to keep images and prompts in this browser.",
-      emptyResultsNote: "Try another keyword or loosen source, category, and value filters."
+      emptyResultsNote: "Try another keyword or loosen the source and category filters."
     },
     detail: {
       promptTitle: "Original prompt",
@@ -399,18 +393,6 @@ const caseLibraryCopy = {
   }
 } as const;
 
-const tierOptionEnglish: Record<(typeof tierOptions)[number], string> = {
-  全部: "All",
-  精选: "Featured",
-  高价值: "High value",
-  可参考: "Study"
-};
-
-const sortOptionEnglish: Record<(typeof sortOptions)[number], string> = {
-  价值优先: "Best first",
-  最新优先: "Newest first",
-  案例编号: "Case number"
-};
 const image2DataVersion = "20260520-hide-broken-v4";
 const favoriteCaseStorageKey = "image2-case-favorites:v1";
 const generationHistoryStorageKey = "image2-generation-history:v1";
@@ -426,6 +408,7 @@ const isSupabaseAuthConfigured = Boolean(supabaseAuthUrl && supabaseAnonKey);
 const maxGenerationHistoryItems = 6;
 const maxPromptReuseHistoryItems = 8;
 const freeQuotaExhaustedCode = "FREE_QUOTA_EXHAUSTED";
+const balanceRequiredCode = "IMAGE2_BALANCE_INSUFFICIENT";
 const promptFieldLabels: Array<{ field: keyof PromptStructure; label: string }> = [
   { field: "subject", label: "主体" },
   { field: "style", label: "风格" },
@@ -622,13 +605,23 @@ const recoverSupabasePassword = async (email: string, redirectTo?: string) => {
   });
 };
 
-const verifySupabaseEmailCode = async (email: string, token: string, type: Exclude<AccountOtpMode, null>) =>
+const verifySupabaseEmailCode = async (email: string, token: string, type: SupabaseOtpType) =>
   toAccountSession(
     await supabaseAuthRequest("verify", {
       method: "POST",
       body: JSON.stringify({ email, token, type })
     })
   );
+
+const verifySupabaseSignupCode = async (email: string, token: string) => {
+  try {
+    return await verifySupabaseEmailCode(email, token, "signup");
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (!/type|otp|token|invalid|verify/i.test(message)) throw error;
+    return verifySupabaseEmailCode(email, token, "email");
+  }
+};
 
 const updateSupabasePassword = async (accessToken: string, password: string) => {
   await supabaseAuthRequest(
@@ -645,15 +638,15 @@ const signOutSupabaseSession = async (accessToken: string) => {
   await supabaseAuthRequest("logout", { method: "POST" }, accessToken);
 };
 
-const requestImage2Membership = async (session: Image2AccountSession) => {
-  const response = await fetch("/api/image2/entitlements", {
+const requestImage2Wallet = async (session: Image2AccountSession) => {
+  const response = await fetch("/api/image2/balance", {
     headers: {
       Authorization: `Bearer ${session.accessToken}`
     },
     cache: "no-store"
   });
-  const data = (await response.json()) as Image2Membership & { error?: string };
-  if (!response.ok) throw new Error(data.error ?? "会员权益读取失败。");
+  const data = (await response.json()) as Image2WalletStatus & { error?: string };
+  if (!response.ok) throw new Error(data.error ?? "图片余额读取失败。");
   return data;
 };
 
@@ -666,9 +659,14 @@ const redeemImage2License = async (session: Image2AccountSession, code: string) 
     },
     body: JSON.stringify({ code })
   });
-  const data = (await response.json()) as { membership?: Image2Membership; error?: string };
-  if (!response.ok || !data.membership) throw new Error(data.error ?? "卡密兑换失败。");
-  return data.membership;
+  const data = (await response.json()) as {
+    redemption?: { credits?: number; plan?: string };
+    wallet?: Image2WalletStatus;
+    membership?: unknown;
+    error?: string;
+  };
+  if (!response.ok || (!data.wallet && !data.membership)) throw new Error(data.error ?? "卡密兑换失败。");
+  return data;
 };
 
 const promptTextHas = (item: Image2Case, pattern: RegExp) => pattern.test(`${item.title} ${item.prompt ?? ""}`);
@@ -1065,15 +1063,22 @@ const persistGenerationHistory = (items: GenerationHistoryItem[]) => {
   return [];
 };
 
-async function requestImage2Json(payload: Record<string, unknown>) {
+function authJsonHeaders(accessToken?: string) {
+  return {
+    "Content-Type": "application/json",
+    ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
+  };
+}
+
+async function requestImage2Json(payload: Record<string, unknown>, accessToken?: string) {
   const response = await fetch("/api/image2", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: authJsonHeaders(accessToken),
     body: JSON.stringify(payload)
   });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok && isQuotaPayload(data) && data.code === freeQuotaExhaustedCode) {
-    throw new FreeQuotaExhaustedError(data.error ?? "免费额度已用完，请添加微信领取生图额度。", data.quota);
+  if (!response.ok && isQuotaPayload(data) && (data.code === freeQuotaExhaustedCode || data.code === balanceRequiredCode)) {
+    throw new FreeQuotaExhaustedError(data.error ?? "免费额度已用完，请登录后兑换图片额度。", data.quota);
   }
   if (!response.ok) throw new Error(data.error ?? "生成失败。");
   return data as GenerationResult;
@@ -1088,16 +1093,17 @@ async function requestImage2Quota() {
 
 async function requestImage2Stream(
   payload: Record<string, unknown>,
-  onStatus: (status: GenerationStreamStatus) => void
+  onStatus: (status: GenerationStreamStatus) => void,
+  accessToken?: string
 ) {
   const response = await fetch("/api/image2/stream", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: authJsonHeaders(accessToken),
     body: JSON.stringify(payload)
   });
 
   if (!response.ok || !response.body) {
-    return requestImage2Json(payload);
+    return requestImage2Json(payload, accessToken);
   }
 
   const reader = response.body.getReader();
@@ -1124,13 +1130,13 @@ async function requestImage2Stream(
       return null;
     }
     if (event === "error") {
-      if (isQuotaPayload(data) && data.code === freeQuotaExhaustedCode) {
-        throw new FreeQuotaExhaustedError(data.error ?? "免费额度已用完，请添加微信领取生图额度。", data.quota);
+      if (isQuotaPayload(data) && (data.code === freeQuotaExhaustedCode || data.code === balanceRequiredCode)) {
+        throw new FreeQuotaExhaustedError(data.error ?? "免费额度已用完，请登录后兑换图片额度。", data.quota);
       }
       throw new Error(typeof data.error === "string" ? data.error : "生成失败。");
     }
     if (event === "quota") {
-      throw new FreeQuotaExhaustedError(data.error ?? "免费额度已用完，请添加微信领取生图额度。", data.quota);
+      throw new FreeQuotaExhaustedError(data.error ?? "免费额度已用完，请登录后兑换图片额度。", data.quota);
     }
     if (event === "done") {
       return data as GenerationResult;
@@ -1265,6 +1271,7 @@ function CaseImage({
 function CaseDetailContent({
   copiedId,
   freeQuota,
+  wallet,
   generation,
   generationError,
   generationElapsedSeconds,
@@ -1304,7 +1311,12 @@ function CaseDetailContent({
   onToggleCaseCollection,
 }: CaseDetailContentProps) {
   const hasPrompt = Boolean(item.prompt?.trim());
-  const quotaIsBlocked = Boolean(freeQuota?.blocked || freeQuota?.remaining === 0);
+  const quotaLabel =
+    freeQuota && freeQuota.remaining > 0
+      ? "免费生成同款"
+      : wallet && wallet.balance > 0
+        ? "余额生成同款"
+        : "生成同款";
   const reuse = inferReuseProfile(item);
   const localized = localizedCaseText(item, language);
   const pageCopy = caseLibraryCopy[language];
@@ -1396,15 +1408,13 @@ function CaseDetailContent({
               {copiedId === item.id ? <ClipboardCheck aria-hidden="true" /> : <Clipboard aria-hidden="true" />}
               {copiedId === item.id ? "已复制" : "复制提示词"}
             </button>
-            <button disabled={!hasPrompt || isPromptLoading || isGenerating} type="button" onClick={quotaIsBlocked ? onOpenQuota : onGenerate}>
+            <button disabled={!hasPrompt || isPromptLoading || isGenerating} type="button" onClick={onGenerate}>
               <WandSparkles aria-hidden="true" />
               {isPromptLoading
                 ? "加载提示词"
                 : isGenerating
                   ? `生成中 ${formatDuration(generationElapsedSeconds)}`
-                  : quotaIsBlocked
-                    ? "领取额度"
-                    : "免费生成同款"}
+                  : quotaLabel}
             </button>
           </div>
           <p className="case-generate-note">
@@ -1489,9 +1499,9 @@ function CaseDetailContent({
               {rewriteCopiedKey === getCaseKey(item) ? <ClipboardCheck aria-hidden="true" /> : <Clipboard aria-hidden="true" />}
               {rewriteCopiedKey === getCaseKey(item) ? "已复制" : "复制改写稿"}
             </button>
-            <button disabled={isGenerating} type="button" onClick={quotaIsBlocked ? onOpenQuota : onGenerateRewrite}>
+            <button disabled={isGenerating} type="button" onClick={onGenerateRewrite}>
               <WandSparkles aria-hidden="true" />
-              {isGenerating ? `生成中 ${formatDuration(generationElapsedSeconds)}` : quotaIsBlocked ? "领取额度" : "生成改写稿"}
+              {isGenerating ? `生成中 ${formatDuration(generationElapsedSeconds)}` : freeQuota && freeQuota.remaining > 0 ? "免费生成改写" : "生成改写稿"}
             </button>
             <button type="button" onClick={onSaveWorkbench}>
               <Save aria-hidden="true" />
@@ -1515,22 +1525,22 @@ function CaseDetailContent({
           )}
         </section>
 
-        <section className="case-asset-hub" aria-label="项目夹与备注">
+        <section className="case-asset-hub" aria-label="收藏夹与备注">
           <header>
             <div>
               <small>
                 <FolderPlus aria-hidden="true" />
                 Asset Hub
               </small>
-              <h3>项目夹与备注</h3>
+              <h3>收藏夹与备注</h3>
             </div>
-            <span>{caseCollections.length ? `${caseCollections.length} 个项目夹` : "本地资产"}</span>
+            <span>{caseCollections.length ? `${caseCollections.length} 个收藏夹` : "本地资产"}</span>
           </header>
 
           <div className="case-asset-collections">
             <div className="case-asset-collections-head">
-              <strong>把当前案例收录到项目夹</strong>
-              <small>{selectedCaseCollectionIds.length ? `${selectedCaseCollectionIds.length} 个已收录` : "未收录到任何项目夹"}</small>
+              <strong>把当前案例收录到收藏夹</strong>
+              <small>{selectedCaseCollectionIds.length ? `${selectedCaseCollectionIds.length} 个已收录` : "未收录到任何收藏夹"}</small>
             </div>
             <div className="case-asset-collection-list">
               {caseCollections.length ? (
@@ -1555,8 +1565,8 @@ function CaseDetailContent({
               ) : (
                 <div className="case-asset-empty">
                   <FolderOpen aria-hidden="true" />
-                  <strong>还没有项目夹</strong>
-                  <p>先在侧边栏新建一个，再把常用案例收进去。</p>
+                  <strong>还没有收藏夹</strong>
+                  <p>先新建一个收藏夹，再把常用案例收进去。</p>
                 </div>
               )}
             </div>
@@ -1657,35 +1667,171 @@ function CaseDetailContent({
 }
 
 function Image2QuotaModal({
+  accountSession,
+  codeDraft,
   onClose,
-  quota
+  onCodeChange,
+  onOpenLogin,
+  onSubmitCode,
+  quota,
+  status,
+  wallet
 }: {
+  accountSession: Image2AccountSession | null;
+  codeDraft: string;
   onClose: () => void;
+  onCodeChange: (value: string) => void;
+  onOpenLogin: () => void;
+  onSubmitCode: (event: FormEvent) => void;
   quota: Image2FreeQuota | null;
+  status: MembershipStatus;
+  wallet: Image2WalletSummary | null;
 }) {
   return (
-    <section className="case-quota-modal-layer" aria-label="领取生图额度">
+    <section className="case-quota-modal-layer" aria-label="图片余额兑换">
       <button aria-label="关闭领取额度弹窗" className="case-quota-modal-backdrop" type="button" onClick={onClose} />
       <div className="case-quota-modal-panel" role="dialog" aria-modal="true" aria-labelledby="case-quota-title">
         <button aria-label="关闭领取额度弹窗" className="case-quota-close" type="button" onClick={onClose}>
           <X aria-hidden="true" />
         </button>
         <div className="case-quota-copy">
-          <p>免费额度</p>
-          <h2 id="case-quota-title">扫码领取更多生图次数</h2>
+          <p>图片余额</p>
+          <h2 id="case-quota-title">两张不够用？试试额度包</h2>
           <span>
-            每个 IP 可免费生成 {quota?.limit ?? 2} 张图。当前免费额度已用完，添加微信后备注
-            <b> image2额度 </b>
-            领取更多次数。
+            每个访问环境可免费生成 {quota?.limit ?? 2} 张图。免费用完后，登录并兑换卡密，生成会自动扣账户图片余额。
           </span>
+          <div className="case-quota-pack-row" aria-label="额度包">
+            {image2BalancePacks.map((pack) => (
+              <span key={pack.plan}>
+                <b>{pack.label}</b>
+                {pack.price}
+              </span>
+            ))}
+          </div>
         </div>
-        <div className="case-quota-qr-card">
-          <img alt="添加微信领取 Image2 生图额度二维码" src="/image2/wechat-quota-qr.jpg" />
-          <small>微信扫码添加好友</small>
+        <div className="case-quota-wallet-card">
+          <small>当前余额</small>
+          <strong>{wallet?.balance ?? 0}</strong>
+          <span>张图</span>
+          {accountSession ? (
+            <form className="case-membership-form" onSubmit={onSubmitCode}>
+              <input
+                aria-label="Image2 卡密"
+                autoComplete="off"
+                placeholder="输入卡密兑换额度"
+                value={codeDraft}
+                onChange={(event) => onCodeChange(event.target.value)}
+              />
+              <button type="submit" disabled={status.tone === "busy"}>
+                {status.tone === "busy" ? <Loader2 className="spinning" aria-hidden="true" /> : <KeyRound aria-hidden="true" />}
+                兑换
+              </button>
+            </form>
+          ) : (
+            <button className="case-quota-login-button" type="button" onClick={onOpenLogin}>
+              <LogIn aria-hidden="true" />
+              登录后兑换
+            </button>
+          )}
+          <p className={status.tone}>{status.message}</p>
         </div>
         <button className="case-quota-primary" type="button" onClick={onClose}>
-          我已添加，稍后再试
+          先继续看案例
         </button>
+      </div>
+    </section>
+  );
+}
+
+function Image2CollectionPickerModal({
+  collectionNameDraft,
+  collections,
+  isFavorite,
+  item,
+  onClose,
+  onCollectionNameChange,
+  onCreateCollection,
+  onToggleCollection,
+  onToggleFavoriteOnly,
+  selectedCollectionIds
+}: {
+  collectionNameDraft: string;
+  collections: CaseCollection[];
+  isFavorite: boolean;
+  item: Image2Case;
+  onClose: () => void;
+  onCollectionNameChange: (value: string) => void;
+  onCreateCollection: (event: FormEvent) => void;
+  onToggleCollection: (collectionId: string) => void;
+  onToggleFavoriteOnly: (item: Image2Case) => void;
+  selectedCollectionIds: string[];
+}) {
+  const localized = localizedCaseText(item, "zh");
+
+  return (
+    <section className="case-collection-modal-layer" aria-label="收藏夹选择器">
+      <button aria-label="关闭收藏夹选择器" className="case-collection-modal-backdrop" type="button" onClick={onClose} />
+      <div className="case-collection-modal-panel" role="dialog" aria-modal="true" aria-labelledby="case-collection-title">
+        <div className="case-collection-modal-head">
+          <div>
+            <small>收藏夹</small>
+            <h2 id="case-collection-title">保存到收藏夹</h2>
+            <p>{localized.title}</p>
+          </div>
+          <button aria-label="关闭收藏夹选择器" type="button" onClick={onClose}>
+            <X aria-hidden="true" />
+          </button>
+        </div>
+
+        <button
+          aria-pressed={isFavorite}
+          className={isFavorite ? "case-collection-favorite-toggle active" : "case-collection-favorite-toggle"}
+          type="button"
+          onClick={() => onToggleFavoriteOnly(item)}
+        >
+          <Heart aria-hidden="true" />
+          <span>{isFavorite ? "已加入我的收藏" : "加入我的收藏"}</span>
+        </button>
+
+        <form className="case-collection-form" onSubmit={onCreateCollection}>
+          <input
+            aria-label="新建收藏夹名称"
+            placeholder="新建收藏夹"
+            value={collectionNameDraft}
+            onChange={(event) => onCollectionNameChange(event.target.value)}
+          />
+          <button type="submit" title="新建收藏夹">
+            <FolderPlus aria-hidden="true" />
+          </button>
+        </form>
+
+        <div className="case-asset-collection-list">
+          {collections.length ? (
+            collections.map((collection) => {
+              const isActive = selectedCollectionIds.includes(collection.id);
+              return (
+                <button
+                  key={collection.id}
+                  className={isActive ? "active" : ""}
+                  type="button"
+                  onClick={() => onToggleCollection(collection.id)}
+                >
+                  <span>
+                    <strong>{collection.name}</strong>
+                    <small>{collection.caseKeys.length} 个案例</small>
+                  </span>
+                  {isActive ? <CheckCircle2 aria-hidden="true" /> : <FolderOpen aria-hidden="true" />}
+                </button>
+              );
+            })
+          ) : (
+            <div className="case-asset-empty">
+              <FolderOpen aria-hidden="true" />
+              <strong>还没有收藏夹</strong>
+              <p>输入名称新建一个，后续可以按收藏夹筛选案例。</p>
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );
@@ -1833,8 +1979,6 @@ export function Image2CaseLibrary() {
   const [query, setQuery] = useState("");
   const [sourceId, setSourceId] = useState("全部");
   const [category, setCategory] = useState("全部");
-  const [tier, setTier] = useState<(typeof tierOptions)[number]>("全部");
-  const [sort, setSort] = useState<(typeof sortOptions)[number]>("价值优先");
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [favoriteCaseKeys, setFavoriteCaseKeys] = useState<Set<string>>(() => new Set());
   const [copiedId, setCopiedId] = useState<number | null>(null);
@@ -1861,9 +2005,9 @@ export function Image2CaseLibrary() {
     message: isSupabaseAuthConfigured ? "可以使用账号登录" : "账号登录未配置",
     tone: "idle"
   });
-  const [membership, setMembership] = useState<Image2Membership | null>(null);
-  const [membershipStatus, setMembershipStatus] = useState<MembershipStatus>({
-    message: isSupabaseAuthConfigured ? "登录后查看会员权益" : "卡密系统未配置",
+  const [wallet, setWallet] = useState<Image2WalletStatus | null>(null);
+  const [walletStatus, setWalletStatus] = useState<MembershipStatus>({
+    message: isSupabaseAuthConfigured ? "登录后查看图片余额" : "余额系统未配置",
     tone: "idle"
   });
   const [licenseCodeDraft, setLicenseCodeDraft] = useState("");
@@ -1880,6 +2024,7 @@ export function Image2CaseLibrary() {
   const [freeQuota, setFreeQuota] = useState<Image2FreeQuota | null>(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isQuotaModalOpen, setIsQuotaModalOpen] = useState(false);
+  const [isCollectionPickerOpen, setIsCollectionPickerOpen] = useState(false);
   const [imagePreview, setImagePreview] = useState<ImagePreview | null>(null);
   const [caseDetails, setCaseDetails] = useState<Record<string, Partial<Image2Case>>>({});
   const [loadingDetailKey, setLoadingDetailKey] = useState<string | null>(null);
@@ -1914,7 +2059,7 @@ export function Image2CaseLibrary() {
   }, []);
 
   useEffect(() => {
-    const shouldLock = isDetailOpen || isHistoryOpen || isQuotaModalOpen || isAuthModalOpen || Boolean(imagePreview);
+    const shouldLock = isDetailOpen || isHistoryOpen || isQuotaModalOpen || isCollectionPickerOpen || isAuthModalOpen || Boolean(imagePreview);
     if (!shouldLock) return;
 
     const previousOverflow = document.body.style.overflow;
@@ -1926,6 +2071,10 @@ export function Image2CaseLibrary() {
       }
       if (isQuotaModalOpen) {
         setIsQuotaModalOpen(false);
+        return;
+      }
+      if (isCollectionPickerOpen) {
+        setIsCollectionPickerOpen(false);
         return;
       }
       if (isHistoryOpen) {
@@ -1946,7 +2095,7 @@ export function Image2CaseLibrary() {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", closeOnEscape);
     };
-  }, [imagePreview, isDetailOpen, isHistoryOpen, isQuotaModalOpen, isAuthModalOpen]);
+  }, [imagePreview, isDetailOpen, isHistoryOpen, isQuotaModalOpen, isCollectionPickerOpen, isAuthModalOpen]);
 
   useEffect(() => {
     setGenerationHistory(readGenerationHistory());
@@ -2008,29 +2157,27 @@ export function Image2CaseLibrary() {
   useEffect(() => {
     if (!isSupabaseAuthConfigured) return;
     if (!accountSession) {
-      setMembership(null);
-      setMembershipStatus({ message: "登录后查看会员权益", tone: "idle" });
+      setWallet(null);
+      setWalletStatus({ message: "登录后查看图片余额", tone: "idle" });
       return;
     }
 
     let ignore = false;
-    setMembershipStatus({ message: "正在读取会员权益...", tone: "busy" });
-    void requestImage2Membership(accountSession)
+    setWalletStatus({ message: "正在读取图片余额...", tone: "busy" });
+    void requestImage2Wallet(accountSession)
       .then((data) => {
         if (ignore) return;
-        setMembership(data);
-        setMembershipStatus({
-          message: data.active
-            ? `权益生效中，有效期至 ${formatMembershipDate(data.activeEntitlement?.endsAt)}`
-            : "当前账号还没有生效权益",
-          tone: data.active ? "success" : "idle"
+        setWallet(data);
+        setWalletStatus({
+          message: data.wallet.balance > 0 ? `当前可生成 ${data.wallet.balance} 张图` : "当前余额为 0，可兑换卡密",
+          tone: data.wallet.balance > 0 ? "success" : "idle"
         });
       })
       .catch((error) => {
         if (ignore) return;
-        setMembership(null);
-        setMembershipStatus({
-          message: toUserFacingError(error instanceof Error ? error.message : error, "会员权益读取失败。"),
+        setWallet(null);
+        setWalletStatus({
+          message: toUserFacingError(error instanceof Error ? error.message : error, "图片余额读取失败。"),
           tone: "error"
         });
       });
@@ -2116,7 +2263,6 @@ export function Image2CaseLibrary() {
     const rows = cases.filter((item) => {
       const matchesSource = sourceId === "全部" || item.sourceId === sourceId || (!item.sourceId && sourceId === "canghe");
       const matchesCategory = category === "全部" || item.category === category;
-      const matchesTier = tier === "全部" || item.valueTier === tier;
       const matchesFavorite = !favoritesOnly || favoriteCaseKeys.has(getCaseKey(item));
       const matchesCollection = !activeCollection || activeCollection.caseKeys.includes(getCaseKey(item));
       const haystack = normalize(
@@ -2136,15 +2282,11 @@ export function Image2CaseLibrary() {
           item.sourceLabel
         ].join(" ")
       );
-      return matchesSource && matchesCategory && matchesTier && matchesFavorite && matchesCollection && (!q || haystack.includes(q));
+      return matchesSource && matchesCategory && matchesFavorite && matchesCollection && (!q || haystack.includes(q));
     });
 
-    return rows.sort((a, b) => {
-      if (sort === "最新优先") return b.id - a.id;
-      if (sort === "案例编号") return a.id - b.id;
-      return b.valueScore - a.valueScore || b.id - a.id;
-    });
-  }, [activeCollection, cases, category, favoriteCaseKeys, favoritesOnly, query, sort, sourceId, tier]);
+    return rows.sort((a, b) => b.valueScore - a.valueScore || b.id - a.id);
+  }, [activeCollection, cases, category, favoriteCaseKeys, favoritesOnly, query, sourceId]);
 
   const selectedCaseSummary = useMemo(
     () => cases.find((item) => getCaseKey(item) === selectedKey) ?? filteredCases[0] ?? (favoritesOnly ? undefined : cases[0]),
@@ -2198,7 +2340,7 @@ export function Image2CaseLibrary() {
     setGenerationStatus(null);
   };
 
-  const toggleFavorite = (item: Image2Case) => {
+  const toggleFavoriteOnly = (item: Image2Case) => {
     const key = getCaseKey(item);
     setFavoriteCaseKeys((current) => {
       const next = new Set(current);
@@ -2209,6 +2351,18 @@ export function Image2CaseLibrary() {
       }
       return persistFavoriteCaseKeys(next);
     });
+  };
+
+  const toggleFavorite = (item: Image2Case) => {
+    const key = getCaseKey(item);
+    setSelectedKey(key);
+    setFavoriteCaseKeys((current) => {
+      if (current.has(key)) return current;
+      const next = new Set(current);
+      next.add(key);
+      return persistFavoriteCaseKeys(next);
+    });
+    setIsCollectionPickerOpen(true);
   };
 
   useEffect(() => {
@@ -2259,7 +2413,7 @@ export function Image2CaseLibrary() {
 
       setAccountAuthStatus({ message: "正在验证邮箱验证码...", tone: "busy" });
       try {
-        const session = verifyPersistedSession(await verifySupabaseEmailCode(email, token, "signup"), email);
+        const session = verifyPersistedSession(await verifySupabaseSignupCode(email, token), email);
         setAccountSession(session);
         setAccountEmail(session.user.email ?? email);
         setAccountPassword("");
@@ -2372,7 +2526,7 @@ export function Image2CaseLibrary() {
     clearAccountSession();
     setAccountSession(null);
     setAccountAuthMode("login");
-    setMembership(null);
+    setWallet(null);
     setLicenseCodeDraft("");
     setAccountPassword("");
     setAccountOtpCode("");
@@ -2385,30 +2539,30 @@ export function Image2CaseLibrary() {
     event.preventDefault();
     if (!isSupabaseAuthConfigured) return;
     if (!accountSession) {
-      setMembershipStatus({ message: "请先登录账号后再兑换卡密", tone: "error" });
+      setWalletStatus({ message: "请先登录账号后再兑换卡密", tone: "error" });
       return;
     }
 
     const code = licenseCodeDraft.trim();
     if (code.length < 4) {
-      setMembershipStatus({ message: "请输入有效卡密", tone: "error" });
+      setWalletStatus({ message: "请输入有效卡密", tone: "error" });
       return;
     }
 
-    setMembershipStatus({ message: "正在兑换卡密...", tone: "busy" });
+    setWalletStatus({ message: "正在兑换卡密...", tone: "busy" });
 
     try {
-      const nextMembership = await redeemImage2License(accountSession, code);
-      setMembership(nextMembership);
+      const data = await redeemImage2License(accountSession, code);
+      if (data.wallet) setWallet(data.wallet);
       setLicenseCodeDraft("");
-      setMembershipStatus({
-        message: nextMembership.active
-          ? `卡密兑换成功，有效期至 ${formatMembershipDate(nextMembership.activeEntitlement?.endsAt)}`
-          : "卡密兑换成功，权益正在刷新",
+      setWalletStatus({
+        message: data.wallet
+          ? `兑换成功，已到账 ${data.redemption?.credits ?? data.wallet.wallet.balance} 张图`
+          : "旧权益卡密兑换成功",
         tone: "success"
       });
     } catch (error) {
-      setMembershipStatus({
+      setWalletStatus({
         message: toUserFacingError(error instanceof Error ? error.message : error, "卡密兑换失败。"),
         tone: "error"
       });
@@ -2681,11 +2835,6 @@ export function Image2CaseLibrary() {
 
   const generateSimilar = async (promptOverride?: string) => {
     if (!selectedCase) return;
-    if (freeQuota && freeQuota.remaining <= 0) {
-      setIsQuotaModalOpen(true);
-      setGenerationError("");
-      return;
-    }
 
     const startedAt = Date.now();
     setGenerationError("");
@@ -2702,8 +2851,24 @@ export function Image2CaseLibrary() {
       setGenerationTick(startedAt);
 
       const payload = { prompt, size: "1024x1024", n: 1, images: [] };
-      const data = await requestImage2Stream(payload, setGenerationStatus);
+      const data = await requestImage2Stream(payload, setGenerationStatus, accountSession?.accessToken);
       if (data.quota) setFreeQuota(data.quota);
+      if (data.wallet) {
+        const nextWallet = data.wallet;
+        setWallet((current) =>
+          current
+            ? {
+                ...current,
+                wallet: nextWallet
+              }
+            : {
+                recentTransactions: [],
+                storageMode: "supabase-postgres",
+                wallet: nextWallet
+              }
+        );
+        setWalletStatus({ message: `当前可生成 ${nextWallet.balance} 张图`, tone: nextWallet.balance > 0 ? "success" : "idle" });
+      }
       const elapsedSeconds =
         typeof data.elapsedSeconds === "number"
           ? Math.round(data.elapsedSeconds)
@@ -2767,11 +2932,10 @@ export function Image2CaseLibrary() {
     );
   }
 
-  const activeMembership = membership?.activeEntitlement;
-  const membershipPanelLabel = activeMembership ? "生效中" : accountSession ? "未激活" : "登录后兑换";
-  const membershipSummary = activeMembership
-    ? `${activeMembership.plan} · 每日 ${activeMembership.dailyLimit} 次 · ${activeMembership.resolution} · 至 ${formatMembershipDate(activeMembership.endsAt)}`
-    : membershipStatus.message;
+  const walletPanelLabel = accountSession ? `${wallet?.wallet.balance ?? 0} 张` : "登录后兑换";
+  const walletSummary = accountSession
+    ? walletStatus.message
+    : "两张不够用？试试图片额度包，登录后即可兑换卡密。";
   const accountNeedsCode = Boolean(accountOtpMode);
   const accountSubmitLabel =
     accountOtpMode === "signup"
@@ -2808,7 +2972,7 @@ export function Image2CaseLibrary() {
           ? "填写邮箱和密码，下一步通过邮箱验证码完成注册。"
           : accountAuthMode === "recover"
             ? "填写邮箱后接收验证码，用验证码设置新密码。"
-            : "登录后可保存收藏、项目夹、备注和会员权益。";
+            : "登录后可保存收藏夹、备注，并兑换图片余额。";
   const openAccountModal = () => {
     if (!accountSession) {
       setAccountAuthMode("login");
@@ -2920,17 +3084,6 @@ export function Image2CaseLibrary() {
           <h1>{pageCopy.heroTitle}</h1>
           <p>{pageCopy.heroDescription}</p>
 
-          <div className="case-hero-actions" aria-label="快捷操作">
-            <a href="#case-gallery">{pageCopy.casesAction}</a>
-            <button type="button" onClick={() => setTier("精选")}>
-              {pageCopy.featuredAction}
-            </button>
-            <button aria-pressed={favoritesOnly} type="button" onClick={() => setFavoritesOnly((value) => !value)}>
-              <Heart aria-hidden="true" />
-              {pageCopy.favoritesAction(favoriteCount)}
-            </button>
-          </div>
-
           <section className={styles.bridge} aria-label="案例到作图台">
             <div className={styles.bridgeCopy}>
               <span>
@@ -3018,169 +3171,6 @@ export function Image2CaseLibrary() {
 
           {!isFiltersCollapsed ? (
             <div className={filterStyles.body}>
-              <div className="case-search">
-                <Search aria-hidden="true" />
-                <input
-                  aria-label="搜索案例"
-                  placeholder={pageCopy.filters.search}
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                />
-              </div>
-
-              <div className="filter-section">
-                <h2>{pageCopy.filters.tier}</h2>
-                <div className="filter-buttons">
-                  {tierOptions.map((option) => (
-                    <button
-                      className={tier === option ? "active" : ""}
-                      key={option}
-                      type="button"
-                      onClick={() => setTier(option)}
-                    >
-                      {language === "zh" ? option : tierOptionEnglish[option]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="filter-section">
-                <h2>{pageCopy.filters.sort}</h2>
-                <div className="filter-buttons">
-                  {sortOptions.map((option) => (
-                    <button
-                      className={sort === option ? "active" : ""}
-                      key={option}
-                      type="button"
-                      onClick={() => setSort(option)}
-                    >
-                      <ArrowUpDown aria-hidden="true" />
-                      {language === "zh" ? option : sortOptionEnglish[option]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="filter-section">
-                <h2>{pageCopy.filters.favorites}</h2>
-                <button
-                  aria-pressed={favoritesOnly}
-                  className={favoritesOnly ? "case-favorites-filter active" : "case-favorites-filter"}
-                  type="button"
-                  onClick={() => setFavoritesOnly((value) => !value)}
-                >
-                  <Heart aria-hidden="true" />
-                  <span>{favoritesOnly ? pageCopy.filters.favoritesOnly : pageCopy.filters.favoritesAll}</span>
-                  <b>{favoriteCount}</b>
-                </button>
-                <p className="case-favorites-note">{pageCopy.filters.favoritesNote}</p>
-              </div>
-
-              <div className="filter-section case-assets-panel">
-                <div className="case-assets-panel-head">
-                  <h2>{pageCopy.filters.collection}</h2>
-                  <span>{caseAssetState.collections.length}</span>
-                </div>
-                <form className="case-collection-form" onSubmit={createCollection}>
-                  <input
-                    aria-label="新建项目夹名称"
-                    placeholder={pageCopy.filters.newCollection}
-                    value={collectionNameDraft}
-                    onChange={(event) => setCollectionNameDraft(event.target.value)}
-                  />
-                  <button type="submit" title="新建项目夹">
-                    <FolderPlus aria-hidden="true" />
-                  </button>
-                </form>
-                <div className="case-collection-list" aria-label="项目夹筛选">
-                  <button
-                    className={!activeCollection ? "active" : ""}
-                    type="button"
-                    onClick={() => setActiveCollection(null)}
-                  >
-                    <span>{pageCopy.filters.allCollections}</span>
-                    <b>{cases.length}</b>
-                  </button>
-                  {caseAssetState.collections.map((collection) => (
-                    <button
-                      className={activeCollection?.id === collection.id ? "active" : ""}
-                      key={collection.id}
-                      type="button"
-                      onClick={() => setActiveCollection(collection.id)}
-                    >
-                      <span>{collection.name}</span>
-                      <b>{collection.caseKeys.length}</b>
-                    </button>
-                  ))}
-                </div>
-
-                <div className={`case-membership-panel ${membershipStatus.tone}`} aria-label="会员权益">
-                  <div className="case-membership-panel-head">
-                    <span>
-                      <Crown aria-hidden="true" />
-                      <strong>{pageCopy.filters.membership}</strong>
-                    </span>
-                    <em>{membershipPanelLabel}</em>
-                  </div>
-                  <p>{membershipSummary}</p>
-                  {activeMembership ? (
-                    <div className="case-membership-features" aria-label="已开启权益">
-                      <span>收藏备份</span>
-                      <span>{activeMembership.canPromptWorkbench ? "高级工作台" : "基础工作台"}</span>
-                      <span>{activeMembership.canBulkExport ? "批量导出" : "单条复用"}</span>
-                    </div>
-                  ) : null}
-                  {activeMembership ? <small>{membershipStatus.message}</small> : null}
-                  {isSupabaseAuthConfigured && accountSession ? (
-                    <form className="case-membership-form" onSubmit={submitLicenseRedeem}>
-                      <input
-                        aria-label="Image2 卡密"
-                        autoComplete="off"
-                        placeholder="输入卡密"
-                        value={licenseCodeDraft}
-                        onChange={(event) => setLicenseCodeDraft(event.target.value)}
-                      />
-                      <button type="submit" disabled={membershipStatus.tone === "busy"}>
-                        {membershipStatus.tone === "busy" ? (
-                          <Loader2 className="spinning" aria-hidden="true" />
-                        ) : (
-                          <KeyRound aria-hidden="true" />
-                        )}
-                        兑换
-                      </button>
-                    </form>
-                  ) : (
-                    <small>{isSupabaseAuthConfigured ? "登录后可兑换卡密并查看权益。" : "账号登录启用后可接入卡密权益。"}</small>
-                  )}
-                </div>
-              </div>
-
-              <div className="filter-section case-recent-panel">
-                <h2>{pageCopy.filters.recent}</h2>
-                <div className="case-recent-list">
-                  {promptReuseHistory.length ? (
-                    promptReuseHistory.slice(0, 5).map((record) => (
-                      <button key={record.id} type="button" onClick={() => selectReuseRecord(record)}>
-                        <span>
-                          <strong>{record.caseTitle}</strong>
-                          <small>
-                            {record.action === "saved"
-                              ? "保存变体"
-                              : record.action === "generated"
-                                ? "生成改写"
-                                : "复制提示词"}{" "}
-                            · {formatHistoryTime(record.createdAt)}
-                          </small>
-                        </span>
-                        <History aria-hidden="true" />
-                      </button>
-                    ))
-                  ) : (
-                    <p>复制、保存或生成后，这里会出现最近用过的案例。</p>
-                  )}
-                </div>
-              </div>
-
               <div className="filter-section category-list case-category-filter">
                 <h2>{pageCopy.filters.category}</h2>
                 <div className="case-filter-scroll">
@@ -3210,6 +3200,142 @@ export function Image2CaseLibrary() {
         </aside>
 
         <section className="case-gallery" id="case-gallery" aria-label={pageCopy.filters.gallery}>
+          <div className="case-gallery-controls" aria-label="案例操作区">
+            <div className="case-gallery-search-row">
+              <div className="case-search">
+                <Search aria-hidden="true" />
+                <input
+                  aria-label="搜索案例"
+                  placeholder={pageCopy.filters.search}
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="case-gallery-control-grid">
+              <section className="case-gallery-filter-card case-gallery-favorites-card">
+                <h3>{pageCopy.filters.favorites}</h3>
+                <button
+                  aria-pressed={favoritesOnly}
+                  className={favoritesOnly ? "case-favorites-filter active" : "case-favorites-filter"}
+                  type="button"
+                  onClick={() => setFavoritesOnly((value) => !value)}
+                >
+                  <Heart aria-hidden="true" />
+                  <span>{favoritesOnly ? pageCopy.filters.favoritesOnly : pageCopy.filters.favoritesAll}</span>
+                  <b>{favoriteCount}</b>
+                </button>
+              </section>
+
+              <section className="case-gallery-filter-card case-gallery-collection-card">
+                <div className="case-assets-panel-head">
+                  <h3>{pageCopy.filters.collection}</h3>
+                  <span>{caseAssetState.collections.length}</span>
+                </div>
+                <div className="case-collection-list" aria-label="收藏夹筛选">
+                  <button
+                    className={!activeCollection ? "active" : ""}
+                    type="button"
+                    onClick={() => setActiveCollection(null)}
+                  >
+                    <span>{pageCopy.filters.allCollections}</span>
+                    <b>{cases.length}</b>
+                  </button>
+                  {caseAssetState.collections.map((collection) => (
+                    <button
+                      className={activeCollection?.id === collection.id ? "active" : ""}
+                      key={collection.id}
+                      type="button"
+                      onClick={() => setActiveCollection(collection.id)}
+                    >
+                      <span>{collection.name}</span>
+                      <b>{collection.caseKeys.length}</b>
+                    </button>
+                  ))}
+                </div>
+                <button
+                  className="case-collection-manage-button"
+                  type="button"
+                  onClick={() => setIsCollectionPickerOpen(true)}
+                >
+                  <FolderPlus aria-hidden="true" />
+                  管理收藏夹
+                </button>
+              </section>
+
+              <section className="case-gallery-filter-card case-gallery-recent-card">
+                <h3>{pageCopy.filters.recent}</h3>
+                <div className="case-recent-list">
+                  {promptReuseHistory.length ? (
+                    promptReuseHistory.slice(0, 4).map((record) => (
+                      <button key={record.id} type="button" onClick={() => selectReuseRecord(record)}>
+                        <span>
+                          <strong>{record.caseTitle}</strong>
+                          <small>
+                            {record.action === "saved"
+                              ? "保存变体"
+                              : record.action === "generated"
+                                ? "生成改写"
+                                : "复制提示词"}{" "}
+                            · {formatHistoryTime(record.createdAt)}
+                          </small>
+                        </span>
+                        <History aria-hidden="true" />
+                      </button>
+                    ))
+                  ) : (
+                    <p>复制、保存或生成后，这里会出现最近用过的案例。</p>
+                  )}
+                </div>
+              </section>
+
+              <section className="case-gallery-filter-card case-gallery-membership-card">
+                <div className={`case-membership-panel ${walletStatus.tone}`} aria-label="图片余额">
+                  <div className="case-membership-panel-head">
+                    <span>
+                      <WalletCards aria-hidden="true" />
+                      <strong>{pageCopy.filters.membership}</strong>
+                    </span>
+                    <em>{walletPanelLabel}</em>
+                  </div>
+                  <p>{walletSummary}</p>
+                  <div className="case-membership-features" aria-label="额度包">
+                    {image2BalancePacks.map((pack) => (
+                      <span key={pack.plan}>
+                        {pack.label} {pack.price}
+                      </span>
+                    ))}
+                  </div>
+                  {isSupabaseAuthConfigured && accountSession ? (
+                    <form className="case-membership-form" onSubmit={submitLicenseRedeem}>
+                      <input
+                        aria-label="Image2 卡密"
+                        autoComplete="off"
+                        placeholder="输入卡密"
+                        value={licenseCodeDraft}
+                        onChange={(event) => setLicenseCodeDraft(event.target.value)}
+                      />
+                      <button type="submit" disabled={walletStatus.tone === "busy"}>
+                        {walletStatus.tone === "busy" ? (
+                          <Loader2 className="spinning" aria-hidden="true" />
+                        ) : (
+                          <KeyRound aria-hidden="true" />
+                        )}
+                        兑换
+                      </button>
+                    </form>
+                  ) : (
+                    <button className="case-balance-login-button" type="button" onClick={openAccountModal}>
+                      <LogIn aria-hidden="true" />
+                      登录后兑换
+                    </button>
+                  )}
+                </div>
+              </section>
+            </div>
+          </div>
+
           <div className="case-gallery-head">
             <div>
               <p>{pageCopy.filters.results(filteredCases.length)}</p>
@@ -3233,7 +3359,6 @@ export function Image2CaseLibrary() {
                       onClick={(event) => handleCaseCardClick(event, item)}
                     >
                       <CaseImage alt={localized.imageAlt} src={item.imageUrl} onUnavailable={() => hideUnavailableCase(item)} />
-                      <span className="case-tier">{localized.valueTier || item.valueTier}</span>
                       <div>
                         <small>
                           {item.caseCode ?? `Case ${item.id}`} · {localized.categoryLabel}
@@ -3285,6 +3410,7 @@ export function Image2CaseLibrary() {
             <CaseDetailContent
               copiedId={copiedId}
               freeQuota={freeQuota}
+              wallet={wallet?.wallet ?? null}
               generation={generation}
               generationError={generationError}
               generationElapsedSeconds={generationElapsedSeconds}
@@ -3348,6 +3474,7 @@ export function Image2CaseLibrary() {
             <CaseDetailContent
               copiedId={copiedId}
               freeQuota={freeQuota}
+              wallet={wallet?.wallet ?? null}
               generation={generation}
               generationError={generationError}
               generationElapsedSeconds={generationElapsedSeconds}
@@ -3395,16 +3522,16 @@ export function Image2CaseLibrary() {
             <button
               disabled={!selectedHasPrompt || isSelectedPromptLoading || isGenerating}
               type="button"
-              onClick={freeQuota && freeQuota.remaining <= 0 ? () => setIsQuotaModalOpen(true) : () => generateSimilar()}
+              onClick={() => generateSimilar()}
             >
               <WandSparkles aria-hidden="true" />
               {isSelectedPromptLoading
                 ? "加载提示词"
                 : isGenerating
                   ? `生成中 ${formatDuration(generationElapsedSeconds)}`
-                  : freeQuota && freeQuota.remaining <= 0
-                    ? "领取额度"
-                    : "免费生成同款"}
+                  : freeQuota && freeQuota.remaining > 0
+                    ? "免费生成同款"
+                    : "生成同款"}
             </button>
           </div>
         </section>
@@ -3418,7 +3545,37 @@ export function Image2CaseLibrary() {
         />
       )}
 
-      {isQuotaModalOpen && <Image2QuotaModal quota={freeQuota} onClose={() => setIsQuotaModalOpen(false)} />}
+      {selectedCase && isCollectionPickerOpen && (
+        <Image2CollectionPickerModal
+          collectionNameDraft={collectionNameDraft}
+          collections={caseAssetState.collections}
+          isFavorite={favoriteCaseKeys.has(getCaseKey(selectedCase))}
+          item={selectedCase}
+          onClose={() => setIsCollectionPickerOpen(false)}
+          onCollectionNameChange={setCollectionNameDraft}
+          onCreateCollection={createCollection}
+          onToggleCollection={toggleCaseCollection}
+          onToggleFavoriteOnly={toggleFavoriteOnly}
+          selectedCollectionIds={selectedCaseCollectionIds}
+        />
+      )}
+
+      {isQuotaModalOpen && (
+        <Image2QuotaModal
+          accountSession={accountSession}
+          codeDraft={licenseCodeDraft}
+          onClose={() => setIsQuotaModalOpen(false)}
+          onCodeChange={setLicenseCodeDraft}
+          onOpenLogin={() => {
+            setIsQuotaModalOpen(false);
+            openAccountModal();
+          }}
+          onSubmitCode={submitLicenseRedeem}
+          quota={freeQuota}
+          status={walletStatus}
+          wallet={wallet?.wallet ?? null}
+        />
+      )}
 
       {imagePreview && <Image2ImagePreviewModal preview={imagePreview} onClose={() => setImagePreview(null)} />}
 

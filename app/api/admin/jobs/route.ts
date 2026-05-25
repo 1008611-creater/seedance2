@@ -5,6 +5,7 @@ import type { GenerationStatus } from "@/lib/types";
 import { toUserFacingError } from "@/lib/user-facing-error";
 
 export const runtime = "nodejs";
+const allowedStatuses = new Set<GenerationStatus>(["queued", "running", "succeeded", "failed", "expired"]);
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,7 +22,11 @@ export async function POST(request: NextRequest) {
     requireAdmin(request);
     const body = await request.json();
     const jobId = String(body.jobId ?? "");
-    const status = body.status ? (String(body.status) as GenerationStatus) : undefined;
+    const statusText = body.status ? String(body.status) : "";
+    if (statusText && !allowedStatuses.has(statusText as GenerationStatus)) {
+      throw new Error("任务状态不正确。");
+    }
+    const status = statusText ? (statusText as GenerationStatus) : undefined;
 
     const queue = await mutateStore((state) => {
       updateManualGeneration(state, jobId, {

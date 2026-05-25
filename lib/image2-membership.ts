@@ -29,7 +29,7 @@ export type Image2MembershipStatus = {
   };
 };
 
-type SupabaseUser = {
+export type SupabaseUser = {
   id: string;
   email?: string;
 };
@@ -85,7 +85,7 @@ export function getBearerToken(request: NextRequest) {
   return match?.[1]?.trim() ?? "";
 }
 
-function serviceHeaders(prefer?: string) {
+export function serviceHeaders(prefer?: string) {
   const config = requireSupabaseConfig();
   const isSecretApiKey = config.serviceRoleKey.startsWith("sb_secret_");
   return {

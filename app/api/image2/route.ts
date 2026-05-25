@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  image2FreeQuotaExceededPayload,
-  isImage2FreeQuotaExceeded,
-  refundImage2FreeQuota,
-  reserveImage2FreeQuota
-} from "@/lib/image2-free-quota";
+  image2GenerationAccessPayload,
+  image2UsagePayload,
+  refundImage2GenerationUsage,
+  reserveImage2GenerationUsage,
+  type Image2GenerationUsageReservation
+} from "@/lib/image2-wallet";
 import { generateImage2, getImage2PublicConfig, sanitizeImage2ProviderMessage } from "@/lib/image2-generation";
 import { toUserFacingError } from "@/lib/user-facing-error";
 
@@ -21,19 +22,21 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  let reservation: Awaited<ReturnType<typeof reserveImage2FreeQuota>> | null = null;
+  let reservation: Image2GenerationUsageReservation | null = null;
 
   try {
-    reservation = await reserveImage2FreeQuota(request);
-    const result = await generateImage2(await request.json());
-    return NextResponse.json({ ...result, quota: reservation.quota });
+    const body = await request.json();
+    reservation = await reserveImage2GenerationUsage(request);
+    const result = await generateImage2(body);
+    return NextResponse.json({ ...result, ...image2UsagePayload(reservation) });
   } catch (error) {
-    if (isImage2FreeQuotaExceeded(error)) {
-      return NextResponse.json(image2FreeQuotaExceededPayload(error), { status: 429 });
+    const accessPayload = image2GenerationAccessPayload(error);
+    if (accessPayload) {
+      return NextResponse.json(accessPayload, { status: 402 });
     }
 
     if (reservation) {
-      await refundImage2FreeQuota(reservation);
+      await refundImage2GenerationUsage(reservation);
     }
 
     return NextResponse.json({ error: toUserFacingError(sanitizeImage2ProviderMessage(error), "作图失败。") }, { status: 500 });

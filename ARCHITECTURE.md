@@ -6,7 +6,7 @@
 
 - 前端：`app/page.tsx` + `components/creator-app.tsx`
 - 后端 API：`/api/dashboard`、`/api/account`、`/api/claim`、`/api/redeem`、`/api/generations`、`/api/admin/jobs`、`/api/provider/seedance/callback`
-- MVP 存储：本地 JSON 文件 `.data/seedance-store.json`，Vercel 上暂用 `/tmp` 兜底
+- MVP 存储：本地 JSON 文件 `.data/seedance-store.json`，Vercel 上暂用 `/tmp` 兜底；执行 `supabase/migrations/202605250002_seedance_guest_store.sql` 后可用 `SEEDANCE_STORE_BACKEND=supabase` 切到 Supabase guest store
 - Provider：未配置 `BYTEPLUS_API_KEY` 时走人工履约队列；配置后走 BytePlus ModelArk Seedance 2.0 创建任务接口
 
 ## 人工履约模式
@@ -19,8 +19,39 @@
 - 后台可复制任务包，记录使用的外部账号/窗口、外部任务链接和内部备注。
 - 完成外部生成后，管理员把视频上传到对象存储/R2/其他公开位置，并将成片链接填回后台。
 - 发布后任务变成 `succeeded`，用户前台成片库即可看到视频。
+- 后台发布 `succeeded` 前会校验成片链接必须是 `http(s)` URL；失败或过期任务会退回本次扣除的今日额度，并在用户端显示可读原因。
+- 主链路可用 `npm run smoke:seedance-main-chain` 反复验证：领取、提交、后台可见、发布、成片库可见、失败退额。
 
 注意：当前代码不包含多账号自动化、自动操控第三方网页或绕过平台限制的脚本。生产上建议把人工履约和对象存储先跑稳，再评估合规的官方 API、团队版或商用授权通道。
+
+## Seedance Supabase Guest Store
+
+当前网站的 Seedance 视频工作台仍使用浏览器本地 UUID 作为用户 ID。为避免强行复用 `auth.users` 导致现有访客流程失效，新增的生产表使用独立 `seedance_*` 命名空间：
+
+- `seedance_profiles`
+- `seedance_license_codes`
+- `seedance_entitlements`
+- `seedance_daily_usage`
+- `seedance_generations`
+- `seedance_image2_assets`
+
+服务端适配层在 `SEEDANCE_STORE_BACKEND=supabase` 时通过 `SUPABASE_SERVICE_ROLE_KEY` 读写这些表。上线顺序是先执行迁移、再设置环境变量；如果表不存在，API 会返回明确迁移错误，不会伪装成云端已启用。
+
+切库验证命令：
+
+```powershell
+npm run check:seedance-supabase-migration
+# 如果本机有 SUPABASE_DB_URL，或 SUPABASE_ACCESS_TOKEN + SUPABASE_DB_PASSWORD：
+npm run migrate:seedance-supabase
+$env:SEEDANCE_STORE_BACKEND="supabase"
+$env:VIDEO_PROVIDER="manual"
+npm run start -- -p 3016
+$env:SEEDANCE_SMOKE_BASE_URL="http://127.0.0.1:3016"
+$env:SEEDANCE_SMOKE_ADMIN_TOKEN=$env:ADMIN_TOKEN
+npm run smoke:seedance-supabase
+```
+
+`smoke:seedance-supabase` 只创建 `seedance_supabase_smoke_` 前缀的临时用户数据，验证 API 主链路和 Supabase 表记录后默认清理。线上如果要回滚，移除 `SEEDANCE_STORE_BACKEND=supabase` 或改回 `local`，代码会重新走本地/临时 store。
 
 ## 官方参数结论
 
