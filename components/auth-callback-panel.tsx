@@ -36,9 +36,14 @@ const readAuthRedirectParams = () => {
     error: hashParams.get("error_description") ?? hashParams.get("error") ?? queryParams.get("error_description") ?? queryParams.get("error") ?? "",
     expiresIn: Number(hashParams.get("expires_in") ?? 0) || undefined,
     flowType: hashParams.get("type") ?? queryParams.get("mode") ?? "",
+    intent: queryParams.get("intent") === "admin" ? "admin" : "account",
+    returnTo: queryParams.get("returnTo") ?? "",
     refreshToken: hashParams.get("refresh_token") ?? undefined
   };
 };
+
+const safeReturnTo = (value: string, fallback: string) =>
+  value.startsWith("/") && !value.startsWith("//") ? value : fallback;
 
 const persistAccountSession = (session: Image2AccountSession) => {
   window.localStorage.setItem(accountSessionStorageKey, JSON.stringify(session));
@@ -93,6 +98,23 @@ const updateSupabasePassword = async (accessToken: string, password: string) => 
   );
 };
 
+const exchangeAdminSession = async (session: Image2AccountSession, expiresIn?: number) => {
+  const response = await fetch("/api/admin/session/exchange", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-image2-admin-csrf": "1"
+    },
+    body: JSON.stringify({
+      accessToken: session.accessToken,
+      expiresIn,
+      refreshToken: session.refreshToken
+    })
+  });
+  const data = (await response.json().catch(() => ({}))) as { admin?: boolean; error?: string };
+  if (!response.ok || !data.admin) throw new Error(data.error || "管理员会话创建失败。" );
+};
+
 type AuthCallbackPanelProps = {
   initialIsSceneSite?: boolean;
 };
@@ -102,6 +124,7 @@ export function AuthCallbackPanel({ initialIsSceneSite = false }: AuthCallbackPa
   const [message, setMessage] = useState("正在验证邮箱链接...");
   const [flowType, setFlowType] = useState("");
   const [isSceneSite, setIsSceneSite] = useState(initialIsSceneSite);
+  const [isAdminFlow, setIsAdminFlow] = useState(false);
   const [session, setSession] = useState<Image2AccountSession | null>(null);
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
@@ -110,9 +133,9 @@ export function AuthCallbackPanel({ initialIsSceneSite = false }: AuthCallbackPa
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isRecoveryFlow = useMemo(() => flowType === "recovery", [flowType]);
-  const accountBrand = isSceneSite ? "场景引擎账号" : "Image2 账号";
-  const returnLabel = isSceneSite ? "返回场景工作台" : "返回 Image2 案例库";
-  const returnHref = isSceneSite ? "/workbench" : "/image2-cases";
+  const accountBrand = isAdminFlow ? "Image2 管理员" : isSceneSite ? "场景引擎账号" : "Image2 账号";
+  const returnLabel = isAdminFlow ? "返回管理员入口" : isSceneSite ? "返回场景工作台" : "返回 Image2 案例库";
+  const returnHref = isAdminFlow ? "/admin/image2-cases" : isSceneSite ? "/workbench" : "/image2-cases";
 
   useEffect(() => {
     setIsSceneSite(window.location.hostname === "scene.lsb0713.online");
@@ -124,6 +147,7 @@ export function AuthCallbackPanel({ initialIsSceneSite = false }: AuthCallbackPa
     }
 
     const params = readAuthRedirectParams();
+    setIsAdminFlow(params.intent === "admin");
     setFlowType(params.flowType);
     if (params.error) {
       setState("error");
@@ -137,14 +161,28 @@ export function AuthCallbackPanel({ initialIsSceneSite = false }: AuthCallbackPa
       return;
     }
 
+    window.history.replaceState(
+      null,
+      "",
+      `/auth/callback?mode=${encodeURIComponent(params.flowType || "confirm")}${params.intent === "admin" ? "&intent=admin" : ""}`
+    );
+
     void getSupabaseUser(params.accessToken)
-      .then((user) => {
+      .then(async (user) => {
         const nextSession: Image2AccountSession = {
           accessToken: params.accessToken,
           refreshToken: params.refreshToken,
           expiresAt: params.expiresIn ? Date.now() + params.expiresIn * 1000 : undefined,
           user
         };
+        if (params.intent === "admin") {
+          await exchangeAdminSession(nextSession, params.expiresIn);
+          setSession(null);
+          setState("success");
+          setMessage("管理员身份已验证，正在进入后台。" );
+          window.location.replace(safeReturnTo(params.returnTo, "/admin/image2-cases"));
+          return;
+        }
         persistAccountSession(nextSession);
         setSession(nextSession);
         setState(params.flowType === "recovery" ? "ready" : "success");
@@ -153,7 +191,6 @@ export function AuthCallbackPanel({ initialIsSceneSite = false }: AuthCallbackPa
             ? "账号已验证，请设置一个新密码。"
             : "邮箱验证完成，账号已登录。"
         );
-        window.history.replaceState(null, "", `/auth/callback?mode=${encodeURIComponent(params.flowType || "confirm")}`);
       })
       .catch((error) => {
         setState("error");

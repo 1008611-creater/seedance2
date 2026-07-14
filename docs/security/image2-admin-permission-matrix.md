@@ -22,6 +22,7 @@
 | `/api/admin/session` | GET | 读取管理员会话 | `requireAdmin` | 不适用（只读） | 已保护 |
 | `/api/admin/session` | DELETE | 退出并撤销会话 | Cookie 来源 | `requireAdminCsrf` | 已保护 |
 | `/api/admin/session/refresh` | POST | 刷新并轮换会话 | `requireAdminUser` 重新检查角色 | `requireAdminCsrf` | 已保护 |
+| `/api/admin/session/exchange` | POST | 将 Supabase 一次性登录链接换成管理员 Cookie | `requireAdminUser` 重新检查角色 | `requireAdminCsrf` | 已保护 |
 
 ## 代码证据
 
@@ -33,6 +34,7 @@
 - 制作队列接口：`app/api/admin/jobs/route.ts:11`、`:24`。
 - 会话接口：`app/api/admin/session/route.ts:19`、`:43`。
 - 会话刷新：`app/api/admin/session/refresh/route.ts:15`。
+- 一次性登录链接交换：`app/api/admin/session/exchange/route.ts:17`。
 - 自动化约束：`tests/image2-admin-operations.spec.ts` 会递归检查全部管理路由；新增未授权路由或缺少 CSRF 的写路由会令测试失败。
 
 ## 返回数据最小化

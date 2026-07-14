@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 import { POST as verifyOtp } from "@/app/api/auth/otp/verify/route";
 import { GET as readAdminSession } from "@/app/api/admin/session/route";
 import { POST as refreshAdminSession } from "@/app/api/admin/session/refresh/route";
+import { POST as exchangeAdminSession } from "@/app/api/admin/session/exchange/route";
 import { requireAdmin } from "@/lib/admin-auth";
 import {
   AdminSessionError,
@@ -185,4 +186,51 @@ test("refresh rotates both HttpOnly cookies only after role verification", async
   expect(cookies).toContain(`${adminAccessCookieName}=rotated-access`);
   expect(cookies).toContain(`${adminRefreshCookieName}=rotated-refresh`);
   expect(cookies).toContain("HttpOnly");
+});
+
+test("admin magic-link tokens are exchanged for HttpOnly cookies without token echo", async () => {
+  delete process.env.UNIFIED_AUTH_SUPABASE_MOCK;
+  mockRole("admin");
+  const response = await exchangeAdminSession(
+    new NextRequest("http://localhost/api/admin/session/exchange", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Origin: "http://localhost",
+        "x-image2-admin-csrf": "1"
+      },
+      body: JSON.stringify({ accessToken: "magic-access-token", expiresIn: 3600, refreshToken: "magic-refresh-token" })
+    })
+  );
+
+  expect(response.status).toBe(200);
+  const body = await response.json();
+  expect(body).toMatchObject({ admin: true, identity: { id: "owner-id" } });
+  expect(JSON.stringify(body)).not.toContain("magic-access-token");
+  expect(JSON.stringify(body)).not.toContain("magic-refresh-token");
+  const cookies = response.headers.get("set-cookie") ?? "";
+  expect(cookies).toContain(`${adminAccessCookieName}=magic-access-token`);
+  expect(cookies).toContain(`${adminRefreshCookieName}=magic-refresh-token`);
+  expect(cookies).toContain("HttpOnly");
+});
+
+test("non-admin magic-link exchange cannot create administrator cookies", async () => {
+  delete process.env.UNIFIED_AUTH_SUPABASE_MOCK;
+  mockRole("user");
+  const response = await exchangeAdminSession(
+    new NextRequest("http://localhost/api/admin/session/exchange", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Origin: "http://localhost",
+        "x-image2-admin-csrf": "1"
+      },
+      body: JSON.stringify({ accessToken: "ordinary-access-token", refreshToken: "ordinary-refresh-token" })
+    })
+  );
+
+  expect(response.status).toBe(403);
+  const cookies = response.headers.get("set-cookie") ?? "";
+  expect(cookies).not.toContain("ordinary-access-token");
+  expect(cookies).not.toContain("ordinary-refresh-token");
 });

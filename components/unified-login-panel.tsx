@@ -168,7 +168,9 @@ export function UnifiedLoginPanel({ brand, intent = "account", returnHref, siteK
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           identifier,
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: isAdmin
+            ? `${window.location.origin}/auth/callback?intent=admin&returnTo=${encodeURIComponent(returnHref)}`
+            : `${window.location.origin}/auth/callback`,
           turnstileToken
         })
       });

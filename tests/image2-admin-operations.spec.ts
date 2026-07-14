@@ -90,13 +90,17 @@ test("admin UI uses HttpOnly session APIs and no longer asks for ADMIN_TOKEN", a
     "components/admin-console.tsx",
     "components/admin-picture-console.tsx",
     "components/admin-users-console.tsx",
-    "components/image2-admin-console.tsx"
+    "components/auth-callback-panel.tsx",
+    "components/image2-admin-console.tsx",
+    "components/unified-login-panel.tsx"
   ];
   const source = (await Promise.all(files.map((file) => readFile(file, "utf8")))).join("\n");
   expect(source).not.toContain("ADMIN_TOKEN");
   expect(source).not.toContain("x-admin-token");
   expect(source).toContain("AdminSessionGate");
   expect(source).toContain("/api/admin/image2/overview");
+  expect(source).toContain("/api/admin/session/exchange");
+  expect(source).toContain("intent=admin&returnTo=");
 });
 
 test("every state-changing admin route has CSRF protection", async () => {

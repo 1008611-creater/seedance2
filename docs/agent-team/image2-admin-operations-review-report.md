@@ -19,6 +19,7 @@
 - `IMAGE2_ADMIN_UI_BASE_URL=http://127.0.0.1:3124 npx playwright test tests/image2-admin-live-ui.spec.ts`：1/1 通过。
 - `npm run build`：通过，1,193 条案例成功生成。
 - 搜索管理 UI 中 `ADMIN_TOKEN|x-admin-token|seedance-admin-token`：0 处。
+- Magic Link 管理员交换测试：管理员令牌只进入 HttpOnly Cookie 且不回显；普通用户交换返回 403。
 - 视觉检查 `output/admin-ops-desktop.png` 和 `output/admin-ops-mobile.png`：桌面层级清楚；390px 导航、用户列表、会员摘要可用，无关键横向溢出。
 
 ## 逐项验收记录
