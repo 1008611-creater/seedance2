@@ -112,7 +112,9 @@ const exchangeAdminSession = async (session: Image2AccountSession, expiresIn?: n
     })
   });
   const data = (await response.json().catch(() => ({}))) as { admin?: boolean; error?: string };
+  if (response.status === 403) return false;
   if (!response.ok || !data.admin) throw new Error(data.error || "管理员会话创建失败。" );
+  return true;
 };
 
 type AuthCallbackPanelProps = {
@@ -138,7 +140,8 @@ export function AuthCallbackPanel({ initialIsSceneSite = false }: AuthCallbackPa
   const returnHref = isAdminFlow ? "/admin/image2-cases" : isSceneSite ? "/workbench" : "/image2-cases";
 
   useEffect(() => {
-    setIsSceneSite(window.location.hostname === "scene.lsb0713.online");
+    const sceneCallback = window.location.hostname === "scene.lsb0713.online";
+    setIsSceneSite(sceneCallback);
 
     if (!isSupabaseAuthConfigured) {
       setState("error");
@@ -175,14 +178,18 @@ export function AuthCallbackPanel({ initialIsSceneSite = false }: AuthCallbackPa
           expiresAt: params.expiresIn ? Date.now() + params.expiresIn * 1000 : undefined,
           user
         };
-        if (params.intent === "admin") {
-          await exchangeAdminSession(nextSession, params.expiresIn);
+        const shouldTryAdminExchange = params.intent === "admin" || (!sceneCallback && params.flowType !== "recovery");
+        const adminExchanged = shouldTryAdminExchange
+          ? await exchangeAdminSession(nextSession, params.expiresIn)
+          : false;
+        if (adminExchanged) {
           setSession(null);
           setState("success");
           setMessage("管理员身份已验证，正在进入后台。" );
           window.location.replace(safeReturnTo(params.returnTo, "/admin/image2-cases"));
           return;
         }
+        if (params.intent === "admin") throw new Error("当前账号没有管理员权限。" );
         persistAccountSession(nextSession);
         setSession(nextSession);
         setState(params.flowType === "recovery" ? "ready" : "success");
