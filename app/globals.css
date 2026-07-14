@@ -7974,6 +7974,7 @@ select:focus {
 
 .unified-login-brand span,
 .unified-login-dev-note,
+.unified-login-existing,
 .unified-login-status,
 .unified-login-return {
   display: inline-flex;
@@ -8091,6 +8092,27 @@ select:focus {
   font-size: 12px;
   font-weight: 820;
   line-height: 1.45;
+}
+
+.unified-login-existing {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  border: 1px solid rgba(15, 124, 102, 0.18);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #0d6555;
+  background: #eefaf4;
+  font-size: 13px;
+  font-weight: 820;
+  line-height: 1.45;
+}
+
+.unified-login-existing svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
 }
 
 .unified-login-form button {

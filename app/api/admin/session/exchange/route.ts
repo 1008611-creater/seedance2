@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminAuthStatus, requireAdminUser } from "@/lib/admin-auth";
 import { AdminSessionError, clearAdminSessionCookies, requireAdminCsrf, setAdminSessionCookies } from "@/lib/admin-session";
 import { getSupabaseUserFromAccessToken } from "@/lib/image2-membership";
-import type { UnifiedAccountSession } from "@/lib/unified-auth";
+import { refreshSupabaseSession, type UnifiedAccountSession } from "@/lib/unified-auth";
 import { toUserFacingError } from "@/lib/user-facing-error";
 
 export const runtime = "nodejs";
@@ -22,9 +22,15 @@ export async function POST(request: NextRequest) {
     const refreshToken = boundedToken(body.refreshToken, false) || undefined;
     const expiresInValue = Number(body.expiresIn);
     const expiresIn = Number.isFinite(expiresInValue) ? Math.min(Math.max(Math.floor(expiresInValue), 60), 3600) : 3600;
-    const user = await getSupabaseUserFromAccessToken(accessToken, "管理员登录链接已失效，请重新发送。" );
-    const identity = await requireAdminUser(user);
-    const session: UnifiedAccountSession = { accessToken, expiresIn, refreshToken, user };
+    let session: UnifiedAccountSession;
+    try {
+      const user = await getSupabaseUserFromAccessToken(accessToken, "管理员登录链接已失效，请重新发送。" );
+      session = { accessToken, expiresIn, refreshToken, user };
+    } catch (error) {
+      if (!refreshToken) throw error;
+      session = await refreshSupabaseSession(refreshToken);
+    }
+    const identity = await requireAdminUser(session.user);
     const response = NextResponse.json({ admin: true, identity });
     response.headers.set("Cache-Control", "no-store, max-age=0");
     setAdminSessionCookies(response, session);

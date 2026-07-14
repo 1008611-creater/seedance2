@@ -234,3 +234,46 @@ test("non-admin magic-link exchange cannot create administrator cookies", async 
   expect(cookies).not.toContain("ordinary-access-token");
   expect(cookies).not.toContain("ordinary-refresh-token");
 });
+
+test("expired stored access can refresh before administrator role verification", async () => {
+  delete process.env.UNIFIED_AUTH_SUPABASE_MOCK;
+  global.fetch = async (input) => {
+    const url = String(input);
+    if (url.endsWith("/auth/v1/user")) {
+      return Response.json({ message: "JWT expired" }, { status: 401 });
+    }
+    if (url.includes("/auth/v1/token?grant_type=refresh_token")) {
+      return Response.json({
+        access_token: "refreshed-access-token",
+        expires_in: 3600,
+        refresh_token: "refreshed-refresh-token",
+        user: { email: "owner@example.com", id: "owner-id" }
+      });
+    }
+    if (url.includes("/rest/v1/profiles?")) {
+      return Response.json([{ email: "owner@example.com", id: "owner-id", role: "admin" }]);
+    }
+    return new Response(null, { status: 404 });
+  };
+
+  const response = await exchangeAdminSession(
+    new NextRequest("http://localhost/api/admin/session/exchange", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Origin: "http://localhost",
+        "x-image2-admin-csrf": "1"
+      },
+      body: JSON.stringify({
+        accessToken: "expired-access-token",
+        refreshToken: "stored-refresh-token"
+      })
+    })
+  );
+
+  expect(response.status).toBe(200);
+  const cookies = response.headers.get("set-cookie") ?? "";
+  expect(cookies).toContain(`${adminAccessCookieName}=refreshed-access-token`);
+  expect(cookies).toContain(`${adminRefreshCookieName}=refreshed-refresh-token`);
+  expect(cookies).not.toContain("stored-refresh-token");
+});

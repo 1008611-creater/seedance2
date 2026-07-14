@@ -166,3 +166,37 @@ test('image2 balance APIs require login', async ({ page }) => {
   expect(redeem.status()).toBe(401);
   expect((await redeem.json()).error).toContain('兑换卡密');
 });
+
+test('admin login reuses a previously saved account session', async ({ page }) => {
+  let exchangePayload: Record<string, unknown> = {};
+
+  await page.route('**/api/admin/session/exchange', async (route) => {
+    exchangePayload = route.request().postDataJSON() as Record<string, unknown>;
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ admin: true, identity: { id: 'owner-id' } })
+    });
+  });
+  await page.route(new RegExp(`^${baseUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/admin/image2-cases$`), async (route) => {
+    await route.fulfill({ status: 200, contentType: 'text/html', body: '<h1>Admin test destination</h1>' });
+  });
+  await page.addInitScript((key) => {
+    window.localStorage.setItem(
+      key,
+      JSON.stringify({
+        accessToken: 'stored-account-access',
+        expiresAt: Date.now() + 30 * 60 * 1000,
+        refreshToken: 'stored-account-refresh',
+        user: { id: 'owner-id', email: 'owner@example.com' }
+      })
+    );
+  }, accountSessionStorageKey);
+
+  await page.goto(`${baseUrl}/login?intent=admin&returnTo=/admin/image2-cases`);
+  await expect(page.getByRole('heading', { name: 'Admin test destination' })).toBeVisible();
+  expect(exchangePayload).toMatchObject({
+    accessToken: 'stored-account-access',
+    refreshToken: 'stored-account-refresh'
+  });
+});

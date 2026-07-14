@@ -46,6 +46,16 @@ type VerifyResponse = {
   walletInitialized?: boolean;
 };
 
+type ExistingAccountSession = {
+  accessToken: string;
+  expiresAt?: number;
+  refreshToken?: string;
+  user: {
+    email?: string;
+    id: string;
+  };
+};
+
 const accountSessionStorageKey = "image2-account-session:v1";
 
 function readJson<T>(response: Response): Promise<T> {
@@ -63,6 +73,31 @@ function isPhone(value: string) {
   return value.trim().startsWith("+") && !value.includes("@");
 }
 
+function readExistingAccountSession(): ExistingAccountSession | null {
+  try {
+    const raw = window.localStorage.getItem(accountSessionStorageKey);
+    if (!raw) return null;
+    const value = JSON.parse(raw) as Record<string, unknown>;
+    const user = value.user && typeof value.user === "object" ? (value.user as Record<string, unknown>) : null;
+    const accessToken = typeof value.accessToken === "string" ? value.accessToken.trim() : "";
+    const refreshToken = typeof value.refreshToken === "string" ? value.refreshToken.trim() : undefined;
+    const userId = typeof user?.id === "string" ? user.id.trim() : "";
+    if (!accessToken || accessToken.length > 12_000 || !userId || userId.length > 200) return null;
+
+    return {
+      accessToken,
+      expiresAt: typeof value.expiresAt === "number" && Number.isFinite(value.expiresAt) ? value.expiresAt : undefined,
+      refreshToken: refreshToken && refreshToken.length <= 12_000 ? refreshToken : undefined,
+      user: {
+        id: userId,
+        email: typeof user?.email === "string" ? user.email.slice(0, 320) : undefined
+      }
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function UnifiedLoginPanel({ brand, intent = "account", returnHref, siteKey }: UnifiedLoginPanelProps) {
   const [identifier, setIdentifier] = useState("");
   const [code, setCode] = useState("");
@@ -71,6 +106,7 @@ export function UnifiedLoginPanel({ brand, intent = "account", returnHref, siteK
   const [message, setMessage] = useState("输入邮箱或手机号，获取一次性验证码。");
   const [maskedIdentifier, setMaskedIdentifier] = useState("");
   const [sessionSaved, setSessionSaved] = useState(false);
+  const [existingSessionAvailable, setExistingSessionAvailable] = useState(false);
   const turnstileRef = useRef<HTMLDivElement | null>(null);
   const widgetIdRef = useRef("");
 
@@ -145,6 +181,56 @@ export function UnifiedLoginPanel({ brand, intent = "account", returnHref, siteK
       }
     };
   }, [siteKey]);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    const existingSession = readExistingAccountSession();
+    if (!existingSession) return;
+    setExistingSessionAvailable(true);
+
+    let cancelled = false;
+    const continueWithExistingSession = async () => {
+      setStatus("verifying");
+      setMessage("检测到你之前已点过登录链接，正在确认管理员身份...");
+      try {
+        const expiresIn = existingSession.expiresAt
+          ? Math.max(60, Math.floor((existingSession.expiresAt - Date.now()) / 1000))
+          : undefined;
+        const response = await fetch("/api/admin/session/exchange", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-image2-admin-csrf": "1"
+          },
+          body: JSON.stringify({
+            accessToken: existingSession.accessToken,
+            expiresIn,
+            refreshToken: existingSession.refreshToken
+          })
+        });
+        const data = await readJson<{ admin?: boolean; error?: string }>(response);
+        if (!response.ok || !data.admin) {
+          if (response.status === 403) throw new Error("当前已登录账号没有管理员权限。");
+          if (response.status === 401) throw new Error("之前的登录状态已过期，请重新获取登录链接。");
+          throw new Error(data.error || "管理员身份确认失败。");
+        }
+        if (cancelled) return;
+        setSessionSaved(true);
+        setStatus("success");
+        setMessage("管理员身份已确认，正在进入后台...");
+        window.location.replace(returnHref);
+      } catch (error) {
+        if (cancelled) return;
+        setStatus("error");
+        setMessage(error instanceof Error ? error.message : "管理员身份确认失败。");
+      }
+    };
+
+    void continueWithExistingSession();
+    return () => {
+      cancelled = true;
+    };
+  }, [isAdmin, returnHref]);
 
   function resetTurnstile() {
     setTurnstileToken("");
@@ -251,6 +337,13 @@ export function UnifiedLoginPanel({ brand, intent = "account", returnHref, siteK
 
         <h1>{isAdmin ? "登录管理后台" : isScene ? "登录场景引擎" : "登录 Image2"}</h1>
         <p>{subtitle}</p>
+
+        {isAdmin && existingSessionAvailable ? (
+          <div className="unified-login-existing">
+            <Loader2 className={status === "verifying" ? "spinning" : ""} aria-hidden="true" />
+            <span>正在使用你之前点过邮件链接后保存的账号登录，无需再次收邮件。</span>
+          </div>
+        ) : null}
 
         <form className="unified-login-form" onSubmit={sendCode}>
           <label>
