@@ -188,7 +188,7 @@ function redemptionReasonMessage(reason: string) {
     exhausted: "卡密已被兑换完。",
     expired: "卡密已过期。",
     invalid: "卡密无效。",
-    legacy_weekly_free: "这是旧周卡卡密，正在按旧权益兑换。",
+    legacy_weekly_free: "这是旧卡密，正在按兼容规则兑换图片额度。",
     license_not_active: "卡密当前不可用。",
     not_authenticated: "请先登录账号后再兑换卡密。",
     unsupported_credit_plan: "这个卡密不是图片余额包。"

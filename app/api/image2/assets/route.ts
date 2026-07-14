@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
+  insertSupabaseImage2AssetChange,
+  isImage2AssetChangeMigrationError,
+  shouldUseSupabaseImage2Assets,
+  toImage2AssetChangeMigrationError
+} from "@/lib/image2-asset-change-log";
+import {
   getImage2AssetsForUser,
   mutateStore,
   normalizeImage2AssetSnapshot,
@@ -7,6 +13,7 @@ import {
 } from "@/lib/store";
 import { toUserFacingError } from "@/lib/user-facing-error";
 import type { Image2AssetSnapshot } from "@/lib/types";
+import { isProductionRuntime, productionConfigurationResponse } from "@/lib/runtime-access";
 
 export const runtime = "nodejs";
 
@@ -34,7 +41,7 @@ function getSupabaseConfig() {
 }
 
 function shouldUseSupabaseAssets() {
-  return process.env.IMAGE2_ASSET_SYNC_BACKEND?.trim().toLowerCase() === "supabase";
+  return shouldUseSupabaseImage2Assets();
 }
 
 function getUserId(request: NextRequest, bodyUserId?: unknown) {
@@ -174,9 +181,13 @@ async function writeSupabaseAssetEvent(user: SupabaseUser, snapshot: Image2Asset
   });
 }
 
-async function saveSupabaseAssets(user: SupabaseUser, value: unknown) {
+async function saveSupabaseAssets(user: SupabaseUser, value: unknown, options: { reason?: unknown; source?: unknown } = {}) {
   const config = requireSupabaseConfig();
+  const existing = await readSupabaseAssets(user);
   const snapshot = normalizeImage2AssetSnapshot(value);
+  if (!snapshot.gachaState && existing.snapshot.gachaState) {
+    snapshot.gachaState = existing.snapshot.gachaState;
+  }
   snapshot.updatedAt = new Date().toISOString();
 
   const response = await fetch(
@@ -200,11 +211,35 @@ async function saveSupabaseAssets(user: SupabaseUser, value: unknown) {
 
   const rows = (await response.json()) as SupabaseAssetRow[];
   await writeSupabaseAssetEvent(user, snapshot);
-  return toSupabaseAssetResponse(user, rows[0] ?? { user_id: user.id, snapshot, created_at: snapshot.updatedAt, updated_at: snapshot.updatedAt });
+  const result = toSupabaseAssetResponse(user, rows[0] ?? { user_id: user.id, snapshot, created_at: snapshot.updatedAt, updated_at: snapshot.updatedAt });
+  let changeLogWarning: string | undefined;
+
+  try {
+    await insertSupabaseImage2AssetChange({
+      action: "asset_snapshot_save",
+      actor: { type: "user", id: user.id, email: user.email },
+      beforeSnapshot: existing.snapshot,
+      afterSnapshot: result.snapshot,
+      reason: typeof options.reason === "string" ? options.reason : "用户资产快照同步",
+      source: typeof options.source === "string" ? options.source : "image2-cases",
+      userId: user.id
+    });
+  } catch (error) {
+    if (!isImage2AssetChangeMigrationError(error)) throw error;
+    changeLogWarning = toImage2AssetChangeMigrationError(error);
+  }
+
+  return {
+    ...result,
+    ...(changeLogWarning ? { changeLogWarning } : {})
+  };
 }
 
 export async function GET(request: NextRequest) {
   try {
+    if (isProductionRuntime() && !shouldUseSupabaseAssets()) {
+      return productionConfigurationResponse("云端资产同步未配置，服务暂不可用。");
+    }
     if (shouldUseSupabaseAssets()) {
       const user = await getSupabaseUser(request);
       return NextResponse.json(await readSupabaseAssets(user));
@@ -224,16 +259,25 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  if (isProductionRuntime() && !shouldUseSupabaseAssets()) {
+    return productionConfigurationResponse("云端资产同步未配置，服务暂不可用。");
+  }
   const body = await request.json().catch(() => ({}));
 
   try {
     if (shouldUseSupabaseAssets()) {
       const user = await getSupabaseUser(request);
-      return NextResponse.json(await saveSupabaseAssets(user, body.snapshot));
+      return NextResponse.json(await saveSupabaseAssets(user, body.snapshot, { reason: body.reason, source: body.source }));
     }
 
     const userId = getUserId(request, body.userId);
-    const assets = await mutateStore((state) => saveImage2AssetsForUser(state, userId, body.snapshot));
+    const assets = await mutateStore((state) =>
+      saveImage2AssetsForUser(state, userId, body.snapshot, {
+        actor: { type: "user", id: userId },
+        reason: typeof body.reason === "string" ? body.reason : "用户资产快照同步",
+        source: typeof body.source === "string" ? body.source : "image2-cases"
+      })
+    );
     return NextResponse.json({
       storageMode: localStorageMode,
       ...assets

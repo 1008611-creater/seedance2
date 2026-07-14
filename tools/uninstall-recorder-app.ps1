@@ -10,10 +10,13 @@ function U {
 
 $desktop = [Environment]::GetFolderPath("Desktop")
 $startMenu = [Environment]::GetFolderPath("Programs")
+$startup = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\Startup"
 $appName = U "Playwright\u5f55\u5236\u63a7\u5236\u53f0"
+$ballName = U "\u811a\u672c\u5de5\u4f5c\u53f0\u60ac\u6d6e\u7403"
 $paths = @(
   (Join-Path $desktop "$appName.lnk"),
-  (Join-Path $startMenu "$appName.lnk")
+  (Join-Path $startMenu "$appName.lnk"),
+  (Join-Path $startup "$ballName.lnk")
 )
 
 foreach ($path in $paths) {

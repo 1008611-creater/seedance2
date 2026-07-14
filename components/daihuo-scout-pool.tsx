@@ -1360,7 +1360,7 @@ export function DaihuoScoutPool() {
             </button>
             <a href="/image2-cases">
               <Link2 />
-              Image2 案例库
+              场景配方库
             </a>
             <a href="https://github.com/NanmiCoder/MediaCrawler" target="_blank" rel="noreferrer">
               <ExternalLink />

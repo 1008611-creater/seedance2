@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { NextRequest, NextResponse } from "next/server";
+import { hiddenRouteResponse, isInternalOperationsApiEnabled } from "@/lib/runtime-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,10 +29,12 @@ const dataDir = path.join(process.cwd(), "public", "data", "daihuo-scout");
 const leadFile = path.join(dataDir, "douyin-leads.json");
 
 export async function GET() {
+  if (!isInternalOperationsApiEnabled()) return hiddenRouteResponse();
   return NextResponse.json({ leads: await readLeads() });
 }
 
 export async function POST(request: NextRequest) {
+  if (!isInternalOperationsApiEnabled()) return hiddenRouteResponse();
   let payload: unknown;
   try {
     payload = await request.json();

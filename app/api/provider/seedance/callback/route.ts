@@ -3,10 +3,12 @@ import { normalizeProviderTask } from "@/lib/provider";
 import { mutateStore, refundQuota } from "@/lib/store";
 import { nowIso } from "@/lib/time";
 import { toUserFacingError } from "@/lib/user-facing-error";
+import { hiddenRouteResponse, isLegacySeedanceApiEnabled } from "@/lib/runtime-access";
 
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
+  if (!isLegacySeedanceApiEnabled()) return hiddenRouteResponse();
   const payload = await request.json();
   const providerTaskId = String(payload.id ?? payload.task_id ?? payload.data?.id ?? "");
   const normalized = normalizeProviderTask(payload);

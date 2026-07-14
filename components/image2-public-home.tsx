@@ -1,6 +1,6 @@
 "use client";
 
-import { FolderOpen, LogIn, PlayCircle, Search, Sparkles, X } from "lucide-react";
+import { Eye, EyeOff, FolderOpen, LogIn, LogOut, PlayCircle, Search, Sparkles, X } from "lucide-react";
 import { type CSSProperties, type FormEvent, useEffect, useMemo, useState } from "react";
 import { Image2LanguageToggle, useImage2LanguagePreference } from "@/components/image2-language";
 import { localizedCaseText, type Image2Language } from "@/lib/image2-language";
@@ -28,40 +28,65 @@ type Image2AccountSession = {
 
 const publicHomeCopy = {
   zh: {
-    heroKicker: "Prompt Atlas",
-    heroTitle: "Image2 案例灵感库",
-    heroDescription: "高价值案例、提示词结构和首帧参考，适合做灵感检索与风格拆解。",
-    casesAction: "进入案例库",
+    heroKicker: "Prompt reuse library",
+    heroTitle: "把好图拆成能复用的提示词。",
+    heroDescription: "查案例、读结构、存变体，再带着一套可改写的提示词进入作图流程。",
+    casesAction: "查找案例",
+    workbenchAction: "打开工作台",
     videoAction: "视频创作",
-    loginAction: "登录",
+    loginAction: "登录同步资产",
+    logoutAction: "退出",
+    navCases: "案例库",
+    navWorkbench: "工作台",
+    navVideo: "视频创作",
     heroPreviewLabel: "精选案例预览",
     publicContentLabel: "公开内容",
-    featuredKicker: "精选案例",
-    featuredTitle: "从优秀样片开始拆解",
+    featuredKicker: "Curated proof",
+    featuredTitle: "先看图，再决定怎么复用。",
+    featuredAction: "浏览全部案例",
     promptReferenceLabel: "提示词参考",
-    promptReferenceTitle: "提示词参考",
-    promptReferenceNote: "按类别、价值分和来源快速筛选案例。",
-    firstFrameTitle: "首帧路线",
-    firstFrameNote: "把优秀样片拆成主体、构图、光线和风格锚点。"
+    promptReferenceTitle: "搜到值得学的图",
+    promptReferenceNote: "按用途、风格、来源和提示词结构快速缩小范围。",
+    firstFrameTitle: "留下能继续生产的结构",
+    firstFrameNote: "保存收藏、改写变体，再进入工作台或视频首帧流程。",
+    footerNote: "每个案例保留来源归属；图片与提示词仅按其标注范围使用。"
   },
   en: {
-    heroKicker: "Prompt Atlas",
-    heroTitle: "Image2 Case Library",
-    heroDescription: "High-value cases, prompt structures, and first-frame references for style research and visual breakdowns.",
-    casesAction: "Explore Cases",
+    heroKicker: "Prompt reuse library",
+    heroTitle: "Turn strong images into prompts you can reuse.",
+    heroDescription: "Find a case, read its structure, save a variation, and continue with a prompt you can actually adapt.",
+    casesAction: "Find a Case",
+    workbenchAction: "Open Workbench",
     videoAction: "Video Studio",
-    loginAction: "Log In",
+    loginAction: "Log In to Sync",
+    logoutAction: "Log Out",
+    navCases: "Cases",
+    navWorkbench: "Workbench",
+    navVideo: "Video",
     heroPreviewLabel: "Featured case preview",
     publicContentLabel: "Public content",
-    featuredKicker: "Featured Cases",
-    featuredTitle: "Start With Proven Visual Samples",
+    featuredKicker: "Curated proof",
+    featuredTitle: "See the image before deciding how to reuse it.",
+    featuredAction: "Browse All Cases",
     promptReferenceLabel: "Prompt references",
-    promptReferenceTitle: "Prompt References",
-    promptReferenceNote: "Filter cases quickly by category, value score, and source.",
-    firstFrameTitle: "First-frame Route",
-    firstFrameNote: "Break strong samples into subject, composition, lighting, and style anchors."
+    promptReferenceTitle: "Find a case worth studying",
+    promptReferenceNote: "Narrow the library by purpose, style, source, and prompt structure.",
+    firstFrameTitle: "Keep a structure you can produce with",
+    firstFrameNote: "Save cases, adapt variants, and continue into the workbench or first-frame flow.",
+    footerNote: "Each case keeps its source attribution; use images and prompts within their stated scope."
   }
 } satisfies Record<Image2Language, Record<string, string>>;
+
+function publicCaseImageUrl(value: string) {
+  if (!value || value.startsWith("/")) return value;
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return value;
+    return `/api/image2/proxy?url=${encodeURIComponent(url.toString())}`;
+  } catch {
+    return value;
+  }
+}
 
 const accountSessionStorageKey = "image2-workbench-team-session:v1";
 const supabaseAuthUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/+$/, "");
@@ -409,11 +434,31 @@ export function Image2PublicHome({ initialData }: { initialData: Image2PublicHom
   return (
     <main className={styles.shell}>
       <header className={styles.topbar}>
-        <a className={styles.brand} href="/">
-          <Sparkles aria-hidden="true" />
-          <span>Image2</span>
-        </a>
-        <Image2LanguageToggle className={styles.languageToggle} language={language} onChange={setLanguage} />
+        <div className={styles.brandCluster}>
+          <a className={styles.brand} href="/">
+            <Sparkles aria-hidden="true" />
+            <span>Image2</span>
+          </a>
+          <nav className={styles.nav} aria-label="Image2">
+            <a href="/image2-cases">{copy.navCases}</a>
+            <a href="/workbench">{copy.navWorkbench}</a>
+            <a href="/video-studio">{copy.navVideo}</a>
+          </nav>
+        </div>
+        <div className={styles.accountTools}>
+          <Image2LanguageToggle className={styles.languageToggle} language={language} onChange={setLanguage} />
+          {accountSession ? (
+            <button className={styles.accountAction} type="button" onClick={signOutAccount}>
+              <LogOut aria-hidden="true" />
+              {copy.logoutAction}
+            </button>
+          ) : (
+            <button className={styles.accountAction} type="button" onClick={() => setIsAuthModalOpen(true)} disabled={!isSupabaseAuthConfigured}>
+              <LogIn aria-hidden="true" />
+              {copy.loginAction}
+            </button>
+          )}
+        </div>
       </header>
 
       <section className={styles.hero} aria-label={copy.heroTitle}>
@@ -426,14 +471,19 @@ export function Image2PublicHome({ initialData }: { initialData: Image2PublicHom
               <FolderOpen aria-hidden="true" />
               {copy.casesAction}
             </a>
+            <a className={styles.secondaryAction} href="/workbench">
+              <Sparkles aria-hidden="true" />
+              {copy.workbenchAction}
+            </a>
             <a className={styles.secondaryAction} href="/video-studio">
               <PlayCircle aria-hidden="true" />
               {copy.videoAction}
             </a>
-            <button className={styles.loginAction} type="button" onClick={() => setIsAuthModalOpen(true)} disabled={!isSupabaseAuthConfigured}>
-              <LogIn aria-hidden="true" />
-              {copy.loginAction}
-            </button>
+          </div>
+          <div className={styles.heroProofs} aria-label="Image2 case contents">
+            <span>{language === "zh" ? "真实图片" : "Real image"}</span>
+            <span>{language === "zh" ? "原始提示词" : "Original prompt"}</span>
+            <span>{language === "zh" ? "来源归属" : "Source attribution"}</span>
           </div>
         </div>
 
@@ -442,8 +492,11 @@ export function Image2PublicHome({ initialData }: { initialData: Image2PublicHom
             const localized = localizedCaseText(item, language);
             return (
               <a className={styles.heroTile} href={`/image2-cases?case=${item.id}`} key={item.id} style={{ "--tile-index": index } as CSSProperties}>
-                <img src={item.imageUrl} alt={localized.imageAlt} loading={index === 0 ? "eager" : "lazy"} />
-                <span>{localized.categoryLabel}</span>
+                <ReliableCaseImage item={item} index={index} alt={localized.imageAlt} loading={index === 0 ? "eager" : "lazy"} />
+                <span>
+                  <small>{localized.categoryLabel}</small>
+                  <strong>{localized.title}</strong>
+                </span>
               </a>
             );
           })}
@@ -452,12 +505,15 @@ export function Image2PublicHome({ initialData }: { initialData: Image2PublicHom
 
       <section className={styles.sections} aria-label={copy.publicContentLabel}>
         <div className={styles.sectionIntro}>
-          <span>{copy.featuredKicker}</span>
-          <h2>{copy.featuredTitle}</h2>
+          <div>
+            <span>{copy.featuredKicker}</span>
+            <h2>{copy.featuredTitle}</h2>
+          </div>
+          <a href="/image2-cases">{copy.featuredAction}</a>
         </div>
         <div className={styles.caseGrid}>
-          {featuredCases.map((item) => (
-            <PublicCaseCard item={item} key={item.id} language={language} />
+          {featuredCases.map((item, index) => (
+            <PublicCaseCard item={item} index={index} key={item.id} language={language} />
           ))}
         </div>
       </section>
@@ -478,6 +534,11 @@ export function Image2PublicHome({ initialData }: { initialData: Image2PublicHom
           </span>
         </a>
       </section>
+
+      <footer className={styles.footer}>
+        <strong>Image2</strong>
+        <span>{copy.footerNote}</span>
+      </footer>
 
       {isAuthModalOpen ? (
         <AccountAuthModal
@@ -515,11 +576,42 @@ export function Image2PublicHome({ initialData }: { initialData: Image2PublicHom
   );
 }
 
-function PublicCaseCard({ item, language }: { item: WorkbenchCase; language: Image2Language }) {
+function ReliableCaseImage({
+  alt,
+  index,
+  item,
+  loading
+}: {
+  alt: string;
+  index: number;
+  item: WorkbenchCase;
+  loading: "eager" | "lazy";
+}) {
+  const [src, setSrc] = useState(() => publicCaseImageUrl(item.imageUrl));
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setSrc(publicCaseImageUrl(item.imageUrl));
+    setFailed(false);
+  }, [item.imageUrl]);
+
+  if (failed || !src) {
+    return (
+      <span className={styles.imageFallback} role="img" aria-label={alt}>
+        <Sparkles aria-hidden="true" />
+        <small>{index + 1}</small>
+      </span>
+    );
+  }
+
+  return <img src={src} alt={alt} loading={loading} onError={() => setFailed(true)} />;
+}
+
+function PublicCaseCard({ item, index, language }: { item: WorkbenchCase; index: number; language: Image2Language }) {
   const localized = localizedCaseText(item, language);
   return (
     <a className={styles.caseCard} href={`/image2-cases?case=${item.id}`}>
-      <img src={item.imageUrl} alt={localized.imageAlt} loading="lazy" />
+      <ReliableCaseImage item={item} index={index} alt={localized.imageAlt} loading="lazy" />
       <span>{localized.categoryLabel}</span>
       <strong>{localized.title}</strong>
       <em>{localized.titleSecondary}</em>
@@ -560,6 +652,7 @@ function AccountAuthModal({
   otpMode: AccountOtpMode;
   password: string;
 }) {
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const submitLabel =
     otpMode === "signup"
       ? "验证并完成注册"
@@ -570,7 +663,7 @@ function AccountAuthModal({
           : authMode === "signup"
             ? "发送注册验证码"
             : "发送找回验证码";
-  const showPassword = otpMode === "signup" ? false : authMode !== "recover" || otpMode === "recovery";
+  const shouldShowPasswordField = otpMode === "signup" ? false : authMode !== "recover" || otpMode === "recovery";
   return (
     <div className={styles.modalBackdrop} role="presentation">
       <section className={styles.modal} role="dialog" aria-modal="true" aria-label="账号登录">
@@ -619,15 +712,25 @@ function AccountAuthModal({
                 />
               </label>
             ) : null}
-            {showPassword ? (
+            {shouldShowPasswordField ? (
               <label>
                 <span>{otpMode === "recovery" ? "新密码" : "密码"}</span>
-                <input
-                  autoComplete={otpMode === "recovery" || authMode === "signup" ? "new-password" : "current-password"}
-                  type="password"
-                  value={password}
-                  onChange={(event) => onPasswordChange(event.target.value)}
-                />
+                <div className={styles.passwordInputRow}>
+                  <input
+                    autoComplete={otpMode === "recovery" || authMode === "signup" ? "new-password" : "current-password"}
+                    type={isPasswordVisible ? "text" : "password"}
+                    value={password}
+                    onChange={(event) => onPasswordChange(event.target.value)}
+                  />
+                  <button
+                    type="button"
+                    aria-label={isPasswordVisible ? "隐藏密码" : "显示密码"}
+                    title={isPasswordVisible ? "隐藏密码" : "显示密码"}
+                    onClick={() => setIsPasswordVisible((current) => !current)}
+                  >
+                    {isPasswordVisible ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
+                  </button>
+                </div>
               </label>
             ) : null}
             <p className={`${styles.authMessage} ${styles[authStatus.tone]}`}>{authStatus.message}</p>

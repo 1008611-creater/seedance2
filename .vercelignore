@@ -3,11 +3,12 @@
 .data
 .env
 .env.*
+deploy/image2/production.env
 node_modules
 .npm-cache/
-output
-outputs
-prompts
+/output/
+/outputs/
+/prompts/
 *.log
 seedance-start-*.ps1
 tsconfig.tsbuildinfo

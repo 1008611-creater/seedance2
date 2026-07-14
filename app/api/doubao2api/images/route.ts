@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createDoubao2ApiImage, isDoubao2ApiConfigured } from "@/lib/provider";
 import { toUserFacingError } from "@/lib/user-facing-error";
+import { hiddenRouteResponse, isLegacySeedanceApiEnabled } from "@/lib/runtime-access";
 
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
+  if (!isLegacySeedanceApiEnabled()) return hiddenRouteResponse();
   try {
     if (!isDoubao2ApiConfigured()) {
       return NextResponse.json({ error: "未配置 doubao2api 本地通道。" }, { status: 503 });

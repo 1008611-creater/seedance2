@@ -1,0 +1,69 @@
+[
+  {
+    "id": "ISSUE-001",
+    "severity": "P0",
+    "type": "数据库",
+    "status": "CLOSED",
+    "requirement": "REQ-004",
+    "acceptance_item": "AC-005",
+    "steps": [
+      "运行 npm run health:unified-auth",
+      "探测 Supabase REST 表 public.user_profiles 与 public.auth_events"
+    ],
+    "expected": "两个业务认证表均返回 HTTP 200，并可用于登录成功后的 profile / auth event 落库。",
+    "actual": "user_profiles、auth_events 与 image2_wallets 均返回 HTTP 200；Unified auth health passed: 5/5 checks passed。",
+    "evidence": [
+      "npm run health:unified-auth: 5/5 checks passed",
+      "user_profiles exists: HTTP 200",
+      "auth_events exists: HTTP 200",
+      "image2_wallets exists: HTTP 200"
+    ],
+    "suggestion": "无需继续处理；后续只需保持 migration 文件与生产 schema 同步。"
+  },
+  {
+    "id": "ISSUE-002",
+    "severity": "P0",
+    "type": "安全配置",
+    "status": "CLOSED",
+    "requirement": "REQ-003",
+    "acceptance_item": "AC-003",
+    "steps": [
+      "创建 Cloudflare Turnstile widget",
+      "将 site key / secret 配入 Docker production.env 与 Vercel Production env",
+      "重启 Docker image2-scene 并部署 Vercel production",
+      "对三域名 POST /api/auth/otp/send 且不提供 Turnstile token"
+    ],
+    "expected": "生产环境配置 NEXT_PUBLIC_TURNSTILE_SITE_KEY 与 TURNSTILE_SECRET_KEY，服务端缺少 token 时拒绝发送验证码。",
+    "actual": "health 检查 Turnstile env present 通过；image2/scene/picture 三域名缺 Turnstile token 均返回 HTTP 403，code turnstile_token_missing。",
+    "evidence": [
+      "npm run health:unified-auth: Turnstile env present ok",
+      "POST image2 /api/auth/otp/send: HTTP 403 turnstile_token_missing",
+      "POST scene /api/auth/otp/send: HTTP 403 turnstile_token_missing",
+      "POST picture /api/auth/otp/send: HTTP 403 turnstile_token_missing"
+    ],
+    "suggestion": "无需继续处理；后续只需保持 secret 不进入仓库。"
+  },
+  {
+    "id": "ISSUE-003",
+    "severity": "P0",
+    "type": "部署入口",
+    "status": "CLOSED",
+    "requirement": "REQ-006",
+    "acceptance_item": "AC-010",
+    "steps": [
+      "运行 npm run smoke:image2-domains",
+      "发现 scene/picture 返回 Cloudflare error code: 1033",
+      "检查 cloudflared tunnel list",
+      "启动既有 Windows 计划任务 Image2SceneCloudflaredTunnel",
+      "复跑 npm run smoke:image2-domains 与 npm run smoke:image2-pages"
+    ],
+    "expected": "scene.lsb0713.online 与 picture.lsb0713.online 公网入口可访问，域名边界 smoke 全部通过。",
+    "actual": "handwriting-photo-site tunnel 恢复连接；npm run smoke:image2-domains 通过 61/61；npm run smoke:image2-pages 通过 26/26。",
+    "evidence": [
+      "cloudflared tunnel list: handwriting-photo-site has active connections",
+      "npm run smoke:image2-domains: 61/61 checks passed",
+      "npm run smoke:image2-pages: 26 passed"
+    ],
+    "suggestion": "若再次出现 Cloudflare 1033，优先检查 Image2SceneCloudflaredTunnel 计划任务与 handwriting-photo-site tunnel 连接数。"
+  }
+]

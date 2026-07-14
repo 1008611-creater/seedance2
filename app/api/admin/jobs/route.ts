@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/admin-auth";
+import { adminAuthStatus, requireAdmin } from "@/lib/admin-auth";
+import { requireAdminCsrf } from "@/lib/admin-session";
 import { adminQueue, mutateStore, updateManualGeneration } from "@/lib/store";
 import type { GenerationStatus } from "@/lib/types";
 import { toUserFacingError } from "@/lib/user-facing-error";
@@ -9,17 +10,21 @@ const allowedStatuses = new Set<GenerationStatus>(["queued", "running", "succeed
 
 export async function GET(request: NextRequest) {
   try {
-    requireAdmin(request);
+    await requireAdmin(request);
     const queue = await mutateStore((state) => adminQueue(state));
     return NextResponse.json(queue);
   } catch (error) {
-    return NextResponse.json({ error: toUserFacingError(error instanceof Error ? error.message : error, "后台访问失败。") }, { status: 401 });
+    return NextResponse.json(
+      { error: toUserFacingError(error instanceof Error ? error.message : error, "后台访问失败。") },
+      { status: adminAuthStatus(error, 400) }
+    );
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    requireAdmin(request);
+    requireAdminCsrf(request);
+    await requireAdmin(request);
     const body = await request.json();
     const jobId = String(body.jobId ?? "");
     const statusText = body.status ? String(body.status) : "";
@@ -46,6 +51,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(queue);
   } catch (error) {
-    return NextResponse.json({ error: toUserFacingError(error instanceof Error ? error.message : error, "任务更新失败。") }, { status: 400 });
+    return NextResponse.json(
+      { error: toUserFacingError(error instanceof Error ? error.message : error, "任务更新失败。") },
+      { status: adminAuthStatus(error, 400) }
+    );
   }
 }

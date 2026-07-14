@@ -139,11 +139,19 @@ export type Image2CaseNote = {
   updatedAt: string;
 };
 
+export type Image2AssetGachaState = {
+  version: 1;
+  runs: unknown[];
+  recipes: unknown[];
+  updatedAt?: string;
+};
+
 export type Image2AssetSnapshot = {
   version: "image2-assets-v1";
   favoriteCaseKeys: string[];
   activeCollectionId: string | null;
   collections: Image2CaseCollection[];
+  gachaState?: Image2AssetGachaState;
   notes: Record<string, Image2CaseNote>;
   promptDrafts: Record<string, Image2PromptWorkbenchDraft>;
   promptReuseHistory: Image2PromptReuseHistoryItem[];
@@ -156,6 +164,44 @@ export type Image2UserAssets = {
   snapshot: Image2AssetSnapshot;
   createdAt: string;
   updatedAt: string;
+};
+
+export type Image2AssetChangeAction = "asset_snapshot_save" | "admin_undo_asset_snapshot";
+
+export type Image2AssetChangeActor = {
+  type: "user" | "admin" | "system";
+  id?: string;
+  email?: string;
+};
+
+export type Image2AssetSnapshotSummary = {
+  favoriteCaseKeys: number;
+  collections: number;
+  collectionCaseKeys: number;
+  notes: number;
+  promptDrafts: number;
+  promptReuseHistory: number;
+  gachaRuns: number;
+  gachaRecipes: number;
+};
+
+export type Image2AssetChangeLog = {
+  id: string;
+  userId: string;
+  action: Image2AssetChangeAction;
+  source: string;
+  reason: string;
+  actor: Image2AssetChangeActor;
+  beforeSnapshot: Image2AssetSnapshot;
+  afterSnapshot: Image2AssetSnapshot;
+  summary: {
+    before: Image2AssetSnapshotSummary;
+    after: Image2AssetSnapshotSummary;
+  };
+  createdAt: string;
+  undoneAt?: string;
+  undoneBy?: string;
+  undoChangeId?: string;
 };
 
 export type Generation = {

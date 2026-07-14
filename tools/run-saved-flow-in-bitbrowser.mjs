@@ -132,7 +132,9 @@ ${body
   .map(line => `    ${line}`)
   .join('\n')}
 
-    await page.screenshot({ path: 'output/playwright/last-bitbrowser-run.png', fullPage: true });
+    await page.screenshot({ path: 'output/playwright/last-bitbrowser-run.png', timeout: 5000 }).catch(error => {
+      console.warn('Skipping final screenshot: ' + error.message);
+    });
   } finally {
     await browser.close();
   }

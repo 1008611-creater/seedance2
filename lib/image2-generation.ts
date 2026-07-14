@@ -8,13 +8,26 @@ const authPath = path.join(userHome, ".codex", "auth.json");
 const ikunConfigPath = path.join(userHome, ".codex", "skills", "ikun-image2", "config.env");
 const localConfigPath = path.join(userHome, ".codex", "skills", "beecode-image2", "config.env");
 const runningHubSkillEnvPath = path.join(userHome, ".codex", "skills", "runninghub-image2-text", ".env");
-const outputRoot = process.env.VERCEL
-  ? path.join(os.tmpdir(), "image2-studio")
-  : path.join(process.cwd(), "outputs", "image2-studio");
+const outputRoot = process.env.DAIHUO_OUTPUT_ROOT
+  ? path.join(process.env.DAIHUO_OUTPUT_ROOT, "image2-studio")
+  : process.env.VERCEL
+    ? path.join(os.tmpdir(), "image2-studio")
+    : path.join(process.cwd(), "outputs", "image2-studio");
 const runningHubTextEndpoint = "/openapi/v2/rhart-image-g-2/text-to-image";
+const runningHubImageEndpoint = "/openapi/v2/rhart-image-g-2/image-to-image";
 const runningHubQueryEndpoint = "/openapi/v2/query";
 
 export const allowedImage2Sizes = new Set(["1024x1024", "1024x1536", "1536x1024"]);
+export const allowedImage2Ratios = new Set(["1:1", "3:4", "9:16", "16:9"]);
+export const allowedImage2Resolutions = new Set(["1k", "2k", "4k"]);
+export const allowedImage2Channels = new Set(["auto", "ikun", "runninghub", "fast", "stable"]);
+export const allowedImage2Modes = new Set(["text-to-image", "image-to-image", "smart-edit"]);
+
+export type Image2Channel = "auto" | "ikun" | "runninghub" | "fast" | "stable";
+export type Image2EffectiveChannel = "ikun" | "runninghub";
+export type Image2Mode = "text-to-image" | "image-to-image" | "smart-edit";
+export type Image2Ratio = "1:1" | "3:4" | "9:16" | "16:9";
+export type Image2Resolution = "1k" | "2k" | "4k";
 
 export type ReferenceImage = {
   name?: string;
@@ -29,7 +42,11 @@ export type GeneratedImage = {
 
 export type Image2GenerationResult = {
   provider: "image2";
+  channel: Image2EffectiveChannel;
   mode: "text-to-image" | "image-to-image";
+  ratio: Image2Ratio;
+  resolution: Image2Resolution;
+  seed?: number;
   size: string;
   outDir: string;
   elapsedSeconds: number;
@@ -45,13 +62,19 @@ type ImageItem = {
 };
 
 type Image2Input = {
+  channel: Image2Channel;
   count: number;
+  mode: Image2Mode;
   prompt: string;
+  ratio: Image2Ratio;
   references: ReferenceImage[];
+  requestedChannel: Image2Channel;
+  resolution: Image2Resolution;
+  seed?: number;
   size: string;
 };
 
-type Image2ProviderName = "beecode" | "runninghub";
+type Image2ProviderName = Image2EffectiveChannel;
 
 function normalizeBaseUrl(value?: string) {
   const baseUrl = (value || "https://beecode.cc").trim().replace(/\/+$/, "");
@@ -147,6 +170,13 @@ function mimeForExtension(extension: string) {
   if (extension === "jpg" || extension === "jpeg") return "image/jpeg";
   if (extension === "webp") return "image/webp";
   return "image/png";
+}
+
+function imageGenerationMockEnabled() {
+  if (process.env.NODE_ENV === "production" && !/^(1|true|yes|on)$/i.test(process.env.IMAGE2_GENERATION_ALLOW_MOCKS ?? "")) {
+    return false;
+  }
+  return /^(1|true|yes|on|pass|auto)$/i.test(process.env.IMAGE2_GENERATION_MOCK ?? "");
 }
 
 function parseEnvFile(text: string) {
@@ -254,6 +284,13 @@ export async function getImage2PublicConfig() {
   const runningHubConfig = await getRunningHubConfig();
   return {
     configured: Boolean(config.apiKey || runningHubConfig.apiKey),
+    channels: {
+      auto: Boolean(config.apiKey || runningHubConfig.apiKey),
+      ikun: Boolean(config.apiKey),
+      runninghub: Boolean(runningHubConfig.apiKey)
+    },
+    ratios: Array.from(allowedImage2Ratios),
+    resolutions: Array.from(allowedImage2Resolutions),
     sizes: Array.from(allowedImage2Sizes)
   };
 }
@@ -263,16 +300,26 @@ export function sanitizeImage2ProviderMessage(error: unknown) {
   return raw
     .replace(/https:\/\/beecode\.cc\/?v?1?/gi, "图片生成服务")
     .replace(/https:\/\/www\.runninghub\.(?:cn|ai)\/?[^\s,，。)）]*/gi, "图片生成服务")
+    .replace(/https:\/\/api\.monkey-tools\.cn\/?[^\s,，。)）]*/gi, "图片生成服务")
     .replace(/beecode/gi, "图片生成服务")
     .replace(/runninghub/gi, "图片生成服务")
+    .replace(/monkey-tools|ikun/gi, "图片生成服务")
     .replace(/sk-[A-Za-z0-9_-]+/g, "[redacted]");
 }
 
 export function parseImage2Input(body: unknown): Image2Input {
   const record = body && typeof body === "object" ? (body as Record<string, unknown>) : {};
   const prompt = String(record.prompt ?? "").trim();
-  const size = allowedImage2Sizes.has(String(record.size)) ? String(record.size) : "1024x1024";
+  const legacySize = allowedImage2Sizes.has(String(record.size)) ? String(record.size) : "";
+  const ratio = normalizeImage2Ratio(record.ratio, legacySize);
+  const resolution = allowedImage2Resolutions.has(String(record.resolution)) ? (String(record.resolution) as Image2Resolution) : "1k";
+  const rawChannel = allowedImage2Channels.has(String(record.channel)) ? (String(record.channel) as Image2Channel) : "ikun";
+  const channel = normalizeImage2Channel(rawChannel);
+  const requestedMode = allowedImage2Modes.has(String(record.mode)) ? (String(record.mode) as Image2Mode) : "text-to-image";
+  const size = legacySize || sizeForRatio(ratio);
   const count = Math.min(Math.max(Number(record.n) || 1, 1), 4);
+  const seedValue = Number(record.seed);
+  const seed = Number.isFinite(seedValue) && seedValue > 0 ? Math.floor(seedValue) : undefined;
   const references: ReferenceImage[] = Array.isArray(record.images)
     ? record.images
         .slice(0, 4)
@@ -289,9 +336,15 @@ export function parseImage2Input(body: unknown): Image2Input {
   }
 
   return {
+    channel,
     count,
+    mode: requestedMode,
     prompt,
+    ratio,
     references,
+    requestedChannel: rawChannel,
+    resolution,
+    seed,
     size
   };
 }
@@ -301,6 +354,47 @@ async function readImageUrl(url: string) {
   const response = await fetch(url, { cache: "no-store" });
   if (!response.ok) throw new Error("生成图片下载失败。");
   return Buffer.from(await response.arrayBuffer());
+}
+
+function publicAppUrl() {
+  return (process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || "").trim().replace(/\/+$/, "");
+}
+
+async function writeReferencesForPublicAccess(references: ReferenceImage[], jobDir: string, jobId: string) {
+  const baseUrl = publicAppUrl();
+  if (!baseUrl) {
+    throw new Error("参考图生成需要配置 APP_URL，才能让备用通道读取上传图片。");
+  }
+
+  const urls: string[] = [];
+  for (const [index, image] of references.entries()) {
+    if (!image.dataUrl) continue;
+    const parsed = parseDataUrl(image.dataUrl);
+    const name = `reference-${String(index + 1).padStart(2, "0")}.${parsed.extension}`;
+    await writeFile(path.join(/* turbopackIgnore: true */ jobDir, name), parsed.buffer);
+    urls.push(`${baseUrl}/api/image2/output/${encodeURIComponent(jobId)}/${encodeURIComponent(name)}`);
+  }
+  return urls;
+}
+
+function normalizeImage2Ratio(value: unknown, legacySize = ""): Image2Ratio {
+  const ratio = String(value ?? "");
+  if (allowedImage2Ratios.has(ratio)) return ratio as Image2Ratio;
+  if (legacySize === "1024x1536") return "9:16";
+  if (legacySize === "1536x1024") return "16:9";
+  return "1:1";
+}
+
+function normalizeImage2Channel(channel: Image2Channel): Image2Channel {
+  if (channel === "fast") return "ikun";
+  if (channel === "stable") return "runninghub";
+  return channel;
+}
+
+function sizeForRatio(ratio: Image2Ratio) {
+  if (ratio === "16:9") return "1536x1024";
+  if (ratio === "3:4" || ratio === "9:16") return "1024x1536";
+  return "1024x1024";
 }
 
 function aspectRatioForSize(size: string) {
@@ -371,7 +465,7 @@ async function postRunningHubJson(
 }
 
 async function pollRunningHubResult(config: Awaited<ReturnType<typeof getRunningHubConfig>>, taskId: string) {
-  const timeoutMs = Math.max(15000, Number(process.env.RUNNINGHUB_IMAGE2_TIMEOUT_MS) || 95000);
+  const timeoutMs = Math.max(15000, Number(process.env.RUNNINGHUB_IMAGE2_TIMEOUT_MS) || 240000);
   const pollMs = Math.max(2000, Number(process.env.RUNNINGHUB_IMAGE2_POLL_MS) || 5000);
   const deadline = Date.now() + timeoutMs;
   let lastResponse: Record<string, unknown> = {};
@@ -387,15 +481,22 @@ async function pollRunningHubResult(config: Awaited<ReturnType<typeof getRunning
 
 async function requestRunningHubImage2(
   config: Awaited<ReturnType<typeof getRunningHubConfig>>,
-  input: Image2Input
+  input: Image2Input,
+  context: { jobDir: string; jobId: string }
 ) {
   const responses: Record<string, unknown>[] = [];
+  const imageUrls = input.references.length ? await writeReferencesForPublicAccess(input.references, context.jobDir, context.jobId) : [];
+  const endpoint = imageUrls.length ? runningHubImageEndpoint : runningHubTextEndpoint;
   for (let index = 0; index < input.count; index += 1) {
-    const submitResponse = await postRunningHubJson(config, runningHubTextEndpoint, {
+    const payload: Record<string, unknown> = {
       prompt: input.prompt,
-      aspectRatio: aspectRatioForSize(input.size),
-      resolution: config.resolution
-    });
+      aspectRatio: input.ratio,
+      resolution: input.resolution || config.resolution
+    };
+    if (imageUrls.length) payload.imageUrls = imageUrls;
+    if (input.seed) payload.seed = input.seed + index;
+
+    const submitResponse = await postRunningHubJson(config, endpoint, payload);
     const taskId = extractTaskId(submitResponse);
     if (!taskId) {
       responses.push(submitResponse);
@@ -465,7 +566,12 @@ async function requestGenerationWithRetry(
   }
 }
 
-async function requestBeeCodeImage2(
+function qualityForResolution(resolution: Image2Resolution) {
+  if (resolution === "1k") return "medium";
+  return "high";
+}
+
+async function requestIkunImage2(
   config: Awaited<ReturnType<typeof getImageConfig>>,
   input: Image2Input
 ) {
@@ -476,42 +582,54 @@ async function requestBeeCodeImage2(
       prompt: input.prompt,
       n: input.count,
       size: input.size,
+      quality: qualityForResolution(input.resolution),
+      ...(input.seed ? { seed: input.seed } : {}),
       output_format: "png"
     },
     input.references
   );
-  return { provider: "beecode" as Image2ProviderName, response };
+  return { provider: "ikun" as Image2ProviderName, response };
 }
 
-async function requestImage2WithFallback(input: Image2Input) {
+async function requestImage2WithFallback(input: Image2Input, context: { jobDir: string; jobId: string }) {
   const config = await getImageConfig();
   const runningHubConfig = await getRunningHubConfig();
-  let beecodeError: unknown = null;
+  let primaryError: unknown = null;
+
+  if (input.channel === "runninghub") {
+    if (!runningHubConfig.apiKey) throw new Error("所选生成通道还没有配置好。");
+    try {
+      return await requestRunningHubImage2(runningHubConfig, input, context);
+    } catch (error) {
+      if (input.requestedChannel !== "stable" || !config.apiKey) throw error;
+      primaryError = error;
+      return requestIkunImage2(config, input);
+    }
+  }
 
   if (config.apiKey) {
     try {
-      return await requestBeeCodeImage2(config, input);
+      return await requestIkunImage2(config, input);
     } catch (error) {
-      beecodeError = error;
+      primaryError = error;
+      if (input.channel === "ikun") throw error;
     }
   } else {
-    beecodeError = new Error("图片生成主通道还没有配置好。");
+    primaryError = new Error("图片生成主通道还没有配置好。");
+    if (input.channel === "ikun") throw primaryError;
   }
 
   if (!runningHubConfig.apiKey) {
-    throw beecodeError instanceof Error ? beecodeError : new Error("图片生成通道暂时不可用。");
-  }
-  if (input.references.length) {
-    throw beecodeError instanceof Error ? beecodeError : new Error("参考图生成暂时不可用。");
+    throw primaryError instanceof Error ? primaryError : new Error("图片生成通道暂时不可用。");
   }
   if (!process.env.VERCEL && process.env.IMAGE2_DISABLE_RUNNINGHUB_FALLBACK === "1") {
-    throw beecodeError instanceof Error ? beecodeError : new Error("图片生成通道暂时不可用。");
+    throw primaryError instanceof Error ? primaryError : new Error("图片生成通道暂时不可用。");
   }
 
   try {
-    return await requestRunningHubImage2(runningHubConfig, input);
+    return await requestRunningHubImage2(runningHubConfig, input, context);
   } catch (runningHubError) {
-    const primaryMessage = beecodeError instanceof Error ? beecodeError.message : String(beecodeError ?? "");
+    const primaryMessage = primaryError instanceof Error ? primaryError.message : String(primaryError ?? "");
     const fallbackMessage = runningHubError instanceof Error ? runningHubError.message : String(runningHubError);
     throw new Error(`主通道失败，备用通道也失败：${primaryMessage || fallbackMessage}`);
   }
@@ -526,7 +644,41 @@ export async function generateImage2(body: unknown): Promise<Image2GenerationRes
   await mkdir(jobDir, { recursive: true });
   await writeFile(path.join(jobDir, "prompt.txt"), input.prompt, "utf-8");
 
-  const generation = await requestImage2WithFallback(input);
+  if (imageGenerationMockEnabled()) {
+    const pngBuffer = Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR4nGNgYPgPAAEDAQB9nU7zAAAAAElFTkSuQmCC",
+      "base64"
+    );
+    await writeFile(
+      path.join(jobDir, "response.json"),
+      JSON.stringify({ provider: "mock", response: { ok: true, count: input.count } }, null, 2),
+      "utf-8"
+    );
+    const images: GeneratedImage[] = [];
+    for (let index = 0; index < input.count; index += 1) {
+      const fileName = `generated-${String(index + 1).padStart(2, "0")}.png`;
+      await writeFile(path.join(/* turbopackIgnore: true */ jobDir, fileName), pngBuffer);
+      images.push({
+        name: fileName,
+        path: `${jobId}/${fileName}`,
+        dataUrl: `data:image/png;base64,${pngBuffer.toString("base64")}`
+      });
+    }
+    return {
+      provider: "image2",
+      channel: input.channel === "runninghub" ? "runninghub" : "ikun",
+      mode: input.references.length > 0 || input.mode !== "text-to-image" ? "image-to-image" : "text-to-image",
+      ratio: input.ratio,
+      resolution: input.resolution,
+      seed: input.seed,
+      size: input.size,
+      outDir: jobId,
+      elapsedSeconds: Math.round((Date.now() - start) / 100) / 10,
+      images
+    };
+  }
+
+  const generation = await requestImage2WithFallback(input, { jobDir, jobId });
   const response = generation.response;
 
   await writeFile(
@@ -549,7 +701,7 @@ export async function generateImage2(body: unknown): Promise<Image2GenerationRes
     const encoded = base64FromItem(item);
     const buffer = encoded ? Buffer.from(encoded, "base64") : await readImageUrl(urlFromItem(item) || "");
     const extension = sniffExtension(buffer, "png");
-    const filePath = path.join(jobDir, `image2-${String(index + 1).padStart(2, "0")}.${extension}`);
+    const filePath = path.join(/* turbopackIgnore: true */ jobDir, `generated-${String(index + 1).padStart(2, "0")}.${extension}`);
     await writeFile(filePath, buffer);
     images.push({
       name: path.basename(filePath),
@@ -564,7 +716,11 @@ export async function generateImage2(body: unknown): Promise<Image2GenerationRes
 
   return {
     provider: "image2",
-    mode: input.references.length > 0 ? "image-to-image" : "text-to-image",
+    channel: generation.provider,
+    mode: input.references.length > 0 || input.mode !== "text-to-image" ? "image-to-image" : "text-to-image",
+    ratio: input.ratio,
+    resolution: input.resolution,
+    seed: input.seed,
     size: input.size,
     outDir: jobId,
     elapsedSeconds: Math.round((Date.now() - start) / 100) / 10,

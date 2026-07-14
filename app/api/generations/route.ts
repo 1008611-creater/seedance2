@@ -12,10 +12,12 @@ import { DURATION_OPTIONS, RATIO_OPTIONS, VIDEO_MODES, type Generation } from "@
 import type { VideoDuration, VideoMode, VideoRatio, VideoResolution } from "@/lib/types";
 import { toUserFacingError } from "@/lib/user-facing-error";
 import { coverForRatio, titleFromPrompt, validateGenerationInput } from "@/lib/video-rules";
+import { hiddenRouteResponse, isLegacySeedanceApiEnabled } from "@/lib/runtime-access";
 
 export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
+  if (!isLegacySeedanceApiEnabled()) return hiddenRouteResponse();
   const userId = request.nextUrl.searchParams.get("userId") ?? request.headers.get("x-seedance-user") ?? "";
   const dashboard = await mutateStore((state) => dashboardForUser(state, userId));
   return NextResponse.json({
@@ -27,6 +29,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  if (!isLegacySeedanceApiEnabled()) return hiddenRouteResponse();
   const body = await request.json();
   const userId = String(body.userId ?? "");
   let created: Generation | undefined;

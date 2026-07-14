@@ -4,6 +4,7 @@ import path from "node:path";
 import { promisify } from "node:util";
 import { NextRequest, NextResponse } from "next/server";
 import { toUserFacingError } from "@/lib/user-facing-error";
+import { hiddenRouteResponse, isInternalOperationsApiEnabled } from "@/lib/runtime-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -196,6 +197,7 @@ async function readWithFetch(url: string) {
 }
 
 export async function GET() {
+  if (!isInternalOperationsApiEnabled()) return hiddenRouteResponse();
   return NextResponse.json({
     hasKey: Boolean(process.env.JINA_API_KEY),
     hasSkillScript: existsSync(jinaSkillScript),
@@ -205,6 +207,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  if (!isInternalOperationsApiEnabled()) return hiddenRouteResponse();
   let body: Record<string, unknown>;
   try {
     body = await request.json();

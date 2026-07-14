@@ -4,6 +4,7 @@ import path from "node:path";
 import { promisify } from "node:util";
 import { NextRequest, NextResponse } from "next/server";
 import { toUserFacingError } from "@/lib/user-facing-error";
+import { hiddenRouteResponse, isInternalOperationsApiEnabled } from "@/lib/runtime-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -105,6 +106,7 @@ function json(payload: Record<string, unknown>, init?: ResponseInit) {
 }
 
 export async function GET() {
+  if (!isInternalOperationsApiEnabled()) return hiddenRouteResponse();
   return json({
     lastClick: readJson("last_click.json"),
     lastWebClick: readJson("last_web_click.json"),
@@ -113,6 +115,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  if (!isInternalOperationsApiEnabled()) return hiddenRouteResponse();
   let body: Record<string, unknown>;
   try {
     body = await request.json();

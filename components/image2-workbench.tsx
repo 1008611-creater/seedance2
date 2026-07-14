@@ -309,7 +309,7 @@ export function Image2Workbench({ initialData }: { initialData: Image2WorkbenchD
     setData(payload);
     setSelectedIds((current) => ({ ...initialSelections(payload.assets), ...current }));
     setAccountAuthStatus({
-      message: payload.access?.isTeamMember ? "已进入创作界面。" : "正在返回首页。",
+      message: payload.access?.isTeamMember ? "已进入创作界面。" : (payload.access?.message ?? "公开模式，可浏览案例和提示词。"),
       tone: payload.access?.isTeamMember ? "success" : "idle"
     });
     return payload;
@@ -322,7 +322,7 @@ export function Image2Workbench({ initialData }: { initialData: Image2WorkbenchD
       await refreshData(session);
     } catch {
       setAccountAuthStatus({
-        message: "正在返回首页。",
+        message: "当前账号不能进入团队素材库，已切换为公开模式。",
         tone: "idle"
       });
     }
@@ -511,11 +511,6 @@ export function Image2Workbench({ initialData }: { initialData: Image2WorkbenchD
     }
     void restoreTeamSession(saved).finally(() => setIsAccessCheckComplete(true));
   }, []);
-
-  useEffect(() => {
-    if (!isAccessCheckComplete || data.access?.isTeamMember) return;
-    window.location.replace("/");
-  }, [data.access?.isTeamMember, isAccessCheckComplete]);
 
   useEffect(() => {
     window.localStorage.setItem(
@@ -710,24 +705,6 @@ export function Image2Workbench({ initialData }: { initialData: Image2WorkbenchD
     } finally {
       setGenerating(null);
     }
-  }
-
-  const isTeamMember = data.access?.isTeamMember === true;
-  if (!isTeamMember) {
-    return (
-      <main
-        aria-label="正在打开"
-        style={{
-          minHeight: "100vh",
-          display: "grid",
-          placeItems: "center",
-          color: "#142023",
-          background: "#f5f2eb"
-        }}
-      >
-        <p style={{ margin: 0, fontSize: 14, fontWeight: 800 }}>正在打开...</p>
-      </main>
-    );
   }
 
   return (

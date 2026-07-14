@@ -9,6 +9,11 @@ import {
   type DailyUsage,
   type DashboardResponse,
   type Entitlement,
+  type Image2AssetChangeActor,
+  type Image2AssetChangeAction,
+  type Image2AssetChangeLog,
+  type Image2AssetGachaState,
+  type Image2AssetSnapshotSummary,
   type Generation,
   type Image2AssetSnapshot,
   type Image2CaseCollection,
@@ -36,12 +41,17 @@ export type StoreState = {
   dailyUsage: DailyUsage[];
   generations: Generation[];
   image2Assets: Image2UserAssets[];
+  image2AssetChanges: Image2AssetChangeLog[];
 };
 
 const demoCodes = ["WEEK-SEED-2026", "VIP-720P-7D", "FREEWEEK"];
 const fallbackStore: { state?: StoreState } = {};
 
 function storeFilePath() {
+  if (process.env.SEEDANCE_STORE_FILE?.trim()) {
+    return path.resolve(process.env.SEEDANCE_STORE_FILE.trim());
+  }
+
   if (process.env.VERCEL) {
     return path.join("/tmp", "seedance-store.json");
   }
@@ -69,6 +79,7 @@ function createDefaultStore(): StoreState {
     dailyUsage: [],
     generations: [],
     image2Assets: [],
+    image2AssetChanges: [],
     licenseCodes: demoCodes.map((code, index) => ({
       id: randomId("code"),
       codeHash: codeHash(code),
@@ -158,6 +169,7 @@ function normalizeStoreShape(state: StoreState) {
   state.dailyUsage ||= [];
   state.generations ||= [];
   state.image2Assets ||= [];
+  state.image2AssetChanges = normalizeImage2AssetChanges(state.image2AssetChanges);
 }
 
 export function updateUser(state: StoreState, userId: string, patch: Partial<UserProfile>) {
@@ -299,6 +311,97 @@ function cleanKeys(value: unknown, limit = 1200) {
   return [...new Set(value.map((item) => cleanString(item, "", 160)).filter(Boolean))].slice(0, limit);
 }
 
+function cleanObjectArray(value: unknown, limit: number) {
+  if (!Array.isArray(value)) return [] as unknown[];
+  return value
+    .filter((item) => Boolean(item && typeof item === "object" && !Array.isArray(item)))
+    .slice(0, limit);
+}
+
+function cleanRecord(value: unknown) {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+}
+
+function normalizeImage2AssetGachaState(value: unknown): Image2AssetGachaState | undefined {
+  const record = value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
+  if (!record) return undefined;
+
+  const runs = cleanObjectArray(record.runs, 60);
+  const recipes = cleanObjectArray(record.recipes, 120);
+  if (!runs.length && !recipes.length && record.version !== 1) return undefined;
+
+  return {
+    version: 1,
+    runs,
+    recipes,
+    updatedAt: cleanIso(record.updatedAt)
+  };
+}
+
+export function summarizeImage2AssetSnapshot(snapshot: Image2AssetSnapshot): Image2AssetSnapshotSummary {
+  return {
+    favoriteCaseKeys: snapshot.favoriteCaseKeys.length,
+    collections: snapshot.collections.length,
+    collectionCaseKeys: snapshot.collections.reduce((total, collection) => total + collection.caseKeys.length, 0),
+    notes: Object.keys(snapshot.notes).length,
+    promptDrafts: Object.keys(snapshot.promptDrafts).length,
+    promptReuseHistory: snapshot.promptReuseHistory.length,
+    gachaRuns: snapshot.gachaState?.runs.length ?? 0,
+    gachaRecipes: snapshot.gachaState?.recipes.length ?? 0
+  };
+}
+
+function normalizeImage2AssetActor(value: unknown): Image2AssetChangeActor {
+  const record = cleanRecord(value);
+  const type = record.type === "admin" || record.type === "system" ? record.type : "user";
+  return {
+    type,
+    id: cleanString(record.id, "", 180) || undefined,
+    email: cleanString(record.email, "", 240) || undefined
+  };
+}
+
+function normalizeImage2AssetChangeAction(value: unknown): Image2AssetChangeAction {
+  return value === "admin_undo_asset_snapshot" ? "admin_undo_asset_snapshot" : "asset_snapshot_save";
+}
+
+function normalizeImage2AssetChange(value: unknown): Image2AssetChangeLog | null {
+  const record = cleanRecord(value);
+  const id = cleanString(record.id, "", 180);
+  const userId = cleanString(record.userId ?? record.user_id, "", 180);
+  if (!id || !userId) return null;
+
+  const beforeSnapshot = normalizeImage2AssetSnapshot(record.beforeSnapshot ?? record.before_snapshot);
+  const afterSnapshot = normalizeImage2AssetSnapshot(record.afterSnapshot ?? record.after_snapshot);
+  return {
+    id,
+    userId,
+    action: normalizeImage2AssetChangeAction(record.action),
+    source: cleanString(record.source, "image2-assets", 120),
+    reason: cleanString(record.reason, "", 600),
+    actor: normalizeImage2AssetActor(record.actor),
+    beforeSnapshot,
+    afterSnapshot,
+    summary: {
+      before: summarizeImage2AssetSnapshot(beforeSnapshot),
+      after: summarizeImage2AssetSnapshot(afterSnapshot)
+    },
+    createdAt: cleanIso(record.createdAt ?? record.created_at),
+    undoneAt: record.undoneAt || record.undone_at ? cleanIso(record.undoneAt ?? record.undone_at) : undefined,
+    undoneBy: cleanString(record.undoneBy ?? record.undone_by, "", 180) || undefined,
+    undoChangeId: cleanString(record.undoChangeId ?? record.undo_change_id, "", 180) || undefined
+  };
+}
+
+function normalizeImage2AssetChanges(value: unknown): Image2AssetChangeLog[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map(normalizeImage2AssetChange)
+    .filter((item): item is Image2AssetChangeLog => Boolean(item))
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 500);
+}
+
 function emptyImage2AssetSnapshot(updatedAt = nowIso()): Image2AssetSnapshot {
   return {
     version: "image2-assets-v1",
@@ -399,12 +502,14 @@ export function normalizeImage2AssetSnapshot(value: unknown): Image2AssetSnapsho
     : [];
 
   const activeCollectionId = cleanString(record.activeCollectionId, "", 120);
+  const gachaState = normalizeImage2AssetGachaState(record.gachaState);
 
   return {
     version: "image2-assets-v1",
     favoriteCaseKeys: cleanKeys(record.favoriteCaseKeys, 1200),
     activeCollectionId: collections.some((item) => item.id === activeCollectionId) ? activeCollectionId : null,
     collections,
+    ...(gachaState ? { gachaState } : {}),
     notes,
     promptDrafts,
     promptReuseHistory,
@@ -427,12 +532,69 @@ export function getImage2AssetsForUser(state: StoreState, userId: string) {
   );
 }
 
-export function saveImage2AssetsForUser(state: StoreState, userId: string, value: unknown) {
+type SaveImage2AssetsOptions = {
+  action?: Image2AssetChangeAction;
+  actor?: Image2AssetChangeActor;
+  mergeExistingGachaState?: boolean;
+  preserveUpdatedAt?: boolean;
+  reason?: string;
+  recordChange?: boolean;
+  source?: string;
+};
+
+function appendImage2AssetChange(
+  state: StoreState,
+  input: {
+    action: Image2AssetChangeAction;
+    actor: Image2AssetChangeActor;
+    afterSnapshot: Image2AssetSnapshot;
+    beforeSnapshot: Image2AssetSnapshot;
+    reason?: string;
+    source?: string;
+    undoChangeId?: string;
+    userId: string;
+  }
+) {
+  const now = nowIso();
+  const change: Image2AssetChangeLog = {
+    id: randomId("image2_asset_change"),
+    userId: input.userId,
+    action: input.action,
+    source: cleanString(input.source, "image2-assets", 120),
+    reason: cleanString(input.reason, "", 600),
+    actor: input.actor,
+    beforeSnapshot: normalizeImage2AssetSnapshot(input.beforeSnapshot),
+    afterSnapshot: normalizeImage2AssetSnapshot(input.afterSnapshot),
+    summary: {
+      before: summarizeImage2AssetSnapshot(normalizeImage2AssetSnapshot(input.beforeSnapshot)),
+      after: summarizeImage2AssetSnapshot(normalizeImage2AssetSnapshot(input.afterSnapshot))
+    },
+    createdAt: now,
+    undoChangeId: input.undoChangeId
+  };
+  state.image2AssetChanges.unshift(change);
+  state.image2AssetChanges = normalizeImage2AssetChanges(state.image2AssetChanges);
+  return change;
+}
+
+export function listImage2AssetChanges(state: StoreState, limit = 30) {
+  normalizeStoreShape(state);
+  const size = Math.min(Math.max(Number.isFinite(limit) ? Math.floor(limit) : 30, 1), 100);
+  return state.image2AssetChanges
+    .slice()
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, size);
+}
+
+export function saveImage2AssetsForUser(state: StoreState, userId: string, value: unknown, options: SaveImage2AssetsOptions = {}) {
   normalizeStoreShape(state);
   const user = ensureUser(state, userId);
   const snapshot = normalizeImage2AssetSnapshot(value);
-  snapshot.updatedAt = nowIso();
+  if (!options.preserveUpdatedAt) snapshot.updatedAt = nowIso();
   let assets = state.image2Assets.find((item) => item.userId === user.id);
+  const beforeSnapshot = assets ? normalizeImage2AssetSnapshot(assets.snapshot) : emptyImage2AssetSnapshot(snapshot.updatedAt);
+  const previousGachaState = assets ? normalizeImage2AssetSnapshot(assets.snapshot).gachaState : undefined;
+  if (options.mergeExistingGachaState !== false && !snapshot.gachaState && previousGachaState) snapshot.gachaState = previousGachaState;
 
   if (!assets) {
     assets = {
@@ -448,7 +610,64 @@ export function saveImage2AssetsForUser(state: StoreState, userId: string, value
     assets.updatedAt = snapshot.updatedAt;
   }
 
+  if (options.recordChange !== false) {
+    appendImage2AssetChange(state, {
+      action: options.action ?? "asset_snapshot_save",
+      actor: options.actor ?? { type: "user", id: user.id },
+      beforeSnapshot,
+      afterSnapshot: snapshot,
+      reason: options.reason,
+      source: options.source ?? "image2-cases",
+      userId: user.id
+    });
+  }
+
   return assets;
+}
+
+export function undoImage2AssetChange(state: StoreState, changeId: string, adminId = "admin") {
+  normalizeStoreShape(state);
+  const id = cleanString(changeId, "", 180);
+  const changeIndex = state.image2AssetChanges.findIndex((item) => item.id === id);
+  const change = changeIndex >= 0 ? state.image2AssetChanges[changeIndex] : undefined;
+  if (!change) throw new Error("变更记录不存在。");
+  if (change.undoneAt) throw new Error("这条变更已经撤销过。");
+  if (change.action === "admin_undo_asset_snapshot") throw new Error("撤销记录不能再次撤销。");
+
+  const beforeSnapshot = normalizeImage2AssetSnapshot(change.afterSnapshot);
+  const restoreSnapshot = normalizeImage2AssetSnapshot(change.beforeSnapshot);
+  const assets = saveImage2AssetsForUser(state, change.userId, restoreSnapshot, {
+    action: "admin_undo_asset_snapshot",
+    actor: { type: "admin", id: adminId },
+    mergeExistingGachaState: false,
+    preserveUpdatedAt: true,
+    reason: `撤销变更 ${change.id}`,
+    source: "admin/image2-cases",
+    recordChange: false
+  });
+  const undoChange = appendImage2AssetChange(state, {
+    action: "admin_undo_asset_snapshot",
+    actor: { type: "admin", id: adminId },
+    beforeSnapshot,
+    afterSnapshot: assets.snapshot,
+    reason: `撤销变更 ${change.id}`,
+    source: "admin/image2-cases",
+    undoChangeId: change.id,
+    userId: change.userId
+  });
+  const currentChangeIndex = state.image2AssetChanges.findIndex((item) => item.id === change.id);
+  if (currentChangeIndex >= 0) state.image2AssetChanges[currentChangeIndex] = {
+    ...change,
+    undoneAt: undoChange.createdAt,
+    undoneBy: adminId,
+    undoChangeId: undoChange.id
+  };
+  state.image2AssetChanges = normalizeImage2AssetChanges(state.image2AssetChanges);
+  return {
+    assets,
+    change: state.image2AssetChanges.find((item) => item.id === id) ?? change,
+    undoChange
+  };
 }
 
 export function adminQueue(state: StoreState): AdminQueueResponse {

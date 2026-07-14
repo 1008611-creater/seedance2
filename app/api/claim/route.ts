@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { claimTrial, dashboardForUser, mutateStore } from "@/lib/store";
 import { DURATION_OPTIONS, RATIO_OPTIONS, VIDEO_MODES } from "@/lib/types";
 import { toUserFacingError } from "@/lib/user-facing-error";
+import { hiddenRouteResponse, isLegacySeedanceApiEnabled } from "@/lib/runtime-access";
 
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
+  if (!isLegacySeedanceApiEnabled()) return hiddenRouteResponse();
   const body = await request.json();
   const userId = String(body.userId ?? "");
 

@@ -65,8 +65,8 @@ const supabaseStorageMode = "supabase-postgres" as const;
 
 export function getSupabaseConfig() {
   return {
-    url: (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/+$/, ""),
-    anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
+    url: (process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/+$/, ""),
+    anonKey: process.env.SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
     serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? ""
   };
 }
@@ -112,9 +112,18 @@ export async function getSupabaseUser(
   request: NextRequest,
   loginMessage = "请先登录账号后再查看会员权益。"
 ): Promise<SupabaseUser> {
-  const config = requireSupabaseConfig();
   const token = getBearerToken(request);
   if (!token) throw new Error(loginMessage);
+
+  return getSupabaseUserFromAccessToken(token, loginMessage);
+}
+
+export async function getSupabaseUserFromAccessToken(
+  token: string,
+  loginMessage = "登录状态已失效，请重新登录。"
+): Promise<SupabaseUser> {
+  const config = requireSupabaseConfig();
+  if (!token.trim()) throw new Error(loginMessage);
 
   const response = await fetch(`${config.url}/auth/v1/user`, {
     headers: {
@@ -125,7 +134,7 @@ export async function getSupabaseUser(
   });
 
   if (!response.ok) {
-    throw new Error(await parseSupabaseError(response, "登录状态已失效，请重新登录。"));
+    throw new Error(await parseSupabaseError(response, loginMessage));
   }
 
   const user = (await response.json()) as { id?: string; email?: string };

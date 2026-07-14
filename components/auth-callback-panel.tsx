@@ -93,10 +93,15 @@ const updateSupabasePassword = async (accessToken: string, password: string) => 
   );
 };
 
-export function AuthCallbackPanel() {
+type AuthCallbackPanelProps = {
+  initialIsSceneSite?: boolean;
+};
+
+export function AuthCallbackPanel({ initialIsSceneSite = false }: AuthCallbackPanelProps) {
   const [state, setState] = useState<AuthCallbackState>("checking");
   const [message, setMessage] = useState("正在验证邮箱链接...");
   const [flowType, setFlowType] = useState("");
+  const [isSceneSite, setIsSceneSite] = useState(initialIsSceneSite);
   const [session, setSession] = useState<Image2AccountSession | null>(null);
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
@@ -105,8 +110,13 @@ export function AuthCallbackPanel() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isRecoveryFlow = useMemo(() => flowType === "recovery", [flowType]);
+  const accountBrand = isSceneSite ? "场景引擎账号" : "Image2 账号";
+  const returnLabel = isSceneSite ? "返回场景工作台" : "返回 Image2 案例库";
+  const returnHref = isSceneSite ? "/workbench" : "/image2-cases";
 
   useEffect(() => {
+    setIsSceneSite(window.location.hostname === "scene.lsb0713.online");
+
     if (!isSupabaseAuthConfigured) {
       setState("error");
       setMessage("当前站点还没有配置 Supabase 账号入口。");
@@ -175,7 +185,7 @@ export function AuthCallbackPanel() {
       setPasswordVisible(false);
       setPasswordConfirmVisible(false);
       setState("success");
-      setMessage("密码已更新，可以返回案例库继续同步资产。");
+      setMessage(isSceneSite ? "密码已更新，可以返回场景工作台继续生成商品图。" : "密码已更新，可以返回 Image2 案例库继续同步资产。");
     } catch (error) {
       setState("error");
       setMessage(toUserFacingError(error instanceof Error ? error.message : error, "密码更新失败。"));
@@ -200,7 +210,7 @@ export function AuthCallbackPanel() {
         </div>
         <p className="auth-callback-kicker">
           <ShieldCheck aria-hidden="true" />
-          Image2 Account
+          {accountBrand}
         </p>
         <h1>{isRecoveryFlow ? "设置新密码" : "邮箱验证"}</h1>
         <p>{message}</p>
@@ -250,8 +260,8 @@ export function AuthCallbackPanel() {
           </form>
         ) : null}
 
-        <a className="auth-callback-link" href="/image2-cases">
-          返回 Image2 案例库
+        <a className="auth-callback-link" href={returnHref}>
+          {returnLabel}
         </a>
       </section>
     </main>

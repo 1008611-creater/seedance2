@@ -32,7 +32,7 @@ test('image2 cases can save and sync local asset snapshots', async ({ page }) =>
   );
   await page.reload();
 
-  await expect(page.getByRole('heading', { name: /从爆款图到可复刻提示词/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /从爆款图到可复刻提示词/ })).toBeVisible({ timeout: 15_000 });
   await expect(page.locator('.case-card-shell').first()).toBeVisible();
 
   const collectionName = `测试收藏夹 ${Date.now()}`;

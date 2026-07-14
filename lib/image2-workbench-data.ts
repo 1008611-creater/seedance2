@@ -301,7 +301,7 @@ function referenceLinks(): WorkbenchReferenceLink[] {
     {
       label: "Image2 案例库",
       href: "/image2-cases",
-      note: "打开高价值案例和提示词库"
+      note: "打开 Image2 案例和提示词参考"
     },
     {
       label: "视频创作台",
@@ -414,10 +414,21 @@ async function readFeaturedWorkbenchCases() {
     }>;
   }>(caseLibraryPath, {});
 
-  return (casePayload.cases ?? [])
-    .filter((item) => item.featured)
-    .sort((a, b) => b.valueScore - a.valueScore)
-    .slice(0, 8)
+  const curatedImageByCaseId = new Map<number, string>([
+    [30001, "/image2/hero/case-30001-vr.jpg"],
+    [20292, "/image2/hero/case-20243-fashion.jpg"],
+    [20305, "/image2/hero/case-20259-burger.jpg"],
+    [20039, "/image2/hero/case-20242-coffee.jpg"],
+    [20125, "/image2/hero/case-20125-portrait.jpg"]
+  ]);
+  const caseById = new Map((casePayload.cases ?? []).map((item) => [item.id, item]));
+
+  return [...curatedImageByCaseId]
+    .map(([id, imageUrl]) => {
+      const item = caseById.get(id);
+      return item ? { ...item, imageUrl } : null;
+    })
+    .filter((item): item is NonNullable<typeof item> => Boolean(item))
     .map((item) => ({
       id: item.id,
       title: item.title,

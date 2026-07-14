@@ -1,0 +1,115 @@
+{
+  "project": "Image2 Creator Library",
+  "source_of_truth": "D:\\codex-work\\seedance2",
+  "website_kind": "authenticated creator SaaS with a public case library and operator console",
+  "public_url": "https://image2.lsb0713.online",
+  "current_phase": "P0 containment and production admin profile contract verified; HttpOnly administrator session candidate verified locally",
+  "primary_user_action": "Find a useful visual case, understand its prompt structure, save or adapt it, then continue into a controlled generation workflow.",
+  "commercial_model": {
+    "public": "Browse cases, search, inspect sources, and copy basic prompts.",
+    "account": "Sync favorites, collections, notes, and reuse history.",
+    "member": "Use advanced prompt workbench, member cases, bulk export, and controlled generation credits.",
+    "operator": "Manage cases, sources, moderation, members, entitlements, and operational records through role-based access."
+  },
+  "experience": {
+    "product_positioning": "A practical prompt-reuse library and visual production workspace for Chinese AI creators.",
+    "public_design_mode": "Product-led creator workspace, not a generic marketing landing page.",
+    "visual_contract_status": "verified_local",
+    "mode": "targeted_evolution",
+    "primary_reference": "Project-owned /image2-cases runtime",
+    "dominant_story": "A creator recognizes a strong image, opens its case, and leaves with a prompt structure they can actually reuse.",
+    "visual_contract": "docs/website-program/G4_PUBLIC_DESIGN_AND_MOTION_SYSTEM.md",
+    "rejection_audit": "docs/website-program/VISUAL_REJECTION_AUDIT.md",
+    "desktop_evidence": [
+      "output/playwright/commercial-final-home-1440.png",
+      "output/playwright/commercial-final-home-768.png"
+    ],
+    "mobile_evidence": [
+      "output/playwright/commercial-final-home-390.png",
+      "output/playwright/commercial-final-home-320.png"
+    ],
+    "rejected_patterns": [
+      "broken remote images",
+      "disconnected light and dark product identities",
+      "repeated equal-weight case cards",
+      "generic AI landing-page decoration"
+    ],
+    "generated_assets_policy": "Use real HTML UI for every control and workflow. Existing Image2 case imagery may be used as bounded editorial/product media only."
+  },
+  "security_release_boundary": {
+    "production_data_mutation": "requires explicit owner approval; the minimal administrator profiles migration was approved, applied, and verified",
+    "deployment": "not_allowed_without_separate release approval",
+    "required_before_release": [
+      "P0 route containment",
+      "verified session and authorization boundaries",
+      "patched Next.js dependency",
+      "desktop and mobile browser evidence",
+      "production environment preflight without secret disclosure"
+    ]
+  },
+  "verification_records": [
+    {
+      "scope": "typecheck",
+      "command": "npm run typecheck",
+      "result": "passed"
+    },
+    {
+      "scope": "production build",
+      "command": "npm run build",
+      "result": "passed_with_existing_turbopack_dynamic_trace_warning"
+    },
+    {
+      "scope": "dependency audit",
+      "command": "npm audit --omit=dev --json",
+      "result": "0 vulnerabilities"
+    },
+    {
+      "scope": "commercial homepage and production security",
+      "command": "npx playwright test tests/image2-commercial-home.spec.ts tests/image2-commercial-security.spec.ts --project=chromium --workers=1",
+      "result": "9 passed"
+    },
+    {
+      "scope": "authentication UI and case assets",
+      "command": "npx playwright test tests/image2-auth-ui.spec.ts tests/image2-case-assets.spec.ts --project=chromium --workers=1",
+      "result": "5 passed"
+    },
+    {
+      "scope": "SEO metadata",
+      "result": "local production HTML verified for title, canonical, Open Graph title, and Twitter card on / and /image2-cases"
+    },
+    {
+      "scope": "role-bound admin authorization",
+      "command": "npx playwright test tests/image2-admin-auth.spec.ts --project=chromium --workers=1",
+      "result": "5 passed; production shared-token compatibility is disabled by default"
+    },
+    {
+      "scope": "admin production denial baseline",
+      "result": "all 6 current admin route groups returned 401 for unauthenticated and bogus break-glass requests"
+    },
+    {
+      "scope": "production Supabase Security Advisor hardening",
+      "artifact": "supabase/migrations/202607150001_image2_security_advisor_hardening.sql",
+      "result": "applied with explicit owner approval; wallet RPC ACLs and five function search paths read back successfully; Security Advisor changed from 10 warnings to 1 and remained at 0 errors"
+    },
+    {
+      "scope": "production role-bound administrator profiles",
+      "artifact": "supabase/migrations/202607150002_image2_admin_profiles_minimal.sql",
+      "command": "npx playwright test tests/image2-admin-profiles-migration.spec.ts tests/image2-admin-auth.spec.ts",
+      "result": "7 passed locally; production readback verified 8 Auth users, 8 profiles, 0 missing profiles, exactly 1 confirmed owner admin, RLS enabled, authenticated role mutation denied, lifecycle triggers present, and fixed function search paths; Security Advisor remained at 0 errors and 1 warning"
+    },
+    {
+      "scope": "local HttpOnly administrator session",
+      "command": "npx playwright test tests/image2-admin-session.spec.ts tests/image2-admin-auth.spec.ts tests/image2-admin-profiles-migration.spec.ts",
+      "result": "13 passed; admin OTP intent returns HttpOnly SameSite=Strict cookies without JSON tokens, role is rechecked on login and refresh, cookie mutations require same-origin CSRF proof, signed-out admin gate and dedicated login UI verified in a real browser"
+    }
+  ],
+  "known_unknowns": [
+    "Live Vercel edge and WAF configuration",
+    "Production Supabase RLS verification outside the new profiles contract",
+    "Which legacy APIs have real traffic",
+    "Which public domains have billable provider credentials enabled"
+    ,"Production deployment and post-deploy verification of the local HttpOnly administrator session candidate"
+    ,"Signed callback contract before any legacy Seedance callback is re-enabled"
+    ,"Production analytics, alerting, payment provider, and release preflight"
+  ]
+}

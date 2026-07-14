@@ -18,7 +18,7 @@ function normalizeEmail(value: string | undefined) {
   return (value ?? "").trim().toLowerCase();
 }
 
-const defaultTeamEmails = new Set(["1453637677@qq.com"]);
+const defaultTeamEmails = new Set<string>();
 
 function configuredTeamEmails() {
   const envEmails = new Set(

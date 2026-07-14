@@ -7,6 +7,15 @@ const nextConfig = {
 
     return [
       {
+        source: "/:path*",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: "camera=(), geolocation=(), microphone=()" }
+        ]
+      },
+      {
         source: "/image2/hero/:path*",
         headers: [{ key: "Cache-Control", value: staticCache }]
       },
@@ -17,6 +26,10 @@ const nextConfig = {
       {
         source: "/api/image2/proxy",
         headers: [{ key: "Cache-Control", value: "public, max-age=14400, s-maxage=604800, stale-while-revalidate=2592000" }]
+      },
+      {
+        source: "/api/image2/output/:path*",
+        headers: [{ key: "Cache-Control", value: staticCache }]
       },
       {
         source: "/data/:path*",

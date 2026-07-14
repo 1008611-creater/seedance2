@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { hiddenRouteResponse, isLegacySeedanceApiEnabled } from "@/lib/runtime-access";
 
 export const runtime = "nodejs";
 
@@ -27,6 +28,7 @@ type PoolPayload = {
 const defaultDoubao2ApiBase = "http://127.0.0.1:7872/v1";
 
 export async function GET() {
+  if (!isLegacySeedanceApiEnabled()) return hiddenRouteResponse();
   const baseUrl = doubao2ApiBase();
   const rootUrl = baseUrl.replace(/\/v1$/i, "");
 

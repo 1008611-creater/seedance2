@@ -10,13 +10,16 @@ import { generateImage2, getImage2PublicConfig, sanitizeImage2ProviderMessage } 
 import { toUserFacingError } from "@/lib/user-facing-error";
 
 export const runtime = "nodejs";
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 export async function GET() {
   const config = await getImage2PublicConfig();
   return NextResponse.json({
     provider: "image2",
     configured: config.configured,
+    channels: config.channels,
+    ratios: config.ratios,
+    resolutions: config.resolutions,
     sizes: config.sizes
   });
 }
@@ -26,6 +29,11 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
+    const prompt = String(body?.prompt ?? "").trim();
+    if (prompt.length < 12) {
+      return NextResponse.json({ error: "提示词太短，至少写清主体、场景和画面要求。" }, { status: 400 });
+    }
+
     reservation = await reserveImage2GenerationUsage(request);
     const result = await generateImage2(body);
     return NextResponse.json({ ...result, ...image2UsagePayload(reservation) });

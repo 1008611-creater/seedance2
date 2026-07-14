@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, type MouseEvent, type SyntheticEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, type MouseEvent, type SyntheticEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   CheckCircle2,
   Clock3,
@@ -23,6 +23,7 @@ import {
   Loader2,
   Maximize2,
   NotebookPen,
+  PackageOpen,
   Radar,
   RotateCcw,
   Search,
@@ -130,6 +131,14 @@ type CaseAssetState = {
   activeCollectionId: string | null;
   collections: CaseCollection[];
   notes: Record<string, CaseNote>;
+};
+
+type Image2AssetSnapshot = CaseAssetState & {
+  favoriteCaseKeys: string[];
+  promptDrafts: Record<string, PromptWorkbenchDraft>;
+  promptReuseHistory: PromptReuseHistoryItem[];
+  updatedAt: string;
+  version: "image2-assets-v1";
 };
 
 type AccountAuthMode = "login" | "signup" | "recover";
@@ -650,6 +659,34 @@ const requestImage2Wallet = async (session: Image2AccountSession) => {
   return data;
 };
 
+const requestImage2Assets = async (session: Image2AccountSession) => {
+  const response = await fetch(`/api/image2/assets?userId=${encodeURIComponent(session.user.id)}`, {
+    headers: {
+      Authorization: `Bearer ${session.accessToken}`,
+      "x-image2-user": session.user.id
+    },
+    cache: "no-store"
+  });
+  const data = (await response.json().catch(() => ({}))) as { error?: string; snapshot?: Image2AssetSnapshot };
+  if (!response.ok) throw new Error(data.error ?? "收藏夹读取失败。");
+  return data.snapshot ?? null;
+};
+
+const saveImage2Assets = async (session: Image2AccountSession, snapshot: Image2AssetSnapshot) => {
+  const response = await fetch("/api/image2/assets", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${session.accessToken}`,
+      "Content-Type": "application/json",
+      "x-image2-user": session.user.id
+    },
+    body: JSON.stringify({ snapshot })
+  });
+  const data = (await response.json().catch(() => ({}))) as { error?: string; snapshot?: Image2AssetSnapshot };
+  if (!response.ok) throw new Error(data.error ?? "收藏夹同步失败。");
+  return data.snapshot ?? snapshot;
+};
+
 const redeemImage2License = async (session: Image2AccountSession, code: string) => {
   const response = await fetch("/api/image2/redeem", {
     method: "POST",
@@ -922,6 +959,129 @@ const persistCaseAssetState = (state: CaseAssetState) => {
 
   return state;
 };
+
+const isRecord = (value: unknown): value is Record<string, unknown> => Boolean(value && typeof value === "object" && !Array.isArray(value));
+
+const normalizeAssetPromptDrafts = (value: unknown) =>
+  isRecord(value)
+    ? Object.fromEntries(
+        Object.entries(value).filter((entry): entry is [string, PromptWorkbenchDraft] => {
+          const draft = entry[1] as PromptWorkbenchDraft;
+          return Boolean(
+            entry[0] &&
+              draft &&
+              typeof draft.caseTitle === "string" &&
+              typeof draft.note === "string" &&
+              typeof draft.prompt === "string" &&
+              typeof draft.updatedAt === "string" &&
+              draft.fields &&
+              promptFieldLabels.every(({ field }) => typeof draft.fields[field] === "string")
+          );
+        })
+      )
+    : {};
+
+const normalizeAssetPromptReuseHistory = (value: unknown) =>
+  Array.isArray(value)
+    ? value
+        .filter((item): item is PromptReuseHistoryItem => {
+          return Boolean(
+            item &&
+              typeof item.id === "string" &&
+              typeof item.caseKey === "string" &&
+              typeof item.caseTitle === "string" &&
+              typeof item.createdAt === "string" &&
+              typeof item.prompt === "string" &&
+              ["copied", "generated", "saved"].includes(item.action)
+          );
+        })
+        .slice(0, maxPromptReuseHistoryItems)
+    : [];
+
+const buildAssetSnapshot = (input: {
+  favoriteCaseKeys: Set<string>;
+  caseAssetState: CaseAssetState;
+  promptDrafts: Record<string, PromptWorkbenchDraft>;
+  promptReuseHistory: PromptReuseHistoryItem[];
+}): Image2AssetSnapshot => ({
+  activeCollectionId: input.caseAssetState.activeCollectionId,
+  collections: input.caseAssetState.collections,
+  favoriteCaseKeys: [...input.favoriteCaseKeys],
+  notes: input.caseAssetState.notes,
+  promptDrafts: input.promptDrafts,
+  promptReuseHistory: input.promptReuseHistory.slice(0, maxPromptReuseHistoryItems),
+  updatedAt: new Date().toISOString(),
+  version: "image2-assets-v1"
+});
+
+const mergeAssetSnapshots = (local: Image2AssetSnapshot, cloud?: Partial<Image2AssetSnapshot> | null): Image2AssetSnapshot => {
+  if (!cloud) return local;
+
+  const collectionMap = new Map<string, CaseCollection>();
+  for (const collection of [...(cloud.collections ?? []), ...local.collections]) {
+    const existing = collectionMap.get(collection.id);
+    collectionMap.set(collection.id, {
+      ...collection,
+      caseKeys: [...new Set([...(existing?.caseKeys ?? []), ...collection.caseKeys])]
+    });
+  }
+
+  const collections = [...collectionMap.values()];
+  const activeCollectionId =
+    local.activeCollectionId && collections.some((item) => item.id === local.activeCollectionId)
+      ? local.activeCollectionId
+      : cloud.activeCollectionId && collections.some((item) => item.id === cloud.activeCollectionId)
+        ? cloud.activeCollectionId
+        : null;
+
+  const historyMap = new Map<string, PromptReuseHistoryItem>();
+  for (const record of [...normalizeAssetPromptReuseHistory(cloud.promptReuseHistory), ...local.promptReuseHistory]) {
+    historyMap.set(record.id, record);
+  }
+
+  return {
+    activeCollectionId,
+    collections,
+    favoriteCaseKeys: [...new Set([...(cloud.favoriteCaseKeys ?? []), ...local.favoriteCaseKeys])],
+    notes: {
+      ...(cloud.notes ?? {}),
+      ...local.notes
+    },
+    promptDrafts: {
+      ...normalizeAssetPromptDrafts(cloud.promptDrafts),
+      ...local.promptDrafts
+    },
+    promptReuseHistory: [...historyMap.values()]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, maxPromptReuseHistoryItems),
+    updatedAt: new Date().toISOString(),
+    version: "image2-assets-v1"
+  };
+};
+
+const stableRecord = <T,>(value: Record<string, T>) => Object.fromEntries(Object.entries(value).sort(([left], [right]) => left.localeCompare(right)));
+
+const assetSnapshotSignature = (snapshot: Image2AssetSnapshot, userId?: string) =>
+  JSON.stringify({
+    userId: userId ?? "",
+    favoriteCaseKeys: [...snapshot.favoriteCaseKeys].sort(),
+    activeCollectionId: snapshot.activeCollectionId,
+    collections: snapshot.collections
+      .map((collection) => ({
+        ...collection,
+        caseKeys: [...collection.caseKeys].sort()
+      }))
+      .sort((left, right) => left.id.localeCompare(right.id)),
+    notes: stableRecord(snapshot.notes),
+    promptDrafts: stableRecord(snapshot.promptDrafts),
+    promptReuseHistory: snapshot.promptReuseHistory.map((record) => ({
+      action: record.action,
+      caseKey: record.caseKey,
+      createdAt: record.createdAt,
+      id: record.id,
+      prompt: record.prompt
+    }))
+  });
 
 const progressForStage = (stage?: string, elapsedSeconds = 0) => {
   if (stage === "任务已提交") return 14;
@@ -1416,6 +1576,23 @@ function CaseDetailContent({
                   ? `生成中 ${formatDuration(generationElapsedSeconds)}`
                   : quotaLabel}
             </button>
+          </div>
+          <div className="case-gacha-entry" aria-label="同款抽卡入口">
+            <span>
+              <PackageOpen aria-hidden="true" />
+              同款抽卡
+            </span>
+            {isFavorite ? (
+              <div>
+                <a href={`/image2-cases/gacha?case=${encodeURIComponent(getCaseKey(item))}&mode=single`}>单抽同款</a>
+                <a href={`/image2-cases/gacha?case=${encodeURIComponent(getCaseKey(item))}&mode=pack`}>九抽同款</a>
+              </div>
+            ) : (
+              <button type="button" onClick={() => onToggleFavorite(item)}>
+                <Heart aria-hidden="true" />
+                先收藏再抽
+              </button>
+            )}
           </div>
           <p className="case-generate-note">
             <span>{formatFreeQuotaText(freeQuota)}</span>
@@ -2005,6 +2182,11 @@ export function Image2CaseLibrary() {
     message: isSupabaseAuthConfigured ? "可以使用账号登录" : "账号登录未配置",
     tone: "idle"
   });
+  const [assetsHydrated, setAssetsHydrated] = useState(false);
+  const [assetSyncStatus, setAssetSyncStatus] = useState<MembershipStatus>({
+    message: "收藏夹保存在当前浏览器",
+    tone: "idle"
+  });
   const [wallet, setWallet] = useState<Image2WalletStatus | null>(null);
   const [walletStatus, setWalletStatus] = useState<MembershipStatus>({
     message: isSupabaseAuthConfigured ? "登录后查看图片余额" : "余额系统未配置",
@@ -2036,6 +2218,30 @@ export function Image2CaseLibrary() {
     return window.localStorage.getItem(caseFiltersCollapsedStorageKey) === "1";
   });
   const [unavailableImageKeys, setUnavailableImageKeys] = useState<Set<string>>(() => new Set());
+  const assetSyncSignatureRef = useRef("");
+  const assetSyncHydratedSessionRef = useRef("");
+  const assetSyncLoadingSessionRef = useRef("");
+
+  const buildCurrentAssetSnapshot = () =>
+    buildAssetSnapshot({
+      caseAssetState,
+      favoriteCaseKeys,
+      promptDrafts,
+      promptReuseHistory
+    });
+
+  const applyAssetSnapshot = (snapshot: Image2AssetSnapshot) => {
+    setFavoriteCaseKeys(persistFavoriteCaseKeys(new Set(snapshot.favoriteCaseKeys)));
+    setCaseAssetState(
+      persistCaseAssetState({
+        activeCollectionId: snapshot.activeCollectionId,
+        collections: snapshot.collections,
+        notes: snapshot.notes
+      })
+    );
+    setPromptDrafts(persistPromptWorkbenchDrafts(snapshot.promptDrafts));
+    setPromptReuseHistory(persistPromptReuseHistory(snapshot.promptReuseHistory));
+  };
 
   useEffect(() => {
     let ignore = false;
@@ -2103,15 +2309,10 @@ export function Image2CaseLibrary() {
 
   useEffect(() => {
     setFavoriteCaseKeys(readFavoriteCaseKeys());
-  }, []);
-
-  useEffect(() => {
     setPromptDrafts(readPromptWorkbenchDrafts());
     setPromptReuseHistory(readPromptReuseHistory());
-  }, []);
-
-  useEffect(() => {
     setCaseAssetState(readCaseAssetState());
+    setAssetsHydrated(true);
   }, []);
 
   useEffect(() => {
@@ -2153,6 +2354,91 @@ export function Image2CaseLibrary() {
         setAccountAuthStatus({ message: "登录状态已失效，请重新登录", tone: "error" });
       });
   }, []);
+
+  useEffect(() => {
+    if (!assetsHydrated) return;
+    if (!isSupabaseAuthConfigured) {
+      setAssetSyncStatus({ message: "收藏夹保存在当前浏览器", tone: "idle" });
+      return;
+    }
+
+    if (!accountSession) {
+      assetSyncSignatureRef.current = "";
+      assetSyncHydratedSessionRef.current = "";
+      assetSyncLoadingSessionRef.current = "";
+      setAssetSyncStatus({ message: "登录后同步收藏夹和抽卡来源", tone: "idle" });
+      return;
+    }
+
+    const sessionKey = `${accountSession.user.id}:${accountSession.accessToken}`;
+    if (assetSyncHydratedSessionRef.current === sessionKey || assetSyncLoadingSessionRef.current === sessionKey) return;
+
+    let ignore = false;
+    assetSyncLoadingSessionRef.current = sessionKey;
+    const localSnapshot = buildCurrentAssetSnapshot();
+    setAssetSyncStatus({ message: "正在同步收藏夹...", tone: "busy" });
+
+    void requestImage2Assets(accountSession)
+      .then(async (cloudSnapshot) => {
+        if (ignore) return;
+        const merged = mergeAssetSnapshots(localSnapshot, cloudSnapshot);
+        const signature = assetSnapshotSignature(merged, accountSession.user.id);
+        assetSyncSignatureRef.current = signature;
+        assetSyncHydratedSessionRef.current = sessionKey;
+        applyAssetSnapshot(merged);
+        const saved = await saveImage2Assets(accountSession, merged);
+        if (ignore) return;
+        const nextSignature = assetSnapshotSignature(saved, accountSession.user.id);
+        assetSyncSignatureRef.current = nextSignature;
+        assetSyncHydratedSessionRef.current = sessionKey;
+        setAssetSyncStatus({ message: "收藏夹已同步", tone: "success" });
+      })
+      .catch((error) => {
+        if (ignore) return;
+        assetSyncHydratedSessionRef.current = "";
+        setAssetSyncStatus({
+          message: toUserFacingError(error instanceof Error ? error.message : error, "收藏夹同步失败。"),
+          tone: "error"
+        });
+      })
+      .finally(() => {
+        if (assetSyncLoadingSessionRef.current === sessionKey) {
+          assetSyncLoadingSessionRef.current = "";
+        }
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [accountSession?.accessToken, accountSession?.user.id, assetsHydrated]);
+
+  useEffect(() => {
+    if (!assetsHydrated || !isSupabaseAuthConfigured || !accountSession) return;
+
+    const sessionKey = `${accountSession.user.id}:${accountSession.accessToken}`;
+    if (assetSyncHydratedSessionRef.current !== sessionKey) return;
+
+    const snapshot = buildCurrentAssetSnapshot();
+    const signature = assetSnapshotSignature(snapshot, accountSession.user.id);
+    if (assetSyncSignatureRef.current === signature) return;
+
+    setAssetSyncStatus({ message: "正在保存收藏夹...", tone: "busy" });
+    const timer = window.setTimeout(() => {
+      void saveImage2Assets(accountSession, snapshot)
+        .then((saved) => {
+          assetSyncSignatureRef.current = assetSnapshotSignature(saved, accountSession.user.id);
+          setAssetSyncStatus({ message: "收藏夹已同步", tone: "success" });
+        })
+        .catch((error) => {
+          setAssetSyncStatus({
+            message: toUserFacingError(error instanceof Error ? error.message : error, "收藏夹同步失败。"),
+            tone: "error"
+          });
+        });
+    }, 650);
+
+    return () => window.clearTimeout(timer);
+  }, [accountSession?.accessToken, accountSession?.user.id, assetsHydrated, caseAssetState, favoriteCaseKeys, promptDrafts, promptReuseHistory]);
 
   useEffect(() => {
     if (!isSupabaseAuthConfigured) return;
@@ -2558,7 +2844,7 @@ export function Image2CaseLibrary() {
       setWalletStatus({
         message: data.wallet
           ? `兑换成功，已到账 ${data.redemption?.credits ?? data.wallet.wallet.balance} 张图`
-          : "旧权益卡密兑换成功",
+          : "兼容卡密兑换成功，图片额度状态已刷新",
         tone: "success"
       });
     } catch (error) {
@@ -2963,7 +3249,7 @@ export function Image2CaseLibrary() {
           ? "找回密码"
           : "登录 / 注册";
   const accountModalDescription = accountSession
-    ? "退出后可以切换账号，继续使用收藏和权益。"
+    ? "退出后可以切换账号，继续使用收藏、备注和图片额度。"
     : accountOtpMode === "signup"
       ? "验证码已发送到邮箱，输入后即可完成注册。"
       : accountOtpMode === "recovery"
@@ -3069,11 +3355,24 @@ export function Image2CaseLibrary() {
     <main className="case-library">
       <header className="case-hero">
         <div className="case-hero-toolbar">
-          <Image2LanguageToggle language={language} onChange={setLanguage} />
-          <button className="case-auth-launcher" type="button" onClick={openAccountModal}>
-            <UserRound aria-hidden="true" />
-            <span>{accountSession ? accountSession.user.email ?? (language === "zh" ? "账号中心" : "Account") : pageCopy.account}</span>
-          </button>
+          <nav className="case-site-nav" aria-label="Image2 导航">
+            <a className="case-site-brand" href="/">
+              <Sparkles aria-hidden="true" />
+              <span>Image2</span>
+            </a>
+            <a href="/">首页</a>
+            <a href="/image2-cases">案例库</a>
+            <a href="/workbench">作图中控台</a>
+            <a href="/image2-cases/gacha">同款抽卡</a>
+            <a href="/admin/image2-cases">运营台</a>
+          </nav>
+          <div className="case-hero-actions">
+            <Image2LanguageToggle language={language} onChange={setLanguage} />
+            <button className="case-auth-launcher" type="button" onClick={openAccountModal}>
+              <UserRound aria-hidden="true" />
+              <span>{accountSession ? accountSession.user.email ?? (language === "zh" ? "账号中心" : "Account") : pageCopy.account}</span>
+            </button>
+          </div>
         </div>
 
         <div className="case-hero-copy">
@@ -3262,6 +3561,10 @@ export function Image2CaseLibrary() {
                   <FolderPlus aria-hidden="true" />
                   管理收藏夹
                 </button>
+                <div className={`case-asset-sync ${assetSyncStatus.tone}`} aria-label="收藏夹同步状态">
+                  <strong>收藏夹同步</strong>
+                  <small>{assetSyncStatus.message}</small>
+                </div>
               </section>
 
               <section className="case-gallery-filter-card case-gallery-recent-card">
@@ -3388,6 +3691,25 @@ export function Image2CaseLibrary() {
                     >
                       <Heart aria-hidden="true" />
                     </button>
+                    <div className={isFavorite ? "case-card-gacha active" : "case-card-gacha"} aria-label="同款抽卡">
+                      {isFavorite ? (
+                        <>
+                          <a href={`/image2-cases/gacha?case=${encodeURIComponent(caseKey)}&mode=single`}>
+                            <WandSparkles aria-hidden="true" />
+                            单抽
+                          </a>
+                          <a href={`/image2-cases/gacha?case=${encodeURIComponent(caseKey)}&mode=pack`}>
+                            <PackageOpen aria-hidden="true" />
+                            九抽
+                          </a>
+                        </>
+                      ) : (
+                        <button type="button" onClick={() => toggleFavorite(item)}>
+                          <Heart aria-hidden="true" />
+                          先收藏再抽
+                        </button>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -3590,7 +3912,7 @@ export function Image2CaseLibrary() {
           <div className="case-auth-modal-panel" role="dialog" aria-modal="true" aria-labelledby="case-auth-title">
             <div className="case-auth-modal-head">
               <div className="case-auth-modal-copy">
-                <small>Image2 Account</small>
+                <small>Image2 账号</small>
                 <h2 id="case-auth-title">{accountModalTitle}</h2>
                 <p>{accountModalDescription}</p>
               </div>
