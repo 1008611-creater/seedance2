@@ -7,13 +7,12 @@ import {
   Film,
   KeyRound,
   Loader2,
-  Lock,
   RefreshCw,
   Search,
   Send,
   XCircle
 } from "lucide-react";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { formatChinaDateTime } from "@/lib/time";
 import type { AdminQueueResponse, Generation, GenerationStatus } from "@/lib/types";
 import { toUserFacingError } from "@/lib/user-facing-error";
@@ -56,11 +55,7 @@ type Doubao2ApiStatus = {
   accounts: Doubao2ApiAccountStatus[];
 };
 
-const tokenKey = "seedance-admin-token";
-
 export function AdminConsole() {
-  const [token, setToken] = useState("");
-  const [tokenInput, setTokenInput] = useState("");
   const [queue, setQueue] = useState<AdminQueueResponse | null>(null);
   const [busy, setBusy] = useState("");
   const [notice, setNotice] = useState<{ text: string; tone: "success" | "error" } | null>(null);
@@ -71,12 +66,7 @@ export function AdminConsole() {
   const [channelLoading, setChannelLoading] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem(tokenKey) ?? "";
-    if (saved) {
-      setToken(saved);
-      setTokenInput(saved);
-      void refresh(saved);
-    }
+    void refresh();
   }, []);
 
   useEffect(() => {
@@ -125,15 +115,10 @@ export function AdminConsole() {
     ];
   }, [queue]);
 
-  async function refresh(activeToken = token) {
-    if (!activeToken) return;
+  async function refresh() {
     setBusy("refresh");
     try {
-      const response = await fetch("/api/admin/jobs", {
-        headers: {
-          Authorization: `Bearer ${activeToken}`
-        }
-      });
+      const response = await fetch("/api/admin/jobs", { cache: "no-store" });
       const json = await response.json();
       if (!response.ok) throw new Error(json.error ?? "后台加载失败。");
       setQueue(json);
@@ -171,14 +156,6 @@ export function AdminConsole() {
     }
   }
 
-  function login(event: FormEvent) {
-    event.preventDefault();
-    const next = tokenInput.trim();
-    setToken(next);
-    localStorage.setItem(tokenKey, next);
-    void refresh(next);
-  }
-
   async function updateJob(job: Generation, status: GenerationStatus, progress: number) {
     const draft = drafts[job.id] ?? draftFromJob(job);
     setBusy(`${job.id}-${status}`);
@@ -187,7 +164,7 @@ export function AdminConsole() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          "x-image2-admin-csrf": "1"
         },
         body: JSON.stringify({
           jobId: job.id,
@@ -222,26 +199,18 @@ export function AdminConsole() {
     }));
   }
 
-  if (!token || !queue) {
+  if (!queue) {
     return (
       <main className="admin-login">
-        <form className="admin-login-card" onSubmit={login}>
-          <span className="admin-lock">
-            <Lock />
-          </span>
+        <section className="admin-login-card">
+          <Loader2 className="spin" />
           <h1>制作后台</h1>
-          <p>输入后台口令后查看用户提交的生成任务。</p>
-          <input
-            value={tokenInput}
-            onChange={(event) => setTokenInput(event.target.value)}
-            placeholder="ADMIN_TOKEN"
-            type="password"
-          />
-          <button className="primary-button" type="submit">
-            进入后台
+          <p>正在使用已验证的管理员会话读取制作队列。</p>
+          <button className="primary-button" type="button" onClick={() => void refresh()} disabled={busy === "refresh"}>
+            重新读取
           </button>
           {notice ? <div className={`notice ${notice.tone === "error" ? "error" : ""}`}>{notice.text}</div> : null}
-        </form>
+        </section>
       </main>
     );
   }

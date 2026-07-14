@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AdminConsole } from "@/components/admin-console";
+import { AdminSessionGate } from "@/components/admin-session-gate";
 
 export const metadata: Metadata = {
   title: "Seedance 制作后台",
@@ -7,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function SeedanceAdminPage() {
-  return <AdminConsole />;
+  return <AdminSessionGate returnTo="/admin/seedance"><AdminConsole /></AdminSessionGate>;
 }

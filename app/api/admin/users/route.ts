@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuthStatus, requireAdmin } from "@/lib/admin-auth";
-import { listAdminUsers, UnifiedAuthError } from "@/lib/unified-auth";
+import { readImage2AdminOverview } from "@/lib/image2-admin-overview";
 import { toUserFacingError } from "@/lib/user-facing-error";
 
 export const runtime = "nodejs";
@@ -10,22 +10,30 @@ function limitFromRequest(request: NextRequest) {
   return Math.min(Math.max(Number.isFinite(raw) ? Math.floor(raw) : 50, 1), 200);
 }
 
-function statusForError(error: unknown) {
-  const message = error instanceof Error ? error.message : String(error ?? "");
-  const authStatus = adminAuthStatus(error, 0);
-  if (authStatus) return authStatus;
-  if (error instanceof UnifiedAuthError) return error.status;
-  return 400;
-}
-
 export async function GET(request: NextRequest) {
   try {
     await requireAdmin(request);
-    return NextResponse.json(await listAdminUsers(limitFromRequest(request)));
+    const overview = await readImage2AdminOverview();
+    const response = NextResponse.json({
+      resourceStatus: overview.users.status,
+      storageMode: overview.storageMode,
+      totals: { users: overview.users.total },
+      users: overview.users.recent.slice(0, limitFromRequest(request)).map((user) => ({
+        createdAt: user.createdAt,
+        displayName: user.displayName,
+        email: user.email,
+        role: user.role,
+        userId: user.id
+      }))
+    });
+    response.headers.set("Cache-Control", "no-store, max-age=0");
+    return response;
   } catch (error) {
-    return NextResponse.json(
+    const response = NextResponse.json(
       { error: toUserFacingError(error instanceof Error ? error.message : error, "用户列表读取失败。") },
-      { status: statusForError(error) }
+      { status: adminAuthStatus(error, 503) }
     );
+    response.headers.set("Cache-Control", "no-store, max-age=0");
+    return response;
   }
 }

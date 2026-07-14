@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { BarChart3, Clapperboard, Images, LayoutGrid, Sparkles, UsersRound } from "lucide-react";
+import { AdminSessionGate } from "@/components/admin-session-gate";
 
 export const metadata: Metadata = {
   title: "Image2 后台入口",
@@ -8,8 +9,9 @@ export const metadata: Metadata = {
 
 export default function AdminPage() {
   return (
-    <main className="admin-hub">
-      <section className="admin-hub-panel" aria-label="后台入口">
+    <AdminSessionGate returnTo="/admin">
+      <main className="admin-hub">
+        <section className="admin-hub-panel" aria-label="后台入口">
         <span className="admin-hub-kicker">
           <Sparkles aria-hidden="true" />
           Image2 后台
@@ -48,7 +50,8 @@ export default function AdminPage() {
           <BarChart3 aria-hidden="true" />
           返回 Image2 案例库
         </a>
-      </section>
-    </main>
+        </section>
+      </main>
+    </AdminSessionGate>
   );
 }

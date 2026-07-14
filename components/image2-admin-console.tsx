@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactElement, useMemo, useState } from "react";
+import { type ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   ArrowUpRight,
@@ -15,9 +15,11 @@ import {
   FolderTree,
   Gauge,
   LayoutDashboard,
+  Loader2,
   LockKeyhole,
   PanelRightOpen,
   Search,
+  ServerCrash,
   ShieldCheck,
   Tags,
   UsersRound,
@@ -25,6 +27,8 @@ import {
   X
 } from "lucide-react";
 import type { Image2AdminCase, Image2AdminCatalog, Image2AdminReviewItem } from "@/lib/image2-admin-catalog";
+import type { AdminResourceStatus, Image2AdminOverview } from "@/lib/image2-admin-overview";
+import { AdminImage2CaseChanges } from "@/components/admin-image2-case-changes";
 import styles from "./image2-admin-console.module.css";
 import visualStyles from "./image2-admin-case-visuals.module.css";
 
@@ -33,18 +37,41 @@ type ReviewState = "all" | "queued" | "reviewed";
 
 type Props = {
   catalog: Image2AdminCatalog;
-  accessReason: string;
+  accessReason?: string;
 };
 
 const navigation: Array<{ id: AdminView; label: string; icon: typeof LayoutDashboard; note: string }> = [
   { id: "overview", label: "总览", icon: LayoutDashboard, note: "数据健康与待办" },
   { id: "catalog", label: "案例 / 提示词", icon: BookOpenCheck, note: "静态索引只读" },
   { id: "taxonomy", label: "分类与标签", icon: Tags, note: "目录治理" },
-  { id: "members", label: "用户与会员", icon: UsersRound, note: "合同未接通" },
-  { id: "wallet", label: "兑换码 / 积分", icon: WalletCards, note: "合同未接通" },
+  { id: "members", label: "用户与会员", icon: UsersRound, note: "真实只读数据" },
+  { id: "wallet", label: "兑换码 / 积分", icon: WalletCards, note: "安全聚合" },
   { id: "review", label: "内容审核", icon: ClipboardCheck, note: "本地 dry-run" },
-  { id: "audit", label: "运营记录", icon: FileClock, note: "现有变更日志" }
+  { id: "audit", label: "运营记录", icon: FileClock, note: "变更与权限" }
 ];
+
+function resourceLabel(status: AdminResourceStatus) {
+  if (status === "ready") return "已连接";
+  if (status === "not_configured") return "未配置";
+  return "暂不可用";
+}
+
+function formatCompactDate(value?: string) {
+  if (!value) return "未记录";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "未记录";
+  return new Intl.DateTimeFormat("zh-CN", { year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
+}
+
+async function readJson<T>(response: Response): Promise<T> {
+  const text = await response.text();
+  if (!text) return {} as T;
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return { error: "服务返回了无法识别的响应。" } as T;
+  }
+}
 
 function formatDate(value?: string) {
   if (!value) return "索引未记录";
@@ -157,7 +184,29 @@ export function Image2AdminConsole({ catalog, accessReason }: Props) {
   const [reviewState, setReviewState] = useState<ReviewState>("queued");
   const [reviewedKeys, setReviewedKeys] = useState<Set<string>>(() => new Set());
   const [localEvents, setLocalEvents] = useState<string[]>([]);
-  const [notice, setNotice] = useState(accessReason);
+  const [notice, setNotice] = useState(accessReason || "管理员会话已验证；动态数据通过受保护接口读取。" );
+  const [overview, setOverview] = useState<Image2AdminOverview | null>(null);
+  const [overviewStatus, setOverviewStatus] = useState<"loading" | "ready" | "error">("loading");
+
+  const loadOverview = useCallback(async () => {
+    setOverviewStatus("loading");
+    try {
+      const response = await fetch("/api/admin/image2/overview", { cache: "no-store" });
+      const data = await readJson<Image2AdminOverview & { error?: string }>(response);
+      if (!response.ok) throw new Error(data.error || "运营总览读取失败。");
+      setOverview(data);
+      setOverviewStatus("ready");
+      setNotice("真实运营摘要已更新；不可用资源会单独标注，不使用估算数据。" );
+    } catch (error) {
+      setOverview(null);
+      setOverviewStatus("error");
+      setNotice(error instanceof Error ? error.message : "运营总览读取失败。" );
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadOverview();
+  }, [loadOverview]);
 
   const filteredCases = useMemo(() => {
     const normalized = query.trim().toLocaleLowerCase("zh-CN");
@@ -197,9 +246,17 @@ export function Image2AdminConsole({ catalog, accessReason }: Props) {
       <>
         <section className={styles.metricGrid} aria-label="案例库摘要">
           <article><span>静态案例</span><strong>{catalog.totalCases.toLocaleString()}</strong><small>读取 `image2-case-library.index.json`</small></article>
-          <article><span>来源归属已映射</span><strong>{catalog.integrity.sourceRegistryCoverage}%</strong><small>按 sourceId 是否映射到来源注册表计算</small></article>
-          <article><span>待来源归属复核</span><strong>{catalog.integrity.withoutSourceRegistry.toLocaleString()}</strong><small>仅统计未映射来源，不把懒加载链接当成缺失</small></article>
-          <article><span>本地已登记审查</span><strong>{reviewedKeys.size}</strong><small>只保存在当前浏览器会话</small></article>
+          <article><span>真实账号</span><strong>{overview?.users.status === "ready" ? overview.users.total.toLocaleString() : "—"}</strong><small>{overview ? resourceLabel(overview.users.status) : "正在读取 Supabase"}</small></article>
+          <article><span>有效会员</span><strong>{overview?.memberships.status === "ready" ? overview.memberships.active.toLocaleString() : "—"}</strong><small>{overview ? resourceLabel(overview.memberships.status) : "正在读取权益"}</small></article>
+          <article><span>成功兑换</span><strong>{overview?.redemptions.status === "ready" ? overview.redemptions.succeeded.toLocaleString() : "—"}</strong><small>{overview ? resourceLabel(overview.redemptions.status) : "正在读取审计"}</small></article>
+        </section>
+
+        <section className={styles.liveStrip} aria-label="动态数据连接状态">
+          <div>
+            {overviewStatus === "loading" ? <Loader2 className={styles.spinning} aria-hidden="true" /> : overviewStatus === "error" ? <ServerCrash aria-hidden="true" /> : <Database aria-hidden="true" />}
+            <span><strong>{overviewStatus === "ready" ? "真实数据已读取" : overviewStatus === "loading" ? "正在读取真实数据" : "动态数据暂不可用"}</strong><small>{overview?.storageMode || "不会回退为演示数字"}</small></span>
+          </div>
+          <button type="button" onClick={() => void loadOverview()} disabled={overviewStatus === "loading"}>刷新真实数据</button>
         </section>
 
         <section className={styles.twoColumn}>
@@ -226,7 +283,7 @@ export function Image2AdminConsole({ catalog, accessReason }: Props) {
             <ol className={styles.taskList}>
               <li><span>01</span><div><strong>核查来源归属</strong><small>{catalog.integrity.withoutSourceRegistry.toLocaleString()} 条未映射到来源注册表；案例原始 URL 属于详情懒加载数据，不在本页判缺。</small></div></li>
               <li><span>02</span><div><strong>复核低分案例</strong><small>{catalog.integrity.belowReviewScore.toLocaleString()} 条低于本地阈值 60，适合先整理为灵感参考层。</small></div></li>
-              <li><span>03</span><div><strong>补齐可执行后台合同</strong><small>角色会话、聚合只读接口、审计写入仍没有安全管理路由。</small></div></li>
+              <li><span>03</span><div><strong>检查动态资源状态</strong><small>{overview ? [overview.users, overview.memberships, overview.licenses, overview.redemptions].filter((item) => item.status !== "ready").length : 4} 个资源当前需要迁移或连接复核。</small></div></li>
             </ol>
           </article>
         </section>
@@ -291,11 +348,77 @@ export function Image2AdminConsole({ catalog, accessReason }: Props) {
   }
 
   function renderMembers() {
-    return <EmptyContract title="用户与会员数据尚未安全接通" body="现有迁移已定义统一用户档案、会员权益、登录审计和云端资产表；现有 `/api/admin/users` 仍依赖后台口令，尚未形成基于 Supabase 管理员角色的聚合读取合同。因此本地候选不会请求或展示任何真实用户。" tables={["user_profiles", "entitlements", "auth_events", "image2_asset_snapshots"]} endpoint="GET /api/admin/image2/overview (server role check)" />;
+    if (!overview || overviewStatus !== "ready") {
+      return <EmptyContract title="用户与会员数据正在连接" body="后台只会通过受保护的管理员接口读取真实数据；读取失败时不会显示演示账号。" tables={["profiles", "entitlements"]} endpoint="GET /api/admin/image2/overview" />;
+    }
+
+    return (
+      <div className={styles.memberGrid}>
+        <section className={styles.panel}>
+          <div className={styles.panelHead}>
+            <div><span className={styles.sectionKicker}>用户档案</span><h2>真实账号列表</h2><p>{overview.users.message}</p></div>
+            <span className={`${styles.resourceState} ${styles[overview.users.status]}`}>{resourceLabel(overview.users.status)}</span>
+          </div>
+          {overview.users.status === "ready" ? (
+            <div className={styles.userTable}>
+              <div className={styles.userTableHead}><span>账号</span><span>角色</span><span>注册时间</span><span>标识</span></div>
+              {overview.users.recent.map((user) => (
+                <article key={user.id}>
+                  <div><strong>{user.displayName}</strong><small>{user.email || "未记录邮箱"}</small></div>
+                  <span className={user.role === "admin" ? styles.adminRole : styles.userRole}>{user.role === "admin" ? "管理员" : "用户"}</span>
+                  <time>{formatCompactDate(user.createdAt)}</time>
+                  <code>{user.id.slice(0, 8)}…</code>
+                </article>
+              ))}
+              {!overview.users.recent.length ? <div className={styles.inlineEmpty}>数据库已连接，当前没有用户档案。</div> : null}
+            </div>
+          ) : <div className={styles.resourceUnavailable}><ServerCrash aria-hidden="true" /><p>{overview.users.message}</p></div>}
+        </section>
+
+        <section className={styles.panel}>
+          <div className={styles.panelHead}>
+            <div><span className={styles.sectionKicker}>会员权益</span><h2>方案与有效期</h2><p>{overview.memberships.message}</p></div>
+            <span className={`${styles.resourceState} ${styles[overview.memberships.status]}`}>{resourceLabel(overview.memberships.status)}</span>
+          </div>
+          <div className={styles.membershipMetrics}>
+            <div><span>权益记录</span><strong>{overview.memberships.status === "ready" ? overview.memberships.total : "—"}</strong></div>
+            <div><span>当前有效</span><strong>{overview.memberships.status === "ready" ? overview.memberships.active : "—"}</strong></div>
+            <div><span>已过期</span><strong>{overview.memberships.status === "ready" ? overview.memberships.expired : "—"}</strong></div>
+          </div>
+          {overview.memberships.status === "ready" ? <div className={styles.planList}>{overview.memberships.byPlan.map((item) => <div key={item.plan}><span>{item.plan}</span><strong>{item.count}</strong></div>)}</div> : <div className={styles.resourceUnavailable}><p>{overview.memberships.message}</p></div>}
+        </section>
+      </div>
+    );
   }
 
   function renderWallet() {
-    return <EmptyContract title="兑换码与图片积分仅展示数据合同" body="当前 schema 已有卡密哈希、兑换审计、钱包余额与交易流水。为避免把卡密或用户金额暴露到浏览器，本候选只展示接通要求；不会查询 license_codes、wallet 或执行兑换、加减积分。" tables={["license_codes", "license_redemptions", "image2_wallets", "image2_wallet_transactions"]} endpoint="GET /api/admin/image2/wallets + POST dry-run preview" />;
+    if (!overview || overviewStatus !== "ready") {
+      return <EmptyContract title="兑换数据正在连接" body="只读取状态聚合，不读取卡密哈希、请求哈希、IP 哈希或明文。" tables={["license_codes", "license_redemptions"]} endpoint="GET /api/admin/image2/overview" />;
+    }
+
+    return (
+      <div className={styles.walletGrid}>
+        <section className={styles.panel}>
+          <div className={styles.panelHead}><div><span className={styles.sectionKicker}>卡密库存</span><h2>状态聚合</h2><p>{overview.licenses.message}</p></div><span className={`${styles.resourceState} ${styles[overview.licenses.status]}`}>{resourceLabel(overview.licenses.status)}</span></div>
+          <div className={styles.walletMetrics}>
+            <div><span>全部</span><strong>{overview.licenses.status === "ready" ? overview.licenses.total : "—"}</strong></div>
+            <div><span>有效</span><strong>{overview.licenses.status === "ready" ? overview.licenses.active : "—"}</strong></div>
+            <div><span>已使用</span><strong>{overview.licenses.status === "ready" ? overview.licenses.used : "—"}</strong></div>
+            <div><span>已过期</span><strong>{overview.licenses.status === "ready" ? overview.licenses.expired : "—"}</strong></div>
+            <div><span>已禁用</span><strong>{overview.licenses.status === "ready" ? overview.licenses.disabled : "—"}</strong></div>
+          </div>
+        </section>
+        <section className={styles.panel}>
+          <div className={styles.panelHead}><div><span className={styles.sectionKicker}>兑换审计</span><h2>结果聚合</h2><p>{overview.redemptions.message}</p></div><span className={`${styles.resourceState} ${styles[overview.redemptions.status]}`}>{resourceLabel(overview.redemptions.status)}</span></div>
+          <div className={styles.membershipMetrics}>
+            <div><span>尝试次数</span><strong>{overview.redemptions.status === "ready" ? overview.redemptions.total : "—"}</strong></div>
+            <div><span>成功</span><strong>{overview.redemptions.status === "ready" ? overview.redemptions.succeeded : "—"}</strong></div>
+            <div><span>未成功</span><strong>{overview.redemptions.status === "ready" ? overview.redemptions.failed : "—"}</strong></div>
+          </div>
+          <div className={styles.safetyNote}><ShieldCheck aria-hidden="true" /><p>此页面没有卡密生成、作废、余额调整或权益修改入口；本切片保持只读。</p></div>
+        </section>
+      </div>
+    );
   }
 
   function renderReview() {
@@ -316,8 +439,19 @@ export function Image2AdminConsole({ catalog, accessReason }: Props) {
 
   function renderAudit() {
     return (
-      <div className={styles.auditGrid}>
-        <section className={styles.panel}><div className={styles.panelHead}><div><span className={styles.sectionKicker}>现有能力</span><h2>资产快照变更日志</h2></div>{accessStatus("后端已存在", "contract")}</div><p className={styles.auditLead}>仓库已有 `/api/admin/image2-cases/changes` 与 `image2_asset_change_logs`，可读取并撤销用户资产快照。现有接口使用 `ADMIN_TOKEN`，此本地候选不会调用它。</p><div className={styles.apiRows}><div><span>GET</span><code>/api/admin/image2-cases/changes</code><small>读取变更记录</small></div><div><span>POST</span><code>/api/admin/image2-cases/changes</code><small>撤销资产快照</small></div></div></section>
+      <div className={styles.auditStack}>
+        <section className={styles.panel}>
+          <div className={styles.panelHead}><div><span className={styles.sectionKicker}>权限矩阵</span><h2>管理接口保护状态</h2><p>页面门禁只负责体验；以下每个接口仍在服务端独立校验管理员身份。</p></div>{accessStatus("服务端角色", "ready")}</div>
+          <div className={styles.permissionTable}>
+            <div><strong>GET</strong><code>/api/admin/image2/overview</code><span>管理员角色</span><small>只读聚合</small></div>
+            <div><strong>GET</strong><code>/api/admin/users</code><span>管理员角色</span><small>只读用户</small></div>
+            <div><strong>GET</strong><code>/api/admin/image2-cases/changes</code><span>管理员角色</span><small>只读日志</small></div>
+            <div><strong>POST</strong><code>/api/admin/image2-cases/changes</code><span>管理员 + CSRF</span><small>撤销资产</small></div>
+            <div><strong>POST</strong><code>/api/admin/jobs</code><span>管理员 + CSRF</span><small>任务变更</small></div>
+            <div><strong>DELETE</strong><code>/api/admin/session</code><span>同源 CSRF</span><small>退出会话</small></div>
+          </div>
+        </section>
+        <AdminImage2CaseChanges />
         <section className={styles.panel}><div className={styles.panelHead}><div><span className={styles.sectionKicker}>本地 session</span><h2>本次 dry-run 记录</h2></div>{accessStatus("浏览器内存", "dry")}</div>{localEvents.length ? <ol className={styles.localEventList}>{localEvents.map((event) => <li key={event}><Check aria-hidden="true" />{event}</li>)}</ol> : <div className={styles.emptyState}><FileClock aria-hidden="true" /><strong>还没有本地操作</strong><p>从案例检查器创建审查任务后，会在这里出现，并在刷新页面后消失。</p></div>}</section>
       </div>
     );
@@ -337,9 +471,9 @@ export function Image2AdminConsole({ catalog, accessReason }: Props) {
   return (
     <main className={styles.shell}>
       <aside className={styles.sidebar}>
-        <a className={styles.brand} href="/image2-cases"><span><Gauge aria-hidden="true" /></span><div><strong>Image2</strong><small>运营后台候选</small></div></a>
+        <a className={styles.brand} href="/image2-cases"><span><Gauge aria-hidden="true" /></span><div><strong>Image2</strong><small>运营后台</small></div></a>
         <nav aria-label="后台导航">{navigation.map((item) => { const Icon = item.icon; return <button key={item.id} type="button" className={activeView === item.id ? styles.navActive : ""} onClick={() => setActiveView(item.id)}><Icon aria-hidden="true" /><span><strong>{item.label}</strong><small>{item.note}</small></span></button>; })}</nav>
-        <div className={styles.sidebarFoot}>{accessStatus("本地预览", "dry")}<small>默认生产关闭</small></div>
+        <div className={styles.sidebarFoot}>{accessStatus("管理员会话", "ready")}<small>真实数据按资源状态读取</small></div>
       </aside>
 
       <section className={styles.workspace}>

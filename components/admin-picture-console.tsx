@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   ExternalLink,
@@ -124,13 +124,12 @@ function saveBlob(blob: Blob, name: string) {
 }
 
 export function AdminPictureConsole() {
-  const [adminToken, setAdminToken] = useState("");
   const [accounts, setAccounts] = useState<PictureAdminAccount[]>([]);
   const [runs, setRuns] = useState<PictureAdminRun[]>([]);
   const [storageMode, setStorageMode] = useState("");
   const [health, setHealth] = useState<NonNullable<PictureAdminPayload["health"]>>({});
   const [status, setStatus] = useState<Status>({
-    message: "输入后台口令后读取制图台数据。",
+    message: "管理员会话已验证，正在读取制图台数据。",
     tone: "idle"
   });
   const [activeView, setActiveView] = useState<"accounts" | "runs">("accounts");
@@ -146,21 +145,11 @@ export function AdminPictureConsole() {
     [accounts, runs]
   );
 
-  async function loadOverview(event?: FormEvent) {
-    event?.preventDefault();
-    const token = adminToken.trim();
-    if (!token) {
-      setStatus({ message: "请输入后台口令。", tone: "error" });
-      return;
-    }
-
+  const loadOverview = useCallback(async () => {
     setStatus({ message: "正在读取制图台数据...", tone: "busy" });
     try {
       const response = await fetch("/api/admin/picture?limit=120", {
-        cache: "no-store",
-        headers: {
-          "x-admin-token": token
-        }
+        cache: "no-store"
       });
       const data = await readJson<PictureAdminPayload>(response);
       if (!response.ok) throw new Error(data.error || "制图台数据读取失败。");
@@ -175,7 +164,11 @@ export function AdminPictureConsole() {
     } catch (error) {
       setStatus({ message: error instanceof Error ? error.message : "制图台数据读取失败。", tone: "error" });
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    void loadOverview();
+  }, [loadOverview]);
 
   function openPreview(image: PictureAdminImage) {
     if (!image.available) {
@@ -189,11 +182,6 @@ export function AdminPictureConsole() {
   }
 
   async function downloadAdminImage(image: PictureAdminImage) {
-    const token = adminToken.trim();
-    if (!token) {
-      setStatus({ message: "请输入后台口令后再下载。", tone: "error" });
-      return;
-    }
     if (!image.available) {
       setStatus({
         message: image.missingReason || "原图文件不在当前服务器，暂时不能下载。",
@@ -205,10 +193,7 @@ export function AdminPictureConsole() {
     setStatus({ message: "正在准备下载图片...", tone: "busy" });
     try {
       const response = await fetch(image.downloadUrl, {
-        cache: "no-store",
-        headers: {
-          "x-admin-token": token
-        }
+        cache: "no-store"
       });
       if (!response.ok) {
         const data = await readJson<{ error?: string }>(response);
@@ -232,22 +217,13 @@ export function AdminPictureConsole() {
         <p>只读管理台。用于确认用户是否能注册、最近有没有生成、通道和账号服务是否配置完整。</p>
       </div>
 
-      <form className="admin-picture-auth" onSubmit={loadOverview}>
-        <label>
-          <span>后台口令</span>
-          <input
-            autoComplete="off"
-            placeholder="ADMIN_TOKEN"
-            type="password"
-            value={adminToken}
-            onChange={(event) => setAdminToken(event.target.value)}
-          />
-        </label>
-        <button type="submit" disabled={status.tone === "busy"}>
+      <div className="admin-picture-auth">
+        <div><span>管理员会话</span><small>HttpOnly Cookie · 服务端角色校验</small></div>
+        <button type="button" disabled={status.tone === "busy"} onClick={() => void loadOverview()}>
           {status.tone === "busy" ? <Loader2 className="spinning" aria-hidden="true" /> : <ShieldCheck aria-hidden="true" />}
-          读取数据
+          刷新数据
         </button>
-      </form>
+      </div>
 
       <div className={`admin-picture-status ${status.tone}`}>
         {status.tone === "error" ? <AlertTriangle aria-hidden="true" /> : <Clock3 aria-hidden="true" />}

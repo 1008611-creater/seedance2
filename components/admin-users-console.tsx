@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Clock3, Loader2, ShieldCheck, UsersRound, WalletCards } from "lucide-react";
 
 type AdminUserSummary = {
@@ -10,6 +10,7 @@ type AdminUserSummary = {
   lastLoginAt?: string;
   loginCount?: number;
   phone?: string;
+  role?: "admin" | "user";
   recentEvents?: Array<{
     createdAt: string;
     eventType: string;
@@ -76,38 +77,30 @@ function eventLabel(eventType: string) {
 }
 
 export function AdminUsersConsole() {
-  const [adminToken, setAdminToken] = useState("");
   const [users, setUsers] = useState<AdminUserSummary[]>([]);
   const [storageMode, setStorageMode] = useState("");
   const [status, setStatus] = useState<Status>({
-    message: "输入后台口令后读取统一账号列表。",
+    message: "管理员会话已验证，正在读取统一账号列表。",
     tone: "idle"
   });
 
   const stats = useMemo(
-    () => ({
-      users: users.length,
-      active: users.filter((user) => user.lastLoginAt).length,
-      balance: users.reduce((sum, user) => sum + (user.wallet?.balance ?? 0), 0)
-    }),
+    () => {
+      const wallets = users.map((user) => user.wallet).filter((wallet): wallet is NonNullable<AdminUserSummary["wallet"]> => Boolean(wallet));
+      return {
+        users: users.length,
+        active: users.some((user) => user.lastLoginAt !== undefined) ? users.filter((user) => user.lastLoginAt).length : null,
+        balance: wallets.length ? wallets.reduce((sum, wallet) => sum + wallet.balance, 0) : null
+      };
+    },
     [users]
   );
 
-  async function loadUsers(event?: FormEvent) {
-    event?.preventDefault();
-    const token = adminToken.trim();
-    if (!token) {
-      setStatus({ message: "请输入后台口令。", tone: "error" });
-      return;
-    }
-
+  const loadUsers = useCallback(async () => {
     setStatus({ message: "正在读取用户列表...", tone: "busy" });
     try {
       const response = await fetch("/api/admin/users?limit=80", {
-        cache: "no-store",
-        headers: {
-          "x-admin-token": token
-        }
+        cache: "no-store"
       });
       const data = await readJson<UsersResponse>(response);
       if (!response.ok) throw new Error(data.error || "用户列表读取失败。");
@@ -117,7 +110,11 @@ export function AdminUsersConsole() {
     } catch (error) {
       setStatus({ message: error instanceof Error ? error.message : "用户列表读取失败。", tone: "error" });
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    void loadUsers();
+  }, [loadUsers]);
 
   return (
     <section className="admin-users-panel" aria-label="统一用户管理">
@@ -130,22 +127,16 @@ export function AdminUsersConsole() {
         <p>集中查看邮箱、手机号、来源站点、最近登录、验证码事件和图片余额，先用现有后台口令保护。</p>
       </div>
 
-      <form className="admin-users-auth" onSubmit={loadUsers}>
-        <label>
-          <span>后台口令</span>
-          <input
-            autoComplete="off"
-            placeholder="ADMIN_TOKEN"
-            type="password"
-            value={adminToken}
-            onChange={(event) => setAdminToken(event.target.value)}
-          />
-        </label>
-        <button type="submit" disabled={status.tone === "busy"}>
+      <div className="admin-users-auth">
+        <div>
+          <span>管理员会话</span>
+          <small>HttpOnly Cookie · 服务端角色校验</small>
+        </div>
+        <button type="button" disabled={status.tone === "busy"} onClick={() => void loadUsers()}>
           {status.tone === "busy" ? <Loader2 className="spinning" aria-hidden="true" /> : <ShieldCheck aria-hidden="true" />}
-          读取用户
+          刷新用户
         </button>
-      </form>
+      </div>
 
       <div className={`admin-users-status ${status.tone}`}>
         {status.tone === "error" ? <AlertTriangle aria-hidden="true" /> : <Clock3 aria-hidden="true" />}
@@ -159,12 +150,12 @@ export function AdminUsersConsole() {
           <small>统一账号</small>
         </div>
         <div>
-          <span>{stats.active}</span>
-          <small>有登录记录</small>
+          <span>{stats.active ?? "—"}</span>
+          <small>{stats.active === null ? "登录记录未接通" : "有登录记录"}</small>
         </div>
         <div>
-          <span>{stats.balance}</span>
-          <small>图片余额合计</small>
+          <span>{stats.balance ?? "—"}</span>
+          <small>{stats.balance === null ? "图片余额未接通" : "图片余额合计"}</small>
         </div>
       </div>
 
@@ -178,9 +169,9 @@ export function AdminUsersConsole() {
                 <small>{user.userId}</small>
               </div>
               <div>
-                <span>来源</span>
-                <strong>{user.sourceHost || user.sourceSite || "未记录"}</strong>
-                <small>登录 {user.loginCount ?? 0} 次</small>
+                <span>角色</span>
+                <strong>{user.role === "admin" ? "管理员" : "普通用户"}</strong>
+                <small>{user.sourceHost || user.sourceSite || "profiles"}</small>
               </div>
               <div>
                 <span>最近登录</span>
@@ -214,7 +205,7 @@ export function AdminUsersConsole() {
           <div className="admin-users-empty">
             <UsersRound aria-hidden="true" />
             <strong>暂无用户数据</strong>
-            <p>输入后台口令后读取；用户通过统一登录页成功登录后会出现在这里。</p>
+            <p>数据库已连接但没有可展示的统一账号，或相关迁移尚未接通。</p>
           </div>
         )}
       </div>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ArrowLeft, Sparkles } from "lucide-react";
 import { AdminPictureConsole } from "@/components/admin-picture-console";
+import { AdminSessionGate } from "@/components/admin-session-gate";
 
 export const metadata: Metadata = {
   title: "AI 制图台管理 - 后台",
@@ -9,7 +10,8 @@ export const metadata: Metadata = {
 
 export default function AdminPicturePage() {
   return (
-    <main className="admin-hub">
+    <AdminSessionGate returnTo="/admin/picture">
+      <main className="admin-hub">
       <section className="admin-hub-panel" aria-label="AI 制图台管理入口">
         <span className="admin-hub-kicker">
           <Sparkles aria-hidden="true" />
@@ -24,6 +26,7 @@ export default function AdminPicturePage() {
       </section>
 
       <AdminPictureConsole />
-    </main>
+      </main>
+    </AdminSessionGate>
   );
 }
