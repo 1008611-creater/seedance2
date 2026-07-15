@@ -414,7 +414,7 @@ const caseLibraryCopy = {
   }
 } as const;
 
-const image2DataVersion = "20260520-hide-broken-v4";
+const image2DataVersion = "20260715-replication-guide-v1";
 const favoriteCaseStorageKey = "image2-case-favorites:v1";
 const generationHistoryStorageKey = "image2-generation-history:v1";
 const promptWorkbenchStorageKey = "image2-prompt-workbench:v1";

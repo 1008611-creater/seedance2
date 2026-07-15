@@ -23,6 +23,7 @@ type Image2ContentCase = {
 };
 
 const dataPath = path.join(process.cwd(), "public", "data", "image2-case-library.json");
+const caseLibrarySourcePath = path.join(process.cwd(), "components", "image2-case-library.tsx");
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3012";
 
 test("every published case has an actionable replication guide", async () => {
@@ -72,7 +73,7 @@ test("retired sources are clearly marked and do not expose dead repository links
 });
 
 test("case detail renders the replication playbook and archived-source boundary", async ({ page }) => {
-  await page.goto(`${baseUrl}/image2-cases`);
+  await page.goto(`${baseUrl}/image2-cases?content-check=replication-guide-v1`);
   const detail = page.locator(".case-detail");
   await expect(detail.getByRole("region", { name: "案例复刻指南" })).toBeVisible({ timeout: 15_000 });
   await expect(detail).toContainText("适合做什么");
@@ -83,4 +84,9 @@ test("case detail renders the replication playbook and archived-source boundary"
   await expect(detail).toContainText("常见失败点");
   await expect(detail.getByRole("region", { name: "案例复用标注" })).toContainText("存量归档");
   await expect(detail.getByRole("link", { name: "GitHub 记录" })).toHaveCount(0);
+});
+
+test("case-library cache version is advanced with the replication-guide dataset", async () => {
+  const source = await readFile(caseLibrarySourcePath, "utf8");
+  expect(source).toContain('const image2DataVersion = "20260715-replication-guide-v1"');
 });
