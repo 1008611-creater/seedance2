@@ -78,6 +78,8 @@ type Image2Case = {
   promptStructure?: PromptStructure;
   reuseProfile?: ReuseProfile;
   replicationGuide?: ReplicationGuide;
+  editorialProfile?: EditorialProfile;
+  promptFamily?: PromptFamily;
 };
 
 type PromptStructure = {
@@ -143,6 +145,21 @@ type ReplicationGuide = {
   keepFixed: string[];
   verification: string[];
   failureWatchouts: string[];
+};
+
+type EditorialProfile = {
+  score: number;
+  tier: "精选" | "高价值" | "可参考";
+  strengths: string[];
+  cautions: string[];
+  basis: string;
+};
+
+type PromptFamily = {
+  id: string;
+  size: number;
+  primary: boolean;
+  variantIndex: number;
 };
 
 type Image2AssetSnapshot = CaseAssetState & {
@@ -414,7 +431,7 @@ const caseLibraryCopy = {
   }
 } as const;
 
-const image2DataVersion = "20260715-replication-guide-v1";
+const image2DataVersion = "20260715-editorial-curation-v1";
 const initialVisibleCaseCount = 48;
 const visibleCasePageSize = 48;
 const favoriteCaseStorageKey = "image2-case-favorites:v1";
@@ -1547,7 +1564,15 @@ function CaseDetailContent({
         </div>
         <p className="case-detail-original-title">{localized.titleSecondary}</p>
         <div className="case-tag-row">
-          {[localized.categoryLabel, item.sourceCategory, item.sourceStatus === "archived" ? "存量归档" : undefined, localized.promptKind || item.promptKind, item.resolution, `${language === "zh" ? "价值" : "Score"} ${item.valueScore}`]
+          {[
+            localized.categoryLabel,
+            item.sourceCategory,
+            item.sourceStatus === "archived" ? "存量归档" : undefined,
+            item.promptFamily && item.promptFamily.size > 1 ? `${item.promptFamily.size} 个同提示词变体` : undefined,
+            localized.promptKind || item.promptKind,
+            item.resolution,
+            `${language === "zh" ? "编辑评分" : "Editorial score"} ${item.valueScore}`
+          ]
             .filter((tag): tag is string => Boolean(tag))
             .map((tag) => (
               <span key={tag}>{tag}</span>
@@ -1563,6 +1588,20 @@ function CaseDetailContent({
           </div>
           <p>{reuse.note}</p>
         </section>
+
+        {item.editorialProfile ? (
+          <section className="case-editorial-profile" aria-label="案例编辑评分">
+            <div>
+              <strong>{item.editorialProfile.score}</strong>
+              <span>{item.editorialProfile.tier}</span>
+              {item.editorialProfile.strengths.map((entry) => (
+                <em key={entry}>{entry}</em>
+              ))}
+            </div>
+            {item.editorialProfile.cautions.length ? <p>{item.editorialProfile.cautions.join(" · ")}</p> : null}
+            <small>评分依据：{item.editorialProfile.basis}</small>
+          </section>
+        ) : null}
 
         {item.replicationGuide ? (
           <section className="case-replication-guide" aria-label="案例复刻指南">
@@ -2210,6 +2249,7 @@ export function Image2CaseLibrary() {
   const [sourceId, setSourceId] = useState("全部");
   const [category, setCategory] = useState("全部");
   const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [showPromptVariants, setShowPromptVariants] = useState(false);
   const [favoriteCaseKeys, setFavoriteCaseKeys] = useState<Set<string>>(() => new Set());
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [rewriteCopiedKey, setRewriteCopiedKey] = useState<string | null>(null);
@@ -2605,6 +2645,8 @@ export function Image2CaseLibrary() {
       const matchesCategory = category === "全部" || item.category === category;
       const matchesFavorite = !favoritesOnly || favoriteCaseKeys.has(getCaseKey(item));
       const matchesCollection = !activeCollection || activeCollection.caseKeys.includes(getCaseKey(item));
+      const matchesPromptFamily =
+        showPromptVariants || Boolean(q) || favoritesOnly || Boolean(activeCollection) || item.promptFamily?.primary !== false;
       const haystack = normalize(
         [
           item.id,
@@ -2622,16 +2664,20 @@ export function Image2CaseLibrary() {
           item.sourceLabel
         ].join(" ")
       );
-      return matchesSource && matchesCategory && matchesFavorite && matchesCollection && (!q || haystack.includes(q));
+      return matchesSource && matchesCategory && matchesFavorite && matchesCollection && matchesPromptFamily && (!q || haystack.includes(q));
     });
 
     return rows.sort((a, b) => b.valueScore - a.valueScore || b.id - a.id);
-  }, [activeCollection, cases, category, favoriteCaseKeys, favoritesOnly, query, sourceId]);
+  }, [activeCollection, cases, category, favoriteCaseKeys, favoritesOnly, query, showPromptVariants, sourceId]);
+  const promptVariantExtraCount = useMemo(
+    () => cases.filter((item) => item.promptFamily && !item.promptFamily.primary).length,
+    [cases]
+  );
   const visibleCases = useMemo(() => filteredCases.slice(0, visibleCaseCount), [filteredCases, visibleCaseCount]);
 
   useEffect(() => {
     setVisibleCaseCount(initialVisibleCaseCount);
-  }, [activeCollection?.id, category, favoritesOnly, query, sourceId]);
+  }, [activeCollection?.id, category, favoritesOnly, query, showPromptVariants, sourceId]);
 
   const selectedCaseSummary = useMemo(
     () => cases.find((item) => getCaseKey(item) === selectedKey) ?? filteredCases[0] ?? (favoritesOnly ? undefined : cases[0]),
@@ -3569,6 +3615,16 @@ export function Image2CaseLibrary() {
                   onChange={(event) => setQuery(event.target.value)}
                 />
               </div>
+              {promptVariantExtraCount > 0 ? (
+                <button
+                  aria-pressed={showPromptVariants}
+                  className={showPromptVariants ? "case-variant-toggle active" : "case-variant-toggle"}
+                  type="button"
+                  onClick={() => setShowPromptVariants((value) => !value)}
+                >
+                  {showPromptVariants ? "隐藏重复变体" : `显示 ${promptVariantExtraCount} 个同提示词变体`}
+                </button>
+              ) : null}
             </div>
 
             <div className="case-gallery-control-grid">
@@ -3725,6 +3781,9 @@ export function Image2CaseLibrary() {
                       <div>
                         <small>
                           {item.caseCode ?? `Case ${item.id}`} · {localized.categoryLabel}
+                          {item.promptFamily && item.promptFamily.size > 1
+                            ? ` · 变体 ${item.promptFamily.variantIndex}/${item.promptFamily.size}`
+                            : ""}
                         </small>
                         <strong>{localized.title}</strong>
                         <em className="case-card-original-title">{localized.titleSecondary}</em>

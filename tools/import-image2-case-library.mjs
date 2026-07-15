@@ -6,6 +6,7 @@ const dataDir = path.join(projectRoot, "public", "data");
 const canghePath = path.join(dataDir, "image2-canghe-cases.json");
 const outputPath = path.join(dataDir, "image2-case-library.json");
 const manualCasesPath = path.join(dataDir, "image2-manual-cases.json");
+const offlineMode = process.argv.includes("--offline");
 
 const wuyoscarRepo = "https://github.com/wuyoscar/gpt_image_2_skill";
 const wuyoscarRaw = "https://raw.githubusercontent.com/wuyoscar/gpt_image_2_skill/main";
@@ -136,7 +137,7 @@ const evolinkCaseFiles = [
 
 function promptKind(prompt) {
   const trimmed = (prompt || "").trim();
-  if (trimmed.startsWith("{") || trimmed.startsWith("[")) return "JSON/结构化";
+  if (trimmed.startsWith("{") || /^\[\s*(?:\{|\[|"|-?\d)/.test(trimmed)) return "JSON/结构化";
   if (/英文版|English|Prompt:/i.test(trimmed)) return "中英混合";
   if (/^[\x00-\x7F\s.,:;'"!?()[\]{}<>/@#%&+-]+$/.test(trimmed.slice(0, 300))) return "英文";
   return "中文";
@@ -255,7 +256,7 @@ function promptStructureFor(item) {
 
 function reuseProfileFor(item) {
   const text = `${item.title} ${item.prompt || ""} ${item.riskNote || ""}`.toLowerCase();
-  const hasBrandRisk = /brand|logo|marvel|openai|youtube|meta|spider|品牌|商标|ip|reference_/.test(text);
+  const hasBrandRisk = /(?:\b(?:brand|logo|marvel|openai|youtube|meta|spider|ip)\b|品牌|商标|reference_)/.test(text);
   const hasStructuredPrompt = item.promptKind === "JSON/结构化" || /^\s*[\[{]/.test(item.prompt || "");
   const hasSource = Boolean(item.sourceUrl);
   const sourceConfidence = item.sourceStatus === "archived" ? "存量归档" : hasSource ? "来源可追溯" : "来源待核查";
@@ -387,12 +388,165 @@ function replicationGuideFor(item) {
   };
 }
 
+function editorialProfileFor(item) {
+  const prompt = String(item.prompt || "");
+  const text = prompt.toLowerCase();
+  const promptLength = prompt.length;
+  const hasStructuredPrompt =
+    item.promptKind === "JSON/结构化" || /^\s*\{/.test(prompt) || /^\s*\[\s*(?:\{|\[|"|-?\d)/.test(prompt);
+  const hasLiveSource = Boolean(item.sourceUrl || item.githubUrl) && item.sourceStatus !== "archived";
+  const hasVariables = [...prompt.matchAll(/(?:\{argument name=["']?([^"'}]+)|\[([A-Z][A-Z0-9_ ]{2,})\])/gi)].length >= 2;
+  const hasControlLanguage = /avoid|do not|no text|keep|preserve|must|不要|避免|保留|必须/.test(text);
+  const hasOutputConstraint = /\b(?:9:16|16:9|4:5|3:2|1:1|1024|1536|4k|8k|aspect ratio)\b/.test(text);
+  const hasBrandRisk = /(?:\b(?:brand|logo|marvel|nike|youtube|meta|spider|ip)\b|品牌|商标)/.test(text);
+  const strengths = [];
+  const cautions = [];
+  let score = 48;
+
+  score += promptLength < 80 ? -20 : promptLength < 160 ? -10 : promptLength < 320 ? 0 : promptLength < 700 ? 7 : promptLength < 1400 ? 12 : 10;
+  score += item.sourceUrl ? 8 : item.githubUrl ? 5 : -8;
+  if (item.sourceStatus === "archived") score -= 10;
+  if (hasStructuredPrompt) score += 10;
+  else if (item.promptKind === "中英混合") score += 4;
+  score += item.reuseProfile?.verdict === "direct" ? 8 : item.reuseProfile?.verdict === "study" ? 4 : 0;
+  if (item.replicationGuide) score += 4;
+  if (hasVariables) score += 5;
+  if (hasControlLanguage) score += 4;
+  if (hasOutputConstraint) score += 3;
+  if (hasBrandRisk) score -= 3;
+  if (item.sourceId === "wuyoscar") score += 3;
+  if (item.sourceId === "image2studio") score += 2;
+
+  if (promptLength >= 700) strengths.push("提示词完整");
+  else if (promptLength >= 320) strengths.push("描述较完整");
+  if (hasStructuredPrompt || hasVariables) strengths.push("变量结构清楚");
+  if (hasLiveSource) strengths.push("来源可核查");
+  if (item.reuseProfile?.verdict === "direct") strengths.push("可直接改写");
+  if (hasControlLanguage || hasOutputConstraint) strengths.push("输出约束明确");
+
+  if (promptLength < 160) cautions.push("提示词偏短");
+  if (!item.sourceUrl && !item.githubUrl) cautions.push("来源待核查");
+  if (item.sourceStatus === "archived") cautions.push("上游已归档");
+  if (hasBrandRisk) cautions.push("含品牌或 IP 元素");
+  if (!hasControlLanguage && !hasOutputConstraint) cautions.push("需补输出约束");
+
+  score = Math.max(35, Math.min(98, score));
+  if (item.sourceStatus === "archived") score = Math.min(79, score);
+  const tier = score >= 88 ? "精选" : score >= 72 ? "高价值" : "可参考";
+
+  return {
+    score,
+    tier,
+    strengths: strengths.slice(0, 4),
+    cautions: cautions.slice(0, 3),
+    basis: "提示词完整度、变量结构、输出约束、来源状态与复用难度"
+  };
+}
+
+function normalizePromptFamily(value = "") {
+  return value.toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+function promptFamilyId(value) {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return `PF-${(hash >>> 0).toString(36).toUpperCase()}`;
+}
+
+function attachPromptFamilies(items) {
+  const groups = new Map();
+  for (const item of items) {
+    const key = normalizePromptFamily(item.prompt);
+    const group = groups.get(key) || [];
+    group.push(item);
+    groups.set(key, group);
+  }
+
+  for (const [key, group] of groups) {
+    if (!key || group.length < 2) continue;
+    group.sort((left, right) => {
+      const archiveDelta = Number(left.sourceStatus === "archived") - Number(right.sourceStatus === "archived");
+      if (archiveDelta) return archiveDelta;
+      const scoreDelta = (right.editorialProfile?.score || 0) - (left.editorialProfile?.score || 0);
+      if (scoreDelta) return scoreDelta;
+      const sourceDelta = Number(Boolean(right.sourceUrl || right.githubUrl)) - Number(Boolean(left.sourceUrl || left.githubUrl));
+      if (sourceDelta) return sourceDelta;
+      return left.id - right.id;
+    });
+    const familyId = promptFamilyId(key);
+    group.forEach((item, index) => {
+      item.promptFamily = {
+        id: familyId,
+        size: group.length,
+        primary: index === 0,
+        variantIndex: index + 1
+      };
+    });
+  }
+
+  return items;
+}
+
+function applyEditorialSpecificity(items) {
+  const titleCounts = new Map();
+  for (const item of items) {
+    const title = String(item.title || "").trim();
+    titleCounts.set(title, (titleCounts.get(title) || 0) + 1);
+  }
+  const genericTitlePattern = /^(综合应用场景图|人物角色设定图|封面排版设计图|主题海报版式设计|电商商品展示设计|信息图可视化设计|绘画艺术风格图|建筑空间场景图|界面交互设计图|应用界面样机图|品牌徽标设计图|古风历史题材图|产品视觉展示图|摄影写实场景图|漫画分镜叙事设计)$/;
+
+  return items.map((item) => {
+    const title = String(item.title || "").trim();
+    const genericPenalty = genericTitlePattern.test(title) ? 7 : 0;
+    const repeatedPenalty = (titleCounts.get(title) || 0) > 2 ? 5 : 0;
+    if (!genericPenalty && !repeatedPenalty) return item;
+
+    const score = Math.max(35, item.editorialProfile.score - genericPenalty - repeatedPenalty);
+    const tier = score >= 88 ? "精选" : score >= 72 ? "高价值" : "可参考";
+    const cautions = [...new Set([...(item.editorialProfile.cautions || []), "标题区分度较低"])].slice(0, 3);
+    return {
+      ...item,
+      editorialProfile: {
+        ...item.editorialProfile,
+        score,
+        tier,
+        cautions
+      },
+      featured: tier === "精选",
+      valueScore: score,
+      valueTier: tier
+    };
+  });
+}
+
 function withReuseFields(item) {
   return {
     ...item,
     promptStructure: item.promptStructure || promptStructureFor(item),
-    reuseProfile: item.sourceStatus === "archived" ? reuseProfileFor(item) : item.reuseProfile || reuseProfileFor(item),
+    reuseProfile: reuseProfileFor(item),
     replicationGuide: item.replicationGuide || replicationGuideFor(item)
+  };
+}
+
+function normalizeCasePromptMetadata(item) {
+  return {
+    ...item,
+    promptKind: promptKind(item.prompt || ""),
+    promptPreview: promptPreview(item.prompt || "")
+  };
+}
+
+function withEditorialFields(item) {
+  const editorialProfile = editorialProfileFor(item);
+  return {
+    ...item,
+    editorialProfile,
+    featured: editorialProfile.tier === "精选",
+    valueScore: editorialProfile.score,
+    valueTier: editorialProfile.tier
   };
 }
 
@@ -751,6 +905,12 @@ function fallbackCasesFromExisting(existingPayload, sourceId) {
   return (existingPayload?.cases || []).filter((item) => item.sourceId === sourceId);
 }
 
+function requireExistingSource(existingPayload, sourceId) {
+  const cases = fallbackCasesFromExisting(existingPayload, sourceId);
+  if (!cases.length) throw new Error(`Offline import requires existing ${sourceId} cases.`);
+  return cases;
+}
+
 async function importWithFallback({ sourceId, importFn, existingPayload }) {
   try {
     return await importFn();
@@ -809,11 +969,13 @@ const existingPayload = await readJsonIfExists(outputPath);
 const manualPayload = await readJsonIfExists(manualCasesPath);
 const canghePayload = JSON.parse(await readFile(canghePath, "utf-8"));
 const cangheCases = canghePayload.cases.map(adaptCangheCase);
-const wuyoscarCases = await importWithFallback({
-  sourceId: "wuyoscar",
-  importFn: importWuyoscar,
-  existingPayload
-});
+const wuyoscarCases = offlineMode
+  ? requireExistingSource(existingPayload, "wuyoscar")
+  : await importWithFallback({
+      sourceId: "wuyoscar",
+      importFn: importWuyoscar,
+      existingPayload
+    });
 const existingEvolinkCases = (existingPayload?.cases || []).filter((item) => item.sourceId === "evolink");
 const evolinkCasesImported = existingEvolinkCases.length
   ? existingEvolinkCases.map((item) => ({
@@ -824,11 +986,13 @@ const evolinkCasesImported = existingEvolinkCases.length
       sourceNote: "EvoLinkAI 最后一次成功导入的存量案例；上游仓库已下线，原作者链接仍保留时优先回到原作者页面核查。"
     }))
   : await importEvolink();
-const image2studioCases = await importWithFallback({
-  sourceId: "image2studio",
-  importFn: importImage2Studio,
-  existingPayload
-});
+const image2studioCases = offlineMode
+  ? requireExistingSource(existingPayload, "image2studio")
+  : await importWithFallback({
+      sourceId: "image2studio",
+      importFn: importImage2Studio,
+      existingPayload
+    });
 const manualCases = (manualPayload?.cases || []).map((item) => ({
   ...item,
   promptPreview: item.promptPreview || promptPreview(item.prompt || ""),
@@ -837,8 +1001,14 @@ const manualCases = (manualPayload?.cases || []).map((item) => ({
   featured: Boolean(item.featured),
   valueTier: item.valueTier || valueTier(item.valueScore || 70, item.featured)
 }));
-const cases = [...cangheCases, ...wuyoscarCases, ...evolinkCasesImported, ...image2studioCases, ...manualCases]
-  .map(withReuseFields)
+const cases = attachPromptFamilies(
+  applyEditorialSpecificity(
+    [...cangheCases, ...wuyoscarCases, ...evolinkCasesImported, ...image2studioCases, ...manualCases]
+      .map(normalizeCasePromptMetadata)
+      .map(withReuseFields)
+      .map(withEditorialFields)
+  )
+)
   .sort((a, b) => b.valueScore - a.valueScore || a.id - b.id);
 const manualSources = buildManualSourceEntries(manualPayload);
 
