@@ -82,13 +82,18 @@ test("case detail renders the replication playbook and archived-source boundary"
   await expect(detail).toContainText("必须保持");
   await expect(detail).toContainText("出图验收");
   await expect(detail).toContainText("常见失败点");
-  await expect(detail.getByRole("region", { name: "案例复用标注" })).toContainText("存量归档");
-  await expect(detail.getByRole("link", { name: "GitHub 记录" })).toHaveCount(0);
-
   const cards = page.locator(".case-card-shell");
   await expect(cards).toHaveCount(48);
   await page.getByRole("button", { name: "加载更多案例" }).click();
   await expect(cards).toHaveCount(96);
+
+  await page.getByLabel("搜索案例").fill("E295-361");
+  await expect(cards).toHaveCount(1);
+  const archivedCaseButton = page.locator(".case-card");
+  await expect(archivedCaseButton).toHaveCount(1);
+  await archivedCaseButton.click();
+  await expect(detail.getByRole("region", { name: "案例复用标注" })).toContainText("存量归档");
+  await expect(detail.getByRole("link", { name: "GitHub 记录" })).toHaveCount(0);
 });
 
 test("case-library cache version is advanced with the replication-guide dataset", async () => {
