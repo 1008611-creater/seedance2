@@ -49,6 +49,7 @@ type Image2Case = {
   sourceCaseId?: string;
   sourceId?: string;
   sourceName?: string;
+  sourceStatus?: "archived";
   title: string;
   category: string;
   categoryLabel: string;
@@ -76,6 +77,7 @@ type Image2Case = {
   publishAngle?: string;
   promptStructure?: PromptStructure;
   reuseProfile?: ReuseProfile;
+  replicationGuide?: ReplicationGuide;
 };
 
 type PromptStructure = {
@@ -131,6 +133,16 @@ type CaseAssetState = {
   activeCollectionId: string | null;
   collections: CaseCollection[];
   notes: Record<string, CaseNote>;
+};
+
+type ReplicationGuide = {
+  workflow: "参考图编辑" | "文本生成";
+  bestFor: string;
+  requiredInputs: string[];
+  editableVariables: string[];
+  keepFixed: string[];
+  verification: string[];
+  failureWatchouts: string[];
 };
 
 type Image2AssetSnapshot = CaseAssetState & {
@@ -1533,7 +1545,7 @@ function CaseDetailContent({
         </div>
         <p className="case-detail-original-title">{localized.titleSecondary}</p>
         <div className="case-tag-row">
-          {[localized.categoryLabel, item.sourceCategory, localized.promptKind || item.promptKind, item.resolution, `${language === "zh" ? "价值" : "Score"} ${item.valueScore}`]
+          {[localized.categoryLabel, item.sourceCategory, item.sourceStatus === "archived" ? "存量归档" : undefined, localized.promptKind || item.promptKind, item.resolution, `${language === "zh" ? "价值" : "Score"} ${item.valueScore}`]
             .filter((tag): tag is string => Boolean(tag))
             .map((tag) => (
               <span key={tag}>{tag}</span>
@@ -1549,6 +1561,45 @@ function CaseDetailContent({
           </div>
           <p>{reuse.note}</p>
         </section>
+
+        {item.replicationGuide ? (
+          <section className="case-replication-guide" aria-label="案例复刻指南">
+            <header>
+              <div>
+                <small>REPLICATION PLAYBOOK</small>
+                <h3>复刻指南</h3>
+              </div>
+              <span>{item.replicationGuide.workflow}</span>
+            </header>
+            <p className="case-replication-best-for">
+              <strong>适合做什么</strong>
+              {item.replicationGuide.bestFor}
+            </p>
+            <div className="case-replication-grid">
+              {[
+                ["准备输入", item.replicationGuide.requiredInputs],
+                ["优先替换", item.replicationGuide.editableVariables],
+                ["必须保持", item.replicationGuide.keepFixed],
+                ["出图验收", item.replicationGuide.verification]
+              ].map(([label, entries]) => (
+                <div key={label as string}>
+                  <strong>{label as string}</strong>
+                  <ul>
+                    {(entries as string[]).map((entry) => (
+                      <li key={entry}>{entry}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+            <div className="case-replication-watchouts">
+              <strong>常见失败点</strong>
+              {item.replicationGuide.failureWatchouts.map((entry) => (
+                <span key={entry}>{entry}</span>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         <div className="case-prompt-box">
           <h3>{pageCopy.detail.promptTitle}</h3>

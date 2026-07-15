@@ -16,7 +16,8 @@ const detailFields = new Set([
   "riskNote",
   "publishAngle",
   "promptStructure",
-  "reuseProfile"
+  "reuseProfile",
+  "replicationGuide"
 ]);
 const unavailableImagePaths = new Set([
   "images/ad-creative_case179/output.jpg",
@@ -156,7 +157,8 @@ await Promise.all(
         riskNote: item.riskNote,
         publishAngle: item.publishAngle,
         promptStructure: item.promptStructure,
-        reuseProfile: item.reuseProfile
+        reuseProfile: item.reuseProfile,
+        replicationGuide: item.replicationGuide
       };
     const body = `${JSON.stringify(detailPayload)}\n`;
     return [
