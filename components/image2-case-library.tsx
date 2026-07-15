@@ -415,6 +415,8 @@ const caseLibraryCopy = {
 } as const;
 
 const image2DataVersion = "20260715-replication-guide-v1";
+const initialVisibleCaseCount = 48;
+const visibleCasePageSize = 48;
 const favoriteCaseStorageKey = "image2-case-favorites:v1";
 const generationHistoryStorageKey = "image2-generation-history:v1";
 const promptWorkbenchStorageKey = "image2-prompt-workbench:v1";
@@ -2263,6 +2265,7 @@ export function Image2CaseLibrary() {
   const [loadingDetailKey, setLoadingDetailKey] = useState<string | null>(null);
   const [isRadarOpen, setIsRadarOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [visibleCaseCount, setVisibleCaseCount] = useState(initialVisibleCaseCount);
   const [isFiltersCollapsed, setIsFiltersCollapsed] = useState(() => {
     if (typeof window === "undefined") return false;
     if (window.matchMedia("(max-width: 980px)").matches) return false;
@@ -2624,6 +2627,11 @@ export function Image2CaseLibrary() {
 
     return rows.sort((a, b) => b.valueScore - a.valueScore || b.id - a.id);
   }, [activeCollection, cases, category, favoriteCaseKeys, favoritesOnly, query, sourceId]);
+  const visibleCases = useMemo(() => filteredCases.slice(0, visibleCaseCount), [filteredCases, visibleCaseCount]);
+
+  useEffect(() => {
+    setVisibleCaseCount(initialVisibleCaseCount);
+  }, [activeCollection?.id, category, favoritesOnly, query, sourceId]);
 
   const selectedCaseSummary = useMemo(
     () => cases.find((item) => getCaseKey(item) === selectedKey) ?? filteredCases[0] ?? (favoritesOnly ? undefined : cases[0]),
@@ -3698,8 +3706,9 @@ export function Image2CaseLibrary() {
           </div>
 
           {filteredCases.length ? (
-            <div className="case-grid">
-              {filteredCases.map((item) => {
+            <>
+              <div className="case-grid">
+              {visibleCases.map((item) => {
                 const caseKey = getCaseKey(item);
                 const isFavorite = favoriteCaseKeys.has(caseKey);
                 const reuse = inferReuseProfile(item);
@@ -3764,7 +3773,18 @@ export function Image2CaseLibrary() {
                   </div>
                 );
               })}
-            </div>
+              </div>
+              {visibleCases.length < filteredCases.length ? (
+                <div className="case-load-more">
+                  <p>
+                    已显示 {visibleCases.length} / {filteredCases.length} 个案例
+                  </p>
+                  <button type="button" onClick={() => setVisibleCaseCount((count) => count + visibleCasePageSize)}>
+                    加载更多案例
+                  </button>
+                </div>
+              ) : null}
+            </>
           ) : (
             <div className="case-empty-results">
               <Heart aria-hidden="true" />

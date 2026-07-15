@@ -9291,6 +9291,38 @@ select:focus {
   gap: 12px;
 }
 
+.case-load-more {
+  display: grid;
+  place-items: center;
+  gap: 9px;
+  margin-top: 18px;
+  border-top: 1px solid #e0e9e6;
+  padding-top: 18px;
+}
+
+.case-load-more p {
+  margin: 0;
+  color: #687a76;
+  font-size: 12px;
+  font-weight: 820;
+}
+
+.case-load-more button {
+  min-height: 42px;
+  border: 1px solid rgba(15, 124, 102, 0.25);
+  border-radius: 999px;
+  padding: 0 22px;
+  color: #0d6f5b;
+  background: #f3fbf7;
+  font-size: 13px;
+  font-weight: 920;
+}
+
+.case-load-more button:hover {
+  border-color: #0f7c66;
+  background: #eaf8f2;
+}
+
 .case-card-shell {
   position: relative;
   display: grid;
