@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { resolveImage2SiteTarget } from "@/lib/legacy-storage-migration";
+import { resolveImage2SiteTarget } from "@/lib/image2-site-target";
 
 const legacyImage2Hosts = new Set(["image2.lsb0713.online", "ai.lsb0713.online"]);
 const sceneHosts = new Set(["scene.lsb0713.online"]);
