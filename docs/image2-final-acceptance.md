@@ -230,7 +230,7 @@ bash /home/niannian-admin/cutover.sh
 | `http://image2.cauai.fun` 未强制跳 HTTPS | 需在 Cloudflare 打开 Always Use HTTPS，属外部配置 |
 | 全库许可逐条核查 | 上游内容权利不明确；本站仅保留来源入口与 `licenseNote`，未宣称可商用 |
 | 万级规模性能压测 | 真实规模（1569）首屏与搜索量化指标已补齐（见第四节）；未构造 10k+ 合成样本 |
-| 1 张案例图超出代理上限 | `wuyoscar` 的 `W121`（Gothic Cathedral Interior）原图 **14.7 MiB** > 代理上限 **12 MiB**，经 `/api/image2/proxy` 返回 **413**，该图在页面上显示不出来。修法二选一：上限提到 16 MiB，或超限时回退为直连原图地址 |
+| ~~1 张案例图超出代理上限~~ | **已修复**：`wuyoscar` 的 `W121`（Gothic Cathedral Interior）原图 14.72 MiB 超代理 12 MiB 上限，原先两道检查都返回 **413** 导致该图显示不出来。现改为超限时 **302 回退直连原图**——不放宽上限（不放大单请求内存与带宽），代理也不再承担这份流量。实测 413→302，其余五源抽样仍全部 200 |
 | ~~未跟踪文件未纳入 git~~ | **已解决**：全部跟踪文件与新增文件已提交并推送（`codex/image2-source-adapters`） |
 
 ### 全库图片可用性核查（2026-10-06 补）
