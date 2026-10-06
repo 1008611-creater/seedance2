@@ -133,7 +133,12 @@ export async function GET(request: NextRequest) {
 
   const declaredLength = Number(response.headers.get("content-length") ?? 0);
   if (Number.isFinite(declaredLength) && declaredLength > maxBytes) {
-    return NextResponse.json({ error: "图片文件过大。" }, { status: 413 });
+    // 声明体积已超上限：回退为直连原图，而不是 413（与下方流式超限处理一致）。
+    // 这里必须一并改，否则声明了 content-length 的超大图会在读取前就被拦下。
+    return NextResponse.redirect(sourceUrl, {
+      status: 302,
+      headers: { "Cache-Control": "public, max-age=3600" }
+    });
   }
 
   const rawType = (response.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
@@ -169,7 +174,14 @@ export async function GET(request: NextRequest) {
       total += value.byteLength;
       if (total > maxBytes) {
         await reader.cancel().catch(() => {});
-        return NextResponse.json({ error: "图片文件过大。" }, { status: 413 });
+        // 超过上限时回退为直连原图，而不是返回 413。
+        // 413 会让这张图在页面上永久显示不出来（实测：wuyoscar W121 原图 14.7 MiB）。
+        // 302 让浏览器自行取原图，代理不再承担这份流量，上限值也不必放宽。
+        // 目标仍是我们刚校验过的地址，未新增任何白名单外主机。
+        return NextResponse.redirect(sourceUrl, {
+          status: 302,
+          headers: { "Cache-Control": "public, max-age=3600" }
+        });
       }
       chunks.push(value);
     }
