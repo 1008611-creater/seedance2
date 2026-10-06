@@ -7,6 +7,9 @@ const allowedHosts = new Set([
   "raw.githubusercontent.com",
   "cms-assets.youmind.com",
   "morphic.com",
+  // morphic.com 的图片会 308 到自己的 CDN，逐跳校验下必须显式放行，
+  // 否则该来源 40 条案例的图片全部 404（原实现自动跟随重定向时能显示）。
+  "external-cdn.morphic.com",
   "imgv3.fotor.com",
   "cdnblog.picsart.com",
   "github.com",
