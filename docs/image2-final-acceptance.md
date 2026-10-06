@@ -230,7 +230,28 @@ bash /home/niannian-admin/cutover.sh
 | `http://image2.cauai.fun` 未强制跳 HTTPS | 需在 Cloudflare 打开 Always Use HTTPS，属外部配置 |
 | 全库许可逐条核查 | 上游内容权利不明确；本站仅保留来源入口与 `licenseNote`，未宣称可商用 |
 | 万级规模性能压测 | 真实规模（1569）首屏与搜索量化指标已补齐（见第四节）；未构造 10k+ 合成样本 |
-| 未跟踪文件未纳入 git | `app/robots.ts`、`app/sitemap.ts`、`tools/`、`docs/` 等仍未提交；未获 commit / push 授权 |
+| 1 张案例图超出代理上限 | `wuyoscar` 的 `W121`（Gothic Cathedral Interior）原图 **14.7 MiB** > 代理上限 **12 MiB**，经 `/api/image2/proxy` 返回 **413**，该图在页面上显示不出来。修法二选一：上限提到 16 MiB，或超限时回退为直连原图地址 |
+| ~~未跟踪文件未纳入 git~~ | **已解决**：全部跟踪文件与新增文件已提交并推送（`codex/image2-source-adapters`） |
+
+### 全库图片可用性核查（2026-10-06 补）
+
+方法：按来源分组均匀抽样，逐张经本站 `/api/image2/proxy` 实取（不只测上游）。
+脚本 `output/audit-artifacts/image2-image-audit.cjs`、`image2-oversize-audit.cjs`（目录在 .gitignore 内）。
+
+| 来源 | 有图条数 | 抽样 | 代理实取成功 | 抽样最大体积 |
+|---|---|---|---|---|
+| canghe | 441 | 10 | 10/10 | 0.7 MB |
+| evolink | 490 | 10 | 10/10 | 0.4 MB |
+| wuyoscar | 162 | 10 | **9/10** | **14.7 MB** |
+| youmind | 128 | 10 | 10/10 | 0.4 MB |
+| zerolu | 72 | 10 | 10/10 | 0.4 MB |
+| morphic | 40 | 10 | 10/10 | 0.4 MB |
+| evolink-commerce-25 | 31 | 10 | 10/10 | 3.2 MB |
+| fotor-blog / image2studio | 24 / 24 | 10 / 10 | 10/10、10/10 | 0.7 MB / 0.0 MB |
+| picsart-blog | 6 | 6 | 6/6 | 0.1 MB |
+
+放大到每来源抽样 25 张（合计 229 张）复核超限比例：**仅 1 张 > 12 MiB（0.4%）**。
+结论：图片可用性整体健康（morphic 全 404 的问题已修复）；唯一失败点是上面那条超限单图。
 
 ### 文档状态
 
