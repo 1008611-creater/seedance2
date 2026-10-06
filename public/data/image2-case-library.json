@@ -107,7 +107,7 @@
       "lastSync": "2026-10-05"
     }
   ],
-  "importedAt": "2026-10-05T15:19:01.667Z",
+  "importedAt": "2026-10-06T05:47:22.086Z",
   "licenseNote": "多来源学习参考库：只用于分类、拆解、复刻练习；保留来源链接，不把第三方图片和提示词包装成自有素材。",
   "totalCases": 1610,
   "categories": [
@@ -142264,6 +142264,30 @@
         {
           "url": "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/1cac78effb25168c1f051e6148c8f5f3ce7fd92be239c8a7d2ed896b1062d0f0.png",
           "role": "output"
+        },
+        {
+          "url": "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/b217d7437dc741a7c273e37c85fe8448d321f283fcda03d128d20ee0d2514e24.png",
+          "role": "output"
+        },
+        {
+          "url": "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/7be4e1099f0c087569f26603f7e23f98b0ea287f094d4a8a2d65ac64efc527c2.png",
+          "role": "output"
+        },
+        {
+          "url": "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/1edc0faf263415720651585ef05e2ce74b68a9a8e48e5bcfec056c4babb06b2e.png",
+          "role": "output"
+        },
+        {
+          "url": "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/dd2c60f832e8a6ff2512341677e9605f311031a8c4ae38f3c84fbe5d936bac2a.png",
+          "role": "output"
+        },
+        {
+          "url": "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/d2b21829edae696c75bea99d432adfe4380729d60da3f778598e92678629b5fc.png",
+          "role": "output"
+        },
+        {
+          "url": "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/c22682cf03fa61fa538a16921b3f78ebaea335b7c52f09e6a331efd06c920b86.png",
+          "role": "output"
         }
       ],
       "extraImageUrls": [
@@ -142281,7 +142305,13 @@
         "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/c6c7ccebffec02b09b99f13e03b4935502b746021617242a836baf478ae1dc24.png",
         "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/67797d8dbc4dba01cc5d678016743b8fe04ca1c7edf39f4a9bc3163c1138af25.png",
         "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/1f9742c59585969b814eab7172a55573c236264a0a588d57d909867a12c73ed5.png",
-        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/1cac78effb25168c1f051e6148c8f5f3ce7fd92be239c8a7d2ed896b1062d0f0.png"
+        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/1cac78effb25168c1f051e6148c8f5f3ce7fd92be239c8a7d2ed896b1062d0f0.png",
+        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/b217d7437dc741a7c273e37c85fe8448d321f283fcda03d128d20ee0d2514e24.png",
+        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/7be4e1099f0c087569f26603f7e23f98b0ea287f094d4a8a2d65ac64efc527c2.png",
+        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/1edc0faf263415720651585ef05e2ce74b68a9a8e48e5bcfec056c4babb06b2e.png",
+        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/dd2c60f832e8a6ff2512341677e9605f311031a8c4ae38f3c84fbe5d936bac2a.png",
+        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/d2b21829edae696c75bea99d432adfe4380729d60da3f778598e92678629b5fc.png",
+        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/c22682cf03fa61fa538a16921b3f78ebaea335b7c52f09e6a331efd06c920b86.png"
       ],
       "prompt": "Replace the product in image 1 across images 2–7. Only the swapped product changes; keep everything else identical.",
       "sourceLabel": "EvoLinkAI · EvoLink / gpt-image-2.5-for-e-commerce",
@@ -149343,6 +149373,34 @@
         {
           "url": "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/b1a1c97b1c72073a59a4b0becfe99587f7dcedff921c07ed52d071e3ebc7433e.png",
           "role": "output"
+        },
+        {
+          "url": "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/2c51c84e00c951155eac7663bb45d6528d58de728bf7687bef8b9445ea914fac.png",
+          "role": "output"
+        },
+        {
+          "url": "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/e2f258ca13c963b1de383163d620e8b93c5bd5db9aa61c1c4c1795f0ff460954.png",
+          "role": "output"
+        },
+        {
+          "url": "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/006e1e78dcf6b9034fbd36b0915e866598e4aa39603ed2ed41e0df947966a2a5.png",
+          "role": "output"
+        },
+        {
+          "url": "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/d976bd35abce3828a8eaeb1f07d0a6ef9fd72f7e033f4d4a408fa0a553084f16.png",
+          "role": "output"
+        },
+        {
+          "url": "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/fb803c75bac50f0d5c72e9e0f16731e7a887b1f8714ed1d9dae34a88b4ff7c77.png",
+          "role": "output"
+        },
+        {
+          "url": "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/5948115ddac4ab0f54ea56f9c1eeb1eaf86d2f3aa6c24904ed67937c75c1d9bb.png",
+          "role": "output"
+        },
+        {
+          "url": "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/5e97ccc029ee066cb29ec80d8759b4273165291c309d067c61d525b8f1148cc5.png",
+          "role": "output"
         }
       ],
       "extraImageUrls": [
@@ -149360,7 +149418,14 @@
         "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/8275adf45f02827f5ddd48c0a0ca4855d2d9d8474ca9d70f195133ace9d39f76.png",
         "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/5f0a4a6bc58d4508decddeab6a6e916891e061396723b3aa9bf34586713bf4a2.png",
         "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/71e66bc70d95e5e4e60edb489ebcb84f14b3de490472c16f81f8ffd7aaf82e5c.png",
-        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/b1a1c97b1c72073a59a4b0becfe99587f7dcedff921c07ed52d071e3ebc7433e.png"
+        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/b1a1c97b1c72073a59a4b0becfe99587f7dcedff921c07ed52d071e3ebc7433e.png",
+        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/2c51c84e00c951155eac7663bb45d6528d58de728bf7687bef8b9445ea914fac.png",
+        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/e2f258ca13c963b1de383163d620e8b93c5bd5db9aa61c1c4c1795f0ff460954.png",
+        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/006e1e78dcf6b9034fbd36b0915e866598e4aa39603ed2ed41e0df947966a2a5.png",
+        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/d976bd35abce3828a8eaeb1f07d0a6ef9fd72f7e033f4d4a408fa0a553084f16.png",
+        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/fb803c75bac50f0d5c72e9e0f16731e7a887b1f8714ed1d9dae34a88b4ff7c77.png",
+        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/5948115ddac4ab0f54ea56f9c1eeb1eaf86d2f3aa6c24904ed67937c75c1d9bb.png",
+        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/5e97ccc029ee066cb29ec80d8759b4273165291c309d067c61d525b8f1148cc5.png"
       ],
       "prompt": "Generate a {platform} listing image set for {country} in {language}. The product is {product_name}, and the selling points are {selling_points}.",
       "sourceLabel": "EvoLinkAI · EvoLink / gpt-image-2.5-for-e-commerce",
@@ -149957,6 +150022,38 @@
         {
           "url": "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/d2f0a552a8fe31125197b1c63b52ebcc29fe84eba11c4c384e2da510b2363a9e.png",
           "role": "output"
+        },
+        {
+          "url": "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/dffd48fc927e8a115b383aa782b6ba9175c32d679ffc3e64fe152b9f90b4aa5c.png",
+          "role": "output"
+        },
+        {
+          "url": "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/a8a419780ce0451aee7ec2e7f51a325bb6ed3403d37c4c7ce758e01af83c6b1a.png",
+          "role": "output"
+        },
+        {
+          "url": "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/38c2e713fe195429dabc6ddf995bdcbb7d44f1f60d4cfc7babcefa1e5cac06e3.png",
+          "role": "output"
+        },
+        {
+          "url": "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/76635368156044e6dc95f1589079fa8e2a7742c557d8ae3f273507219759869e.png",
+          "role": "output"
+        },
+        {
+          "url": "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/2ff8ff93f8d9f755e271299bf9a98d179305fc174ef1a22e5aa2fd8eaf1eb86f.png",
+          "role": "output"
+        },
+        {
+          "url": "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/03fa89075125c671221111f38876fd878f42c39fc7a0572da9afd1502fc03ea3.jpg",
+          "role": "output"
+        },
+        {
+          "url": "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/823c71509846b19a25da8d0c3bba52480981bd9542c21359fa6f392501337079.jpg",
+          "role": "output"
+        },
+        {
+          "url": "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/2b31504e899f1c7ac5c104648da133b4c0515b0ae0d685c8e9f31380949a99ee.jpg",
+          "role": "output"
         }
       ],
       "extraImageUrls": [
@@ -149974,7 +150071,15 @@
         "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/e5d76f62f82f03405291f5c9ad854975b37cb93e623bc275945b06d64d14c14d.png",
         "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/1fdee45a43b464454477a4e3248322e49dcc18ff123a05b6e5696f7b281be3c4.png",
         "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/02c3c668aaea8d3a4a323522c224ddd9c928394421decd6f7c24b48751124d55.png",
-        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/d2f0a552a8fe31125197b1c63b52ebcc29fe84eba11c4c384e2da510b2363a9e.png"
+        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/d2f0a552a8fe31125197b1c63b52ebcc29fe84eba11c4c384e2da510b2363a9e.png",
+        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/dffd48fc927e8a115b383aa782b6ba9175c32d679ffc3e64fe152b9f90b4aa5c.png",
+        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/a8a419780ce0451aee7ec2e7f51a325bb6ed3403d37c4c7ce758e01af83c6b1a.png",
+        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/38c2e713fe195429dabc6ddf995bdcbb7d44f1f60d4cfc7babcefa1e5cac06e3.png",
+        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/76635368156044e6dc95f1589079fa8e2a7742c557d8ae3f273507219759869e.png",
+        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/2ff8ff93f8d9f755e271299bf9a98d179305fc174ef1a22e5aa2fd8eaf1eb86f.png",
+        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/03fa89075125c671221111f38876fd878f42c39fc7a0572da9afd1502fc03ea3.jpg",
+        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/823c71509846b19a25da8d0c3bba52480981bd9542c21359fa6f392501337079.jpg",
+        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/2b31504e899f1c7ac5c104648da133b4c0515b0ae0d685c8e9f31380949a99ee.jpg"
       ],
       "prompt": "This is a {product_description}. Generate A+ detail visuals for {country} in {language}.",
       "sourceLabel": "Community contribution · EvoLink / gpt-image-2.5-for-e-commerce",
@@ -158745,6 +158850,26 @@
         {
           "url": "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/9cc65b62005351a4570dacf16ff05476965c67984a968fc7d74fdbf5bb9a6225.png",
           "role": "output"
+        },
+        {
+          "url": "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/b50957bd8792b1fc635363b3cc6e7038b9d6e26a4b7c90e8331dea82932c928c.png",
+          "role": "output"
+        },
+        {
+          "url": "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/6a16883ee2a80bbb82d801d33ecef849858dc929cf6615f1314a0467f2a19534.png",
+          "role": "output"
+        },
+        {
+          "url": "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/56e22af6d84c15e5d5e3ad43984ae9fe6401078bdbb017e76ad3b7237e75db9f.png",
+          "role": "output"
+        },
+        {
+          "url": "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/5d25a09c8e81465b51de2246271ec0ba308aab03f64f6aa06125b0292f5e7b40.png",
+          "role": "output"
+        },
+        {
+          "url": "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/4a8161c87c1d9e4fe7de90cbcedf55ea08b88277d2e8d1ed17f2cfee5f8e985c.png",
+          "role": "output"
         }
       ],
       "extraImageUrls": [
@@ -158762,7 +158887,12 @@
         "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/62d3d10189af3511cd827330e475ca986f9b28085ae833f0d117ac9ef496df2b.png",
         "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/666b483ce861e93c1f347fa10c5397870e2498e08e1fd37f7625978dee0efb48.png",
         "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/f9d1d04eb5f417da2af7ed5c79b1d3c37c3e9d7e27566b81543064ffaf58abf1.png",
-        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/9cc65b62005351a4570dacf16ff05476965c67984a968fc7d74fdbf5bb9a6225.png"
+        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/9cc65b62005351a4570dacf16ff05476965c67984a968fc7d74fdbf5bb9a6225.png",
+        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/b50957bd8792b1fc635363b3cc6e7038b9d6e26a4b7c90e8331dea82932c928c.png",
+        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/6a16883ee2a80bbb82d801d33ecef849858dc929cf6615f1314a0467f2a19534.png",
+        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/56e22af6d84c15e5d5e3ad43984ae9fe6401078bdbb017e76ad3b7237e75db9f.png",
+        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/5d25a09c8e81465b51de2246271ec0ba308aab03f64f6aa06125b0292f5e7b40.png",
+        "https://pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev/github-repo-media/gpt-image-2-for-e-commerce/.codex/gpt-image-2.5-migration/media/4a8161c87c1d9e4fe7de90cbcedf55ea08b88277d2e8d1ed17f2cfee5f8e985c.png"
       ],
       "prompt": "Generate a {platform} listing image set for {country} in {language}.",
       "sourceLabel": "EvoLinkAI · EvoLink / gpt-image-2.5-for-e-commerce",

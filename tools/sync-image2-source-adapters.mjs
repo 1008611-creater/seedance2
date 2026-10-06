@@ -133,11 +133,14 @@ const slug = (v) => clean(v).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/
 const mdUrl = (v) => { const m = String(v || "").match(/https?:\/\/[^\s)>]+/i); return m ? m[0].replace(/[.,;]+$/, "") : ""; };
 const sourceUrl = (block) => mdUrl((block.split("\n").find((x) => /source\s*:/i.test(x))) || "");
 
+// 单块图片上限。EvoLink 电商的 Case 会把多个 Example 的图表收在同一个块里，
+// 上限过小会静默截断（原为 16，导致 4 个 Case 块共 26 张图丢失）。
+// 48 覆盖现有最大块（24 张），同时仍能挡住异常膨胀。
 function images(block, id) {
   const a = [];
   for (const m of block.matchAll(/<img\b[^>]*\bsrc=["']([^"']+)["']/gi)) a.push(m[1]);
   for (const m of block.matchAll(/!\[[^\]]*\]\(([^)\s]+)/g)) a.push(m[1]);
-  return [...new Set(a.filter((x) => x && !/badge|shields\.io|trendshift/i.test(x)).map((x) => /^https?:/i.test(x) ? x : id === "zerolu" ? "https://raw.githubusercontent.com/ZeroLu/awesome-gpt-image/main/" + x.replace(/^\.?\//, "") : x))].slice(0, 16);
+  return [...new Set(a.filter((x) => x && !/badge|shields\.io|trendshift/i.test(x)).map((x) => /^https?:/i.test(x) ? x : id === "zerolu" ? "https://raw.githubusercontent.com/ZeroLu/awesome-gpt-image/main/" + x.replace(/^\.?\//, "") : x))].slice(0, 48);
 }
 
 function blocks(text, pattern) {
