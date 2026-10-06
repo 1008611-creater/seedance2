@@ -32,10 +32,9 @@
 |---|---|---|
 | `app/migrate/page.tsx` | 已删除 | 旧域作废后，该页成为指向 404 旧域的死链入口 |
 | `components/legacy-storage-migration.tsx` | 已删除 | 迁移页 UI |
-| `lib/legacy-storage-migration.ts` | **保留** | `proxy.ts` 依赖其中的 `resolveImage2SiteTarget()` |
+| `lib/legacy-storage-migration.ts` | 已清理 | 迁移工具已无调用方；仅保留 `resolveImage2SiteTarget()` 并改名为 `lib/image2-site-target.ts` |
 
-**遗留死代码提示（未处理，待定）**：`lib/legacy-storage-migration.ts` 里除 `resolveImage2SiteTarget()` 外，`scanMigratableStorage` / `buildMigrationPayload` / `encodeMigrationPayload` / `decodeMigrationPayload` / `mergeMigrationPayload` / `buildMigrationLink` 等约 250 行迁移逻辑已无调用方。
-该文件目前**未纳入 git 跟踪**，直接删除会丢失，故未动。若要清理，建议先纳入版本控制再删，或只保留 `resolveImage2SiteTarget` 与常量。
+**死代码已清理（2026-10-06）**：原 `lib/legacy-storage-migration.ts` 中除地址解析外的约 250 行迁移逻辑（`scanMigratableStorage` / `buildMigrationPayload` / `encodeMigrationPayload` / `decodeMigrationPayload` / `mergeMigrationPayload` / `buildMigrationLink` 等）已无任何调用方，现已删除；仍在使用的最小部分抽为 `lib/image2-site-target.ts`，`proxy.ts` 同步更新引用。
 
 ## 四、线上部署事实（前序记录，本次未复验）
 
@@ -49,7 +48,7 @@
 | 项 | 说明 | 状态 |
 |---|---|---|
 | `http://image2.cauai.fun` 强制跳 HTTPS | 实测 `http://` 返回 200，未跳转。需在 Cloudflare 打开 Always Use HTTPS | 待授权（外部配置） |
-| 仓库提交 | `app/robots.ts`、`app/sitemap.ts`、`lib/legacy-storage-migration.ts`、`tools/`、`docs/` 等仍未跟踪 | 待授权 |
+| 仓库提交 | 已完成（2026-10-06）：本轮 4 个提交已推送，本地与远程同为 `95bd7b6`，工作区干净 | ✅ 完成 |
 
 ## 六、回滚
 
