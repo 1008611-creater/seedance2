@@ -1,4 +1,4 @@
-import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const dataDir = path.join(process.cwd(), "public", "data");
@@ -113,6 +113,10 @@ const omitDetailFields = (item) => {
   };
 };
 
+// 分片目录是纯生成物：每次重建前先清空。
+// 否则已下线或改名的案例会留下陈旧分片——它们不被 index 引用，却仍能被公开访问
+// （实测遗留：youmind-Y1/Y2/Y5/Y6 共 8 个文件，来自更早一次导入）。
+await rm(detailsDir, { recursive: true, force: true });
 await mkdir(detailsDir, { recursive: true });
 
 const countBy = (items, getKey) =>
