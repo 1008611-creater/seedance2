@@ -25,6 +25,22 @@ export function proxy(request: NextRequest) {
   const host = requestHost(request);
   const { pathname } = request.nextUrl;
 
+  // 明文 http 访问本站时跳转到 https。
+  // 判据是边缘转发的 X-Forwarded-Proto —— 它反映「用户到边缘」的协议，
+  // 与边缘回源用 http 还是 https 无关，因此不会与源站形成重定向循环。
+  // 逃生开关：IMAGE2_DISABLE_HTTPS_REDIRECT=1 可临时关闭。
+  const forwardedProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim().toLowerCase();
+  if (
+    forwardedProto === "http" &&
+    image2SiteHosts.has(host) &&
+    process.env.IMAGE2_DISABLE_HTTPS_REDIRECT !== "1"
+  ) {
+    // 用绝对 URL 重建，不要改 clone() 的 host/port ——
+    // NextURL 会保留内部端口（如 :3052），导致 Location 带上它、跳转后 502。
+    const url = new URL(`${pathname}${request.nextUrl.search}`, `https://${host}`);
+    return NextResponse.redirect(url, 301);
+  }
+
   if (legacyImage2Hosts.has(host) && process.env.IMAGE2_DISABLE_LEGACY_REDIRECT !== "1") {
     return NextResponse.redirect(image2TargetUrl(pathname, request.nextUrl.search), 308);
   }
