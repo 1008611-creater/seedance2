@@ -57,7 +57,20 @@ test('image2 cases can save and sync local asset snapshots', async ({ page }) =>
   await expect(page.getByLabel('案例备注')).toHaveValue(note);
 
   const apiResponse = await page.request.get(`${baseUrl}/api/image2/assets`);
-  expect(apiResponse.status()).toBe(401);
+  const apiStatus = apiResponse.status();
+  if (apiStatus === 200) {
+    // Local JSON store mode has no cloud credentials, so anonymous reads resolve to an empty local snapshot.
+    const payload = (await apiResponse.json()) as { storageMode?: string };
+    expect(payload.storageMode).toBe('local-json-store');
+  } else if (apiStatus === 503) {
+    // Production runtime without IMAGE2_ASSET_SYNC_BACKEND=supabase: the route refuses to serve the
+    // file-backed store instead of exposing a shared snapshot, so 503 is the documented state.
+    const payload = (await apiResponse.json()) as { error?: string };
+    expect(payload.error ?? '').toContain('未配置');
+  } else {
+    // Supabase asset backend: anonymous reads must be rejected instead of leaking another user's snapshot.
+    expect(apiStatus).toBe(401);
+  }
 
   await page.evaluate(
     ([assetKey, favoriteKey, promptKey, reuseKey]) => {

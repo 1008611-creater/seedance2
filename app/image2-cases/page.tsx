@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Image2CaseLibrary } from "@/components/image2-case-library";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://image2.lsb0713.online"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_IMAGE2_SITE_URL || "https://image2.cauai.fun"),
   title: "Image2 案例灵感库 - 搜索、拆解与复用提示词",
   description: "浏览可追溯的 Image2 案例，按用途、风格与来源筛选，复制提示词、保存收藏并继续生成。",
   alternates: { canonical: "/image2-cases" },

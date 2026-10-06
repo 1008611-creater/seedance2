@@ -61,7 +61,8 @@
     "bb:pages": "node tools/bitbrowser-playwright.mjs pages",
     "bb:goto": "node tools/bitbrowser-playwright.mjs goto",
     "bb:screenshot": "node tools/bitbrowser-playwright.mjs screenshot",
-    "bb:monitor": "node tools/bitbrowser-action-monitor.mjs"
+    "bb:monitor": "node tools/bitbrowser-action-monitor.mjs",
+    "sync:image2-sources": "node tools/sync-image2-source-adapters.mjs --write"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.1",

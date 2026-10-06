@@ -2,7 +2,7 @@
 
 Production site:
 
-- Main Image2 case-library site: `https://image2.lsb0713.online`
+- Main Image2 case-library site: `https://image2.cauai.fun`
 - Standalone Docker scene service: `https://scene.lsb0713.online`
 - Public picture studio: `https://picture.lsb0713.online`
 
@@ -10,7 +10,7 @@ The gacha page belongs to the main Image2 case-library flow and should be
 validated at:
 
 ```text
-https://image2.lsb0713.online/image2-cases/gacha
+https://image2.cauai.fun/image2-cases/gacha
 ```
 
 ## Deploy
@@ -195,7 +195,7 @@ npm run smoke:image2-domains
 # verify the same picture routing through the local container and forwarded host.
 node tools/smoke-image2-domains.mjs --picture-base=http://127.0.0.1:3052 --picture-host=picture.lsb0713.online --timeout-ms=30000
 
-$env:IMAGE2_SMOKE_BASE_URL="https://image2.lsb0713.online"
+$env:IMAGE2_SMOKE_BASE_URL="https://image2.cauai.fun"
 npm run health:image2-gacha
 npm run smoke:image2-gacha
 
@@ -204,5 +204,24 @@ npm run health:picture-auth-history
 npm run smoke:picture-auth-history:real
 ```
 
-The gacha smoke belongs to `https://image2.lsb0713.online`, not the standalone
+The gacha smoke belongs to `https://image2.cauai.fun`, not the standalone
 `scene.lsb0713.online` Docker service. The health check verifies env/table readiness with `ADMIN_TOKEN`; the smoke verifies 收藏夹来源、抽卡记录、评分收藏和配方保存，不触发真实作图。
+
+## 旧域本地数据迁移
+
+浏览器按 origin 隔离 localStorage，换域名后旧域（image2.lsb0713.online / ai.lsb0713.online）里的收藏、草稿、笔记和生成历史不会自动出现，需要用户主动迁移一次。
+
+迁移路径：
+
+1. 在旧域打开 https://image2.lsb0713.online/migrate ，页面枚举旧域 localStorage 里可迁移的键，打包成 base64url 迁移码。
+2. 点「带数据前往新域」跳到 https://image2.cauai.fun/migrate#import=<迁移码> ，新域页面校验后合并写入；链接过长或跳转失败时，把迁移码复制到新域迁移页的输入框手动导入。
+3. 导入完成后新域页面显示「已导入 X 项、跳过 Y 项」，并清掉地址栏里的 #import= 片段。
+
+约定与边界：
+
+- 旧域的 308 跳转 matcher 已排除 /migrate（见 proxy.ts 的 migrate$ 分支），旧域这一页不会被重定向到新域，用户才能在旧 origin 下读到自己的数据。
+- 迁移码只包含本地数据键（收藏、草稿、生成历史、界面偏好等）；键名匹配 session|token|auth|secret 的一律不迁移，登录状态需要在新域重新登录。
+- 合并规则为「不覆盖」：目标 origin 已存在同名键时跳过并计数，写入失败的键单独列出。
+- 迁移全程在浏览器里完成，不经过任何服务端接口；迁移码本身等价于明文，导入完成后应关闭旧域迁移页。
+- 未登录用户的 localStorage 数据只能由用户自己在旧域走这一步，服务端无法代查、代迁或验证迁移结果。
+- 本地自测：新域页面 URL 加 ?legacy=1 可强制进入旧域导出视图。

@@ -40,7 +40,7 @@ const supabaseUrl = getEnv("NEXT_PUBLIC_SUPABASE_URL").replace(/\/+$/, "");
 const publishableKey = getEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
 const secretKey = getEnv("SUPABASE_SERVICE_ROLE_KEY");
 const adminToken = args.get("admin-token") ?? getEnv("ADMIN_TOKEN");
-const baseUrl = (args.get("base-url") ?? getEnv("IMAGE2_SMOKE_BASE_URL") ?? "https://image2.lsb0713.online").replace(
+const baseUrl = (args.get("base-url") ?? getEnv("IMAGE2_SMOKE_BASE_URL") ?? "https://image2.cauai.fun").replace(
   /\/+$/,
   ""
 );

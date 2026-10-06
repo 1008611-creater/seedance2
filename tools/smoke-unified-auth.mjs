@@ -89,7 +89,7 @@ async function waitForServer() {
   let lastError = "";
   while (Date.now() - startedAt < timeoutMs) {
     try {
-      const response = await request("/login", { headers: { "x-forwarded-host": "image2.lsb0713.online" } });
+      const response = await request("/login", { headers: { "x-forwarded-host": "image2.cauai.fun" } });
       if (response.status < 500) return;
       lastError = `HTTP ${response.status}`;
     } catch (error) {
@@ -277,7 +277,7 @@ await withServer(
 
     await runCheck("Image2 login page renders Image2 account copy", async () => {
       const response = await request("/login", {
-        headers: { "x-forwarded-host": "image2.lsb0713.online" }
+        headers: { "x-forwarded-host": "image2.cauai.fun" }
       });
       const text = stripHtml(await response.text());
       assert(response.ok, `expected 2xx, got ${response.status}`);

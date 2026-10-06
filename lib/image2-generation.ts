@@ -1,21 +1,15 @@
 import { randomUUID } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
-const userHome = process.env.USERPROFILE ?? process.env.HOME ?? os.homedir();
-const authPath = path.join(userHome, ".codex", "auth.json");
-const ikunConfigPath = path.join(userHome, ".codex", "skills", "ikun-image2", "config.env");
-const localConfigPath = path.join(userHome, ".codex", "skills", "beecode-image2", "config.env");
-const runningHubSkillEnvPath = path.join(userHome, ".codex", "skills", "runninghub-image2-text", ".env");
 const outputRoot = process.env.DAIHUO_OUTPUT_ROOT
   ? path.join(process.env.DAIHUO_OUTPUT_ROOT, "image2-studio")
   : process.env.VERCEL
     ? path.join(os.tmpdir(), "image2-studio")
     : path.join(process.cwd(), "outputs", "image2-studio");
-const runningHubTextEndpoint = "/openapi/v2/rhart-image-g-2/text-to-image";
-const runningHubImageEndpoint = "/openapi/v2/rhart-image-g-2/image-to-image";
-const runningHubQueryEndpoint = "/openapi/v2/query";
+const mcgroxDefaultBaseUrl = "https://mcgrox.top/v1";
+const mcgroxDefaultModel = "gpt-image-2.5-sunburst";
 
 export const allowedImage2Sizes = new Set(["1024x1024", "1024x1536", "1536x1024"]);
 export const allowedImage2Ratios = new Set(["1:1", "3:4", "9:16", "16:9"]);
@@ -77,7 +71,7 @@ type Image2Input = {
 type Image2ProviderName = Image2EffectiveChannel;
 
 function normalizeBaseUrl(value?: string) {
-  const baseUrl = (value || "https://beecode.cc").trim().replace(/\/+$/, "");
+  const baseUrl = (value || mcgroxDefaultBaseUrl).trim().replace(/\/+$/, "");
   return baseUrl.endsWith("/v1") ? baseUrl : `${baseUrl}/v1`;
 }
 
@@ -179,115 +173,27 @@ function imageGenerationMockEnabled() {
   return /^(1|true|yes|on|pass|auto)$/i.test(process.env.IMAGE2_GENERATION_MOCK ?? "");
 }
 
-function parseEnvFile(text: string) {
-  const values = new Map<string, string>();
-  for (const rawLine of text.split(/\r?\n/)) {
-    const line = rawLine.trim();
-    if (!line || line.startsWith("#") || !line.includes("=")) continue;
-    const [key, ...parts] = line.split("=");
-    values.set(key.trim(), parts.join("=").trim().replace(/^["']|["']$/g, ""));
-  }
-  return values;
-}
-
-async function readLocalConfig() {
-  try {
-    return parseEnvFile(await readFile(localConfigPath, "utf-8"));
-  } catch {
-    return new Map<string, string>();
-  }
-}
-
-async function readIkunConfig() {
-  try {
-    return parseEnvFile(await readFile(ikunConfigPath, "utf-8"));
-  } catch {
-    return new Map<string, string>();
-  }
-}
-
-async function readRunningHubSkillConfig() {
-  try {
-    return parseEnvFile(await readFile(runningHubSkillEnvPath, "utf-8"));
-  } catch {
-    return new Map<string, string>();
-  }
-}
-
-async function readAuthJsonKey() {
-  try {
-    const auth = JSON.parse(await readFile(authPath, "utf-8"));
-    return typeof auth.OPENAI_API_KEY === "string" ? auth.OPENAI_API_KEY : "";
-  } catch {
-    return "";
-  }
-}
-
 async function getImageConfig() {
-  const ikunConfig = await readIkunConfig();
-  const localConfig = await readLocalConfig();
-  const apiKey =
-    process.env.IKUN_IMAGE2_API_KEY ||
-    process.env.MONKEY_TOOLS_API_KEY ||
-    process.env.NEWAPI_API_KEY ||
-    process.env.OPENAI_API_KEY ||
-    process.env.BEECODE_OPENAI_API_KEY ||
-    ikunConfig.get("IKUN_IMAGE2_API_KEY") ||
-    ikunConfig.get("MONKEY_TOOLS_API_KEY") ||
-    ikunConfig.get("NEWAPI_API_KEY") ||
-    ikunConfig.get("OPENAI_API_KEY") ||
-    localConfig.get("OPENAI_API_KEY") ||
-    localConfig.get("BEECODE_OPENAI_API_KEY") ||
-    (await readAuthJsonKey());
-
-  const baseUrl =
-    process.env.IKUN_IMAGE2_BASE_URL ||
-    process.env.MONKEY_TOOLS_BASE_URL ||
-    process.env.NEWAPI_BASE_URL ||
-    ikunConfig.get("IKUN_IMAGE2_BASE_URL") ||
-    ikunConfig.get("MONKEY_TOOLS_BASE_URL") ||
-    ikunConfig.get("NEWAPI_BASE_URL") ||
-    ikunConfig.get("OPENAI_BASE_URL") ||
-    process.env.OPENAI_BASE_URL ||
-    process.env.BEECODE_BASE_URL ||
-    localConfig.get("OPENAI_BASE_URL") ||
-    localConfig.get("BEECODE_BASE_URL") ||
-    (ikunConfig.size ? "https://api.monkey-tools.cn" : undefined);
+  // Image generation is server-env-only. Never read workstation skill files
+  // or auth.json, and never silently switch to another provider.
+  const apiKey = process.env.OPENAI_API_KEY || "";
+  const baseUrl = process.env.OPENAI_BASE_URL || mcgroxDefaultBaseUrl;
 
   return {
     apiKey: apiKey.trim(),
     baseUrl: normalizeBaseUrl(baseUrl),
-    model:
-      process.env.IKUN_IMAGE2_MODEL ||
-      ikunConfig.get("IKUN_IMAGE2_MODEL") ||
-      process.env.IMAGE2_MODEL ||
-      process.env.OPENAI_IMAGE_MODEL ||
-      process.env.BEECODE_IMAGE_MODEL ||
-      localConfig.get("BEECODE_IMAGE_MODEL") ||
-      "gpt-image-2"
-  };
-}
-
-async function getRunningHubConfig() {
-  const skillConfig = await readRunningHubSkillConfig();
-  const apiKey = process.env.RUNNINGHUB_API_KEY || skillConfig.get("RUNNINGHUB_API_KEY") || "";
-  const resolution = process.env.RUNNINGHUB_IMAGE2_RESOLUTION || skillConfig.get("RUNNINGHUB_IMAGE2_RESOLUTION") || "1k";
-  return {
-    apiKey: apiKey.trim(),
-    baseUrl: (process.env.RUNNINGHUB_BASE_URL || skillConfig.get("RUNNINGHUB_BASE_URL") || "https://www.runninghub.cn").trim().replace(/\/+$/, ""),
-    resolution: resolution.trim()
+    model: process.env.IMAGE2_MODEL || process.env.OPENAI_IMAGE_MODEL || mcgroxDefaultModel
   };
 }
 
 export async function getImage2PublicConfig() {
   const config = await getImageConfig();
-  const runningHubConfig = await getRunningHubConfig();
   return {
-    configured: Boolean(config.apiKey || runningHubConfig.apiKey),
+    configured: Boolean(config.apiKey),
     channels: {
-      auto: Boolean(config.apiKey || runningHubConfig.apiKey),
+      auto: Boolean(config.apiKey),
       ikun: Boolean(config.apiKey),
-      runninghub: Boolean(runningHubConfig.apiKey)
+      runninghub: false
     },
     ratios: Array.from(allowedImage2Ratios),
     resolutions: Array.from(allowedImage2Resolutions),
@@ -356,27 +262,6 @@ async function readImageUrl(url: string) {
   return Buffer.from(await response.arrayBuffer());
 }
 
-function publicAppUrl() {
-  return (process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || "").trim().replace(/\/+$/, "");
-}
-
-async function writeReferencesForPublicAccess(references: ReferenceImage[], jobDir: string, jobId: string) {
-  const baseUrl = publicAppUrl();
-  if (!baseUrl) {
-    throw new Error("参考图生成需要配置 APP_URL，才能让备用通道读取上传图片。");
-  }
-
-  const urls: string[] = [];
-  for (const [index, image] of references.entries()) {
-    if (!image.dataUrl) continue;
-    const parsed = parseDataUrl(image.dataUrl);
-    const name = `reference-${String(index + 1).padStart(2, "0")}.${parsed.extension}`;
-    await writeFile(path.join(/* turbopackIgnore: true */ jobDir, name), parsed.buffer);
-    urls.push(`${baseUrl}/api/image2/output/${encodeURIComponent(jobId)}/${encodeURIComponent(name)}`);
-  }
-  return urls;
-}
-
 function normalizeImage2Ratio(value: unknown, legacySize = ""): Image2Ratio {
   const ratio = String(value ?? "");
   if (allowedImage2Ratios.has(ratio)) return ratio as Image2Ratio;
@@ -386,8 +271,8 @@ function normalizeImage2Ratio(value: unknown, legacySize = ""): Image2Ratio {
 }
 
 function normalizeImage2Channel(channel: Image2Channel): Image2Channel {
-  if (channel === "fast") return "ikun";
-  if (channel === "stable") return "runninghub";
+  // Legacy UI names remain accepted, but every request uses McGrox/Sunburst.
+  if (channel === "fast" || channel === "stable" || channel === "runninghub" || channel === "auto") return "ikun";
   return channel;
 }
 
@@ -401,113 +286,6 @@ function aspectRatioForSize(size: string) {
   if (size === "1024x1536") return "2:3";
   if (size === "1536x1024") return "3:2";
   return "1:1";
-}
-
-function extractTaskId(response: Record<string, unknown>) {
-  const candidates = [response, response.data].filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object");
-  for (const item of candidates) {
-    for (const key of ["taskId", "task_id", "id"]) {
-      const value = item[key];
-      if (typeof value === "string" || typeof value === "number") return String(value);
-    }
-  }
-  return "";
-}
-
-function findImageUrls(value: unknown): string[] {
-  if (typeof value === "string") {
-    const lower = value.toLowerCase();
-    return value.startsWith("http") && [".png", ".jpg", ".jpeg", ".webp"].some((ext) => lower.includes(ext)) ? [value] : [];
-  }
-  if (Array.isArray(value)) {
-    return [...new Set(value.flatMap(findImageUrls))];
-  }
-  if (value && typeof value === "object") {
-    return [...new Set(Object.values(value).flatMap(findImageUrls))];
-  }
-  return [];
-}
-
-function runningHubLooksDone(response: Record<string, unknown>) {
-  if (findImageUrls(response).length) return true;
-  const text = JSON.stringify(response).toLowerCase();
-  return ["success", "succeeded", "completed", "finish"].some((word) => text.includes(word));
-}
-
-async function postRunningHubJson(
-  config: Awaited<ReturnType<typeof getRunningHubConfig>>,
-  endpoint: string,
-  payload: Record<string, unknown>
-) {
-  const response = await fetch(`${config.baseUrl}${endpoint}`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${config.apiKey}`,
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      "User-Agent": "image2-case-library/1.0"
-    },
-    body: JSON.stringify(payload)
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const message =
-      typeof data?.message === "string"
-        ? data.message
-        : typeof data?.error === "string"
-          ? data.error
-          : typeof data?.error?.message === "string"
-            ? data.error.message
-            : `图片生成失败：${response.status}`;
-    throw new Error(message);
-  }
-  return data as Record<string, unknown>;
-}
-
-async function pollRunningHubResult(config: Awaited<ReturnType<typeof getRunningHubConfig>>, taskId: string) {
-  const timeoutMs = Math.max(15000, Number(process.env.RUNNINGHUB_IMAGE2_TIMEOUT_MS) || 240000);
-  const pollMs = Math.max(2000, Number(process.env.RUNNINGHUB_IMAGE2_POLL_MS) || 5000);
-  const deadline = Date.now() + timeoutMs;
-  let lastResponse: Record<string, unknown> = {};
-
-  while (Date.now() < deadline) {
-    lastResponse = await postRunningHubJson(config, runningHubQueryEndpoint, { taskId });
-    if (runningHubLooksDone(lastResponse)) return lastResponse;
-    await new Promise((resolve) => setTimeout(resolve, pollMs));
-  }
-
-  throw new Error("图片生成排队时间过长。");
-}
-
-async function requestRunningHubImage2(
-  config: Awaited<ReturnType<typeof getRunningHubConfig>>,
-  input: Image2Input,
-  context: { jobDir: string; jobId: string }
-) {
-  const responses: Record<string, unknown>[] = [];
-  const imageUrls = input.references.length ? await writeReferencesForPublicAccess(input.references, context.jobDir, context.jobId) : [];
-  const endpoint = imageUrls.length ? runningHubImageEndpoint : runningHubTextEndpoint;
-  for (let index = 0; index < input.count; index += 1) {
-    const payload: Record<string, unknown> = {
-      prompt: input.prompt,
-      aspectRatio: input.ratio,
-      resolution: input.resolution || config.resolution
-    };
-    if (imageUrls.length) payload.imageUrls = imageUrls;
-    if (input.seed) payload.seed = input.seed + index;
-
-    const submitResponse = await postRunningHubJson(config, endpoint, payload);
-    const taskId = extractTaskId(submitResponse);
-    if (!taskId) {
-      responses.push(submitResponse);
-      continue;
-    }
-    responses.push({
-      submit: submitResponse,
-      query: await pollRunningHubResult(config, taskId)
-    });
-  }
-  return { provider: "runninghub" as Image2ProviderName, response: { data: responses } };
 }
 
 async function requestGeneration(config: Awaited<ReturnType<typeof getImageConfig>>, payload: Record<string, unknown>, references: ReferenceImage[]) {
@@ -593,46 +371,8 @@ async function requestIkunImage2(
 
 async function requestImage2WithFallback(input: Image2Input, context: { jobDir: string; jobId: string }) {
   const config = await getImageConfig();
-  const runningHubConfig = await getRunningHubConfig();
-  let primaryError: unknown = null;
-
-  if (input.channel === "runninghub") {
-    if (!runningHubConfig.apiKey) throw new Error("所选生成通道还没有配置好。");
-    try {
-      return await requestRunningHubImage2(runningHubConfig, input, context);
-    } catch (error) {
-      if (input.requestedChannel !== "stable" || !config.apiKey) throw error;
-      primaryError = error;
-      return requestIkunImage2(config, input);
-    }
-  }
-
-  if (config.apiKey) {
-    try {
-      return await requestIkunImage2(config, input);
-    } catch (error) {
-      primaryError = error;
-      if (input.channel === "ikun") throw error;
-    }
-  } else {
-    primaryError = new Error("图片生成主通道还没有配置好。");
-    if (input.channel === "ikun") throw primaryError;
-  }
-
-  if (!runningHubConfig.apiKey) {
-    throw primaryError instanceof Error ? primaryError : new Error("图片生成通道暂时不可用。");
-  }
-  if (!process.env.VERCEL && process.env.IMAGE2_DISABLE_RUNNINGHUB_FALLBACK === "1") {
-    throw primaryError instanceof Error ? primaryError : new Error("图片生成通道暂时不可用。");
-  }
-
-  try {
-    return await requestRunningHubImage2(runningHubConfig, input, context);
-  } catch (runningHubError) {
-    const primaryMessage = primaryError instanceof Error ? primaryError.message : String(primaryError ?? "");
-    const fallbackMessage = runningHubError instanceof Error ? runningHubError.message : String(runningHubError);
-    throw new Error(`主通道失败，备用通道也失败：${primaryMessage || fallbackMessage}`);
-  }
+  if (!config.apiKey) throw new Error("McGrox image generation is not configured on the server (OPENAI_API_KEY is missing).");
+  return requestIkunImage2(config, input);
 }
 
 export async function generateImage2(body: unknown): Promise<Image2GenerationResult> {

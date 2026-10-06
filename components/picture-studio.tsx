@@ -88,12 +88,15 @@ const modeOptions: Array<{ id: StudioMode; label: string; hint: string }> = [
   { id: "smart-edit", label: "智能改图", hint: "按要求重绘细节" }
 ];
 
-const channelOptions: Array<{ id: StudioChannel; label: string; note: string }> = [
+const legacyChannelOptions: Array<{ id: StudioChannel; label: string; note: string }> = [
   { id: "fast", label: "高速通道", note: "适合快速试稿" },
   { id: "stable", label: "稳定通道", note: "适合备用出图" }
 ];
 
 const ratioOptions: StudioRatio[] = ["1:1", "3:4", "9:16", "16:9"];
+const channelOptions: Array<{ id: StudioChannel; label: string; note: string }> = [
+  { id: "fast", label: "McGrox · Sunburst", note: "质量优先的默认生图通道" }
+];
 const resolutionOptions: StudioResolution[] = ["1k", "2k", "4k"];
 
 const examplePrompts = [
@@ -394,7 +397,7 @@ export function PictureStudio() {
   function reuseHistoryItem(item: PictureHistoryItem) {
     setPrompt(item.prompt);
     if (item.mode) setMode(item.mode);
-    if (item.channel === "fast" || item.channel === "stable") setChannel(item.channel);
+    if (item.channel === "fast" || item.channel === "stable") setChannel("fast");
     if (item.ratio) setRatio(item.ratio);
     if (item.resolution) setResolution(item.resolution);
     if (item.seed) {

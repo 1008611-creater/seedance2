@@ -10,71 +10,178 @@ const allowedHosts = new Set([
   "imgv3.fotor.com",
   "cdnblog.picsart.com",
   "github.com",
+  // GitHub user-attachments（/user-attachments/assets/*）会 302 到这个 S3 域。
+  // 桶名由 GitHub 占用，第三方无法注册同名桶；若 GitHub 更换分片号需同步更新，
+  // 否则这批图片会被逐跳校验拒绝（宁可图挂，也不放开任意重定向目标）。
+  "github-production-user-asset-6210df.s3.amazonaws.com",
   "user-gen-media-assets.s3.amazonaws.com",
-  "api.image2studio.com"
+  "api.image2studio.com",
+  "pbs.twimg.com",
+  "pub-62cf7640cd0f4066b60933bd2e9b85ef.r2.dev"
 ]);
 
 const maxBytes = 12 * 1024 * 1024;
+const fetchTimeoutMs = 15_000;
+const maxRedirects = 3;
 const imageCacheHeader = "public, max-age=14400, s-maxage=604800, stale-while-revalidate=2592000";
 
-function isAllowedUrl(value: string) {
+// 只代理栅格图。显式排除 SVG（可内嵌脚本）等非栅格类型。
+const allowedMimeTypes = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "image/avif"
+]);
+
+// 源站未声明类型或只给通用二进制类型时，允许按扩展名兜底判断；
+// 但扩展名无法确认为栅格图时必须拒绝，不能"缺头就假装成 jpeg"。
+const unknownMimeTypes = new Set(["", "application/octet-stream", "binary/octet-stream"]);
+
+// 白名单校验：仅 https、仅标准端口、无 userinfo、主机名精确匹配。
+// 校验主机名时若不限制端口，`https://host:8443` 会绕过白名单；userinfo 也应拒绝。
+function parseAllowedUrl(value: string): URL | null {
+  let url: URL;
   try {
-    const url = new URL(value);
-    return (url.protocol === "https:" || url.protocol === "http:") && allowedHosts.has(url.hostname);
+    url = new URL(value);
   } catch {
-    return false;
+    return null;
   }
+  if (url.protocol !== "https:") return null;
+  if (url.username || url.password) return null;
+  if (url.port !== "" && url.port !== "443") return null;
+  if (!allowedHosts.has(url.hostname.toLowerCase())) return null;
+  return url;
 }
 
-function extensionContentType(pathname: string) {
+function extensionContentType(pathname: string): string | null {
   const lower = pathname.toLowerCase();
   if (lower.endsWith(".png")) return "image/png";
   if (lower.endsWith(".webp")) return "image/webp";
   if (lower.endsWith(".gif")) return "image/gif";
   if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
-  return "image/jpeg";
+  if (lower.endsWith(".avif")) return "image/avif";
+  return null;
+}
+
+// 逐跳校验重定向目标。fetch 默认自动跟随会把请求带到白名单之外的地址（SSRF），
+// 所以改为手动模式，每一跳都重新走白名单校验，超出跳数上限即拒绝。
+async function fetchImageWithGuard(startUrl: URL): Promise<Response | null> {
+  let current = startUrl;
+
+  for (let hop = 0; hop <= maxRedirects; hop += 1) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), fetchTimeoutMs);
+    let response: Response;
+    try {
+      response = await fetch(current, {
+        redirect: "manual",
+        signal: controller.signal,
+        headers: {
+          Accept: "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
+          "User-Agent": "image2-case-library/1.0"
+        },
+        next: { revalidate: 60 * 60 * 24 * 7 }
+      });
+    } finally {
+      clearTimeout(timer);
+    }
+
+    if (response.status >= 300 && response.status < 400) {
+      const location = response.headers.get("location");
+      if (!location) return null;
+      let nextUrl: URL | null;
+      try {
+        nextUrl = parseAllowedUrl(new URL(location, current).toString());
+      } catch {
+        nextUrl = null;
+      }
+      if (!nextUrl) return null;
+      current = nextUrl;
+      continue;
+    }
+
+    return response;
+  }
+
+  return null;
 }
 
 export async function GET(request: NextRequest) {
   const source = request.nextUrl.searchParams.get("url") ?? "";
-  if (!isAllowedUrl(source)) {
+  const sourceUrl = parseAllowedUrl(source);
+  if (!sourceUrl) {
     return NextResponse.json({ error: "图片来源不可用。" }, { status: 404 });
   }
 
-  const sourceUrl = new URL(source);
-  let response: Response;
-
+  let response: Response | null;
   try {
-    response = await fetch(sourceUrl, {
-      headers: {
-        Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
-        "User-Agent": "image2-case-library/1.0"
-      },
-      next: { revalidate: 60 * 60 * 24 * 7 }
-    });
+    response = await fetchImageWithGuard(sourceUrl);
   } catch {
     return NextResponse.json({ error: "图片读取超时。" }, { status: 504 });
+  }
+  if (!response) {
+    return NextResponse.json({ error: "图片来源不可用。" }, { status: 404 });
   }
 
   if (!response.ok) {
     return NextResponse.json({ error: "图片暂时不可用。" }, { status: response.status === 404 ? 404 : 502 });
   }
 
-  const contentLength = Number(response.headers.get("content-length") ?? 0);
-  if (contentLength > maxBytes) {
+  const declaredLength = Number(response.headers.get("content-length") ?? 0);
+  if (Number.isFinite(declaredLength) && declaredLength > maxBytes) {
     return NextResponse.json({ error: "图片文件过大。" }, { status: 413 });
   }
 
-  const contentType = response.headers.get("content-type") ?? extensionContentType(sourceUrl.pathname);
-  if (!contentType.startsWith("image/")) {
+  const rawType = (response.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
+  let contentType: string | null;
+  if (allowedMimeTypes.has(rawType)) {
+    contentType = rawType;
+  } else if (unknownMimeTypes.has(rawType)) {
+    contentType = extensionContentType(sourceUrl.pathname);
+  } else {
+    contentType = null;
+  }
+  if (!contentType) {
     return NextResponse.json({ error: "图片格式不可用。" }, { status: 415 });
   }
 
-  const buffer = Buffer.from(await response.arrayBuffer());
-  if (buffer.byteLength > maxBytes) {
-    return NextResponse.json({ error: "图片文件过大。" }, { status: 413 });
+  // 流式读取并即时计数：源站不声明或伪造 content-length 时，不能先把整个响应读进内存再判断。
+  const reader = response.body?.getReader();
+  if (!reader) {
+    return NextResponse.json({ error: "图片暂时不可用。" }, { status: 502 });
   }
 
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  // 读取阶段单独计时：fetch 返回不代表 body 已到齐，源站可以慢速发送把连接挂住。
+  const readTimer = setTimeout(() => {
+    void reader.cancel().catch(() => {});
+  }, fetchTimeoutMs);
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel().catch(() => {});
+        return NextResponse.json({ error: "图片文件过大。" }, { status: 413 });
+      }
+      chunks.push(value);
+    }
+  } catch {
+    await reader.cancel().catch(() => {});
+    return NextResponse.json({ error: "图片暂时不可用。" }, { status: 502 });
+  } finally {
+    clearTimeout(readTimer);
+  }
+
+  if (total === 0) {
+    return NextResponse.json({ error: "图片暂时不可用。" }, { status: 502 });
+  }
+
+  const buffer = Buffer.concat(chunks, total);
   return new NextResponse(buffer, {
     headers: {
       "Cache-Control": imageCacheHeader,

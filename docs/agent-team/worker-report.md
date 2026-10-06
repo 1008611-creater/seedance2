@@ -75,4 +75,4 @@
 - `supabase/migrations/202606040002_unified_auth_profiles.sql` 需要在 Supabase SQL Editor 或 CLI 中执行后，真实用户 profile / auth event 才会落库。
 - Supabase Phone Auth 的短信可用性取决于 Supabase 项目内 Phone provider / SMS 服务配置。
 - `UNIFIED_AUTH_ALLOW_MOCKS` 只为本地 smoke 使用，不得配置到生产环境。
-- 后续部署生产前需要配置 Cloudflare Turnstile site key / secret，并确认 `/login` 在 `scene.lsb0713.online`、`image2.lsb0713.online` 均可真实发送验证码。
+- 后续部署生产前需要配置 Cloudflare Turnstile site key / secret，并确认 `/login` 在 `scene.lsb0713.online`、`image2.cauai.fun` 均可真实发送验证码。

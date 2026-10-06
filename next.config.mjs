@@ -3,7 +3,7 @@ const nextConfig = {
   allowedDevOrigins: ["127.0.0.1", "localhost"],
   async headers() {
     const staticCache = "public, max-age=31536000, immutable";
-    const dataCache = "public, max-age=1800, s-maxage=86400, stale-while-revalidate=604800";
+    const dataCache = "public, max-age=600, s-maxage=3600, stale-while-revalidate=86400";
 
     return [
       {

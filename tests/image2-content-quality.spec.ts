@@ -15,6 +15,7 @@ type ReplicationGuide = {
 type Image2ContentCase = {
   detailKey?: string;
   imageUrl?: string;
+  imageStatus?: string;
   prompt?: string;
   promptKind?: string;
   replicationGuide?: ReplicationGuide;
@@ -50,7 +51,7 @@ test("every published case has an actionable replication guide", async () => {
     return (
       !item.title?.trim() ||
       !item.prompt?.trim() ||
-      !item.imageUrl?.trim() ||
+      (item.imageStatus !== "text-only" && !item.imageUrl?.trim()) ||
       !guide?.workflow ||
       !guide.bestFor?.trim() ||
       (guide.requiredInputs?.length ?? 0) < 2 ||
@@ -191,5 +192,5 @@ test("mobile case detail keeps editorial content readable without horizontal ove
 
 test("case-library cache version is advanced with the editorial-curation dataset", async () => {
   const source = await readFile(caseLibrarySourcePath, "utf8");
-  expect(source).toContain('const image2DataVersion = "20260715-editorial-curation-v1"');
+  expect(source).toContain('const image2DataVersion = "20261005-multisource-v2"');
 });

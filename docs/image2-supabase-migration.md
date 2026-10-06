@@ -115,7 +115,7 @@ Keep `IMAGE2_WORKBENCH_STORAGE_BACKEND=local` until `202605250001_image2_workben
 In Supabase Dashboard, add these Redirect URLs before asking real users to verify email or reset passwords:
 
 ```text
-https://image2.lsb0713.online/auth/callback
+https://image2.cauai.fun/auth/callback
 http://localhost:3012/auth/callback
 ```
 
@@ -236,7 +236,7 @@ npm run health:image2-gacha
 Before spending time on a full smoke test, run the admin-only health check. It does not create users and does not draw images:
 
 ```powershell
-$env:IMAGE2_SMOKE_BASE_URL="https://image2.lsb0713.online"
+$env:IMAGE2_SMOKE_BASE_URL="https://image2.cauai.fun"
 npm run health:image2-gacha
 ```
 
@@ -249,7 +249,7 @@ The health check requires `ADMIN_TOKEN` locally or `--admin-token=...`. It check
 After the SQL is applied and the deployed app has `IMAGE2_GACHA_BACKEND=supabase`, verify the cloud-backed gacha API without spending image quota:
 
 ```powershell
-$env:IMAGE2_SMOKE_BASE_URL="https://image2.lsb0713.online"
+$env:IMAGE2_SMOKE_BASE_URL="https://image2.cauai.fun"
 npm run smoke:image2-gacha
 ```
 
@@ -300,7 +300,7 @@ npm run check:image2-workbench-migration
 npm run check:image2-gacha-migration
 npm run typecheck
 npm run build
-$env:IMAGE2_SMOKE_BASE_URL="https://image2.lsb0713.online"
+$env:IMAGE2_SMOKE_BASE_URL="https://image2.cauai.fun"
 npm run health:image2-gacha
 ```
 
@@ -309,7 +309,7 @@ This static verification does not apply migrations to a live Supabase project. A
 After the live Supabase project and Vercel environment variables are configured, run the account-backed asset smoke test:
 
 ```powershell
-$env:IMAGE2_SMOKE_BASE_URL="https://image2.lsb0713.online"
+$env:IMAGE2_SMOKE_BASE_URL="https://image2.cauai.fun"
 npm run smoke:image2-supabase
 npm run smoke:image2-license
 npm run smoke:image2-gacha

@@ -40,17 +40,40 @@ test("commercial home supports account and bilingual interactions", async ({ pag
   await page.goto(`${baseUrl}/`, { waitUntil: "domcontentloaded" });
 
   const login = page.getByRole("button", { name: "登录同步资产" });
-  await expect(login).toBeEnabled();
-  await login.click();
-  await expect(page.getByRole("dialog", { name: "账号登录" })).toBeVisible();
-  const password = page.getByLabel("密码", { exact: true });
-  await expect(password).toHaveAttribute("type", "password");
-  await page.getByRole("button", { name: "显示密码" }).click();
-  await expect(password).toHaveAttribute("type", "text");
-  await page.getByRole("button", { name: "关闭" }).click();
+  // 登录能力是否配置由环境决定，不能由按钮自身的 disabled 状态决定：那样按钮在已配置 Supabase 的环境里
+  // 回归成 disabled 时，else 分支的 toBeDisabled() 依然成立，测试会静默放行。
+  // 判据取同源资产接口：生产模式下未配置 Supabase 资产后端固定返回 503；已配置 Supabase 资产后端时匿名请求固定返回 401。
+  const assetsProbe = await page.request.get(`${baseUrl}/api/image2/assets`);
+  const assetsStatus = assetsProbe.status();
+  if (assetsStatus === 401) {
+    // 生产部署模板 deploy/image2/production.env.example 把 Supabase 账号凭据与 IMAGE2_ASSET_SYNC_BACKEND=supabase
+    // 绑定在一起，401 说明这套凭据已配置，登录入口必须可用，按钮必须 enabled。
+    await expect(login).toBeEnabled();
+    // 弹窗按钮同样要等 hydration；先确认弹窗未开再点击，避免重试时点到被遮罩挡住的按钮。
+    const dialog = page.getByRole("dialog", { name: "账号登录" });
+    await expect(async () => {
+      if (!(await dialog.isVisible())) {
+        await login.click({ timeout: 3000 });
+      }
+      await expect(dialog).toBeVisible({ timeout: 3000 });
+    }).toPass({ timeout: 20000 });
+    const password = page.getByLabel("密码", { exact: true });
+    await expect(password).toHaveAttribute("type", "password");
+    await page.getByRole("button", { name: "显示密码" }).click();
+    await expect(password).toHaveAttribute("type", "text");
+    await page.getByRole("button", { name: "关闭" }).click();
+  } else {
+    // 200（本地 JSON store）或 503（生产模式未配置 Supabase 资产后端）都说明本次运行没有 Supabase 账号后端，
+    // 客户端没有可用登录入口，按钮必须保持 disabled；其他状态说明判据本身失效，直接失败而不是猜分支。
+    expect([200, 503], `unexpected /api/image2/assets status ${assetsStatus}`).toContain(assetsStatus);
+    await expect(login).toBeDisabled();
+  }
 
-  await page.getByRole("button", { name: "EN", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Turn strong images into prompts you can reuse." })).toBeVisible();
+  // 语言切换按钮在 hydration 之前点击会被丢弃，高并发下偶发失败；用 toPass 重试整段交互。
+  await expect(async () => {
+    await page.getByRole("button", { name: "EN", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Turn strong images into prompts you can reuse." })).toBeVisible({ timeout: 2000 });
+  }).toPass({ timeout: 20000 });
 });
 
 for (const viewport of [

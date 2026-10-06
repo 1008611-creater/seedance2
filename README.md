@@ -34,7 +34,7 @@ FREEWEEK
 后台地址：
 
 ```text
-https://image2.lsb0713.online/admin
+https://image2.cauai.fun/admin
 ```
 
 后台会读取 `ADMIN_TOKEN`。本机开发口令放在 `.env.local`，线上口令需要在 Vercel 环境变量中配置。
@@ -114,7 +114,7 @@ npm run smoke:seedance-supabase
 复制 `.env.example` 为 `.env.local`，配置：
 
 ```text
-APP_URL=https://image2.lsb0713.online
+APP_URL=https://image2.cauai.fun
 ADMIN_TOKEN=你的后台口令
 BYTEPLUS_API_KEY=你的 ModelArk API Key
 SEEDANCE_MODEL_ID=dreamina-seedance-2-0-260128

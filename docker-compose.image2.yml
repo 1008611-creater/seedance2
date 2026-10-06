@@ -6,7 +6,7 @@ services:
       args:
         NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-}
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
-        NEXT_PUBLIC_IMAGE2_LINK_SITE_URL: ${NEXT_PUBLIC_IMAGE2_LINK_SITE_URL:-https://image2.lsb0713.online}
+        NEXT_PUBLIC_IMAGE2_LINK_SITE_URL: ${NEXT_PUBLIC_IMAGE2_LINK_SITE_URL:-https://image2.cauai.fun}
     image: image2-scene:latest
     container_name: image2-scene
     restart: unless-stopped
@@ -21,7 +21,7 @@ services:
       IMAGE2_GACHA_BACKEND: supabase
       IMAGE2_GACHA_PACK_DRAW_COUNT: "2"
       IMAGE2_WORKBENCH_STORAGE_BACKEND: supabase
-      NEXT_PUBLIC_IMAGE2_LINK_SITE_URL: ${NEXT_PUBLIC_IMAGE2_LINK_SITE_URL:-https://image2.lsb0713.online}
+      NEXT_PUBLIC_IMAGE2_LINK_SITE_URL: ${NEXT_PUBLIC_IMAGE2_LINK_SITE_URL:-https://image2.cauai.fun}
     ports:
       - "127.0.0.1:3052:3000"
     volumes:

@@ -57,7 +57,7 @@ export type Image2SocialCommercePageMode =
   | "ops"
   | "all";
 
-const image2LinkSiteUrl = process.env.NEXT_PUBLIC_IMAGE2_LINK_SITE_URL || "https://image2.lsb0713.online";
+const image2LinkSiteUrl = process.env.NEXT_PUBLIC_IMAGE2_LINK_SITE_URL || process.env.NEXT_PUBLIC_IMAGE2_SITE_URL || "https://image2.cauai.fun";
 
 type NavItem = {
   key: Image2SocialCommerceSection | "image2-link-site";

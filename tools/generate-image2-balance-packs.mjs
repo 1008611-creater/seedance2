@@ -114,7 +114,7 @@ const listingText = `# Image2 额度包链动小屋上架包
 
 ## 兑换说明
 
-1. 打开 image2.lsb0713.online/image2-cases。
+1. 打开 image2.cauai.fun/image2-cases。
 2. 点击登录，使用邮箱账号登录或注册。
 3. 在图片余额区域输入卡密并点击兑换。
 4. 余额到账后继续点击生成同款；免费额度优先消耗，免费用完后扣图片余额。

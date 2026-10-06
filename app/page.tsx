@@ -43,7 +43,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
   const description = "查找真实 Image2 案例，阅读提示词结构，保存变体并继续进入作图工作流。";
   return {
-    metadataBase: new URL("https://image2.lsb0713.online"),
+    metadataBase: new URL(process.env.NEXT_PUBLIC_IMAGE2_SITE_URL || "https://image2.cauai.fun"),
     title: "Image2 案例库 - 把好图拆成能复用的提示词",
     description,
     keywords: ["Image2", "提示词", "AI 图片案例", "GPT Image 2", "提示词案例库"],

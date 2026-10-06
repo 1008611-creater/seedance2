@@ -9419,12 +9419,28 @@ select:focus {
   pointer-events: none;
 }
 
-.case-card-shell:hover .case-card-gacha,
-.case-card-shell:focus-within .case-card-gacha,
+@media (hover: hover) and (pointer: fine) {
+  .case-card-shell:hover .case-card-gacha {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+}
+
+.case-card-shell:has(:focus-visible) .case-card-gacha,
 .case-card-gacha.active {
   opacity: 1;
   transform: translateY(0);
   pointer-events: auto;
+}
+
+/* Touch devices have no real hover: a sticky hover state would turn this invisible
+   overlay into a tappable button and silently toggle favorites. Hide it on touch;
+   the gacha entry stays reachable from the case detail panel. */
+@media (hover: none), (pointer: coarse) {
+  .case-card-gacha {
+    display: none;
+  }
 }
 
 .case-card-gacha a,
@@ -14436,4 +14452,26 @@ select:focus {
     grid-template-columns: 1fr;
     grid-column: auto;
   }
+}
+
+.case-image-text-only {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 3;
+  padding: 16px;
+  color: #126f62;
+  background: linear-gradient(135deg, rgba(16, 124, 102, 0.12), rgba(216, 159, 53, 0.12)), #eef5f2;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+.case-image-text-only span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 8px 12px;
+  border: 1px solid rgba(18, 111, 98, 0.2);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.68);
 }

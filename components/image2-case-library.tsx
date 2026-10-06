@@ -1,6 +1,15 @@
 "use client";
 
-import { type FormEvent, type MouseEvent, type SyntheticEvent, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type FormEvent,
+  type MouseEvent,
+  type SyntheticEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from "react";
 import {
   CheckCircle2,
   Clock3,
@@ -60,6 +69,7 @@ type Image2Case = {
   sceneLabels: string[];
   imageUrl: string;
   imageAlt: string;
+  imageStatus?: "available" | "text-only";
   prompt?: string;
   promptPreview: string;
   promptKind: string;
@@ -334,6 +344,7 @@ type CaseImageProps = {
   onPreview?: () => void;
   previewLabel?: string;
   src: string;
+  textOnly?: boolean;
   timeoutMs?: number;
 };
 
@@ -431,7 +442,7 @@ const caseLibraryCopy = {
   }
 } as const;
 
-const image2DataVersion = "20260715-editorial-curation-v1";
+const image2DataVersion = "20261005-multisource-v2";
 const initialVisibleCaseCount = 48;
 const visibleCasePageSize = 48;
 const favoriteCaseStorageKey = "image2-case-favorites:v1";
@@ -475,6 +486,45 @@ const heroImageOverrides: Record<number, string> = {
 };
 
 const normalize = (value: string) => value.trim().toLowerCase();
+const searchQuerySeparatorPattern = /[\s,，、;；|/\\+_\-()（）[\]【】"'“”]+/;
+const cjkCharacterPattern = /[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/;
+const hasCjkCharacter = (value: string) => cjkCharacterPattern.test(value);
+const stripSearchWhitespace = (value: string) => value.replace(/\s+/g, "");
+
+const tokenizeSearchQuery = (query: string) => {
+  const seen = new Set<string>();
+  const tokens: string[] = [];
+
+  for (const raw of query.split(searchQuerySeparatorPattern)) {
+    const token = raw.trim();
+    if (!token || seen.has(token)) continue;
+    seen.add(token);
+    tokens.push(token);
+  }
+
+  return tokens;
+};
+
+type CaseSearchHaystack = {
+  compact: string;
+  text: string;
+};
+
+const matchesSearchToken = (haystack: CaseSearchHaystack | undefined, token: string) => {
+  if (!haystack) return false;
+  if (!hasCjkCharacter(token) && !hasCjkCharacter(haystack.text)) return haystack.text.includes(token);
+
+  const compactToken = stripSearchWhitespace(token);
+  if (haystack.compact.includes(compactToken)) return true;
+  if (compactToken.length < 2 || !hasCjkCharacter(compactToken)) return false;
+
+  for (const character of compactToken) {
+    if (!haystack.compact.includes(character)) return false;
+  }
+
+  return true;
+};
+
 const getCaseKey = (item: Pick<Image2Case, "detailKey" | "id">) => item.detailKey ?? String(item.id);
 const withDataVersion = (url: string) => `${url}${url.includes("?") ? "&" : "?"}v=${image2DataVersion}`;
 
@@ -1364,6 +1414,7 @@ function CaseImage({
   onUnavailable,
   previewLabel = "查看高清大图",
   src,
+  textOnly = false,
   timeoutMs = 12000
 }: CaseImageProps) {
   const [failed, setFailed] = useState(false);
@@ -1372,13 +1423,14 @@ function CaseImage({
   const [shellElement, setShellElement] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
+    if (textOnly) return;
     setFailed(false);
     setLoaded(false);
     setIsInView(loading === "eager");
-  }, [loading, src]);
+  }, [loading, src, textOnly]);
 
   useEffect(() => {
-    if (!shellElement || loading === "eager") return;
+    if (textOnly || !shellElement || loading === "eager") return;
     if (!("IntersectionObserver" in window)) {
       setIsInView(true);
       return;
@@ -1396,10 +1448,10 @@ function CaseImage({
 
     observer.observe(shellElement);
     return () => observer.disconnect();
-  }, [loading, shellElement, src]);
+  }, [loading, shellElement, src, textOnly]);
 
   useEffect(() => {
-    if (!isInView || failed || loaded) return;
+    if (textOnly || !isInView || failed || loaded) return;
 
     const timer = window.setTimeout(() => {
       setFailed(true);
@@ -1407,8 +1459,15 @@ function CaseImage({
     }, timeoutMs);
 
     return () => window.clearTimeout(timer);
-  }, [failed, isInView, loaded, onUnavailable, src, timeoutMs]);
+  }, [failed, isInView, loaded, onUnavailable, src, timeoutMs, textOnly]);
 
+  if (textOnly) {
+    return (
+      <div className={"case-image-shell case-image-text-only" + (className ? " " + className : "")} aria-label="纯文本提示词案例">
+        <span>纯文本提示词案例</span>
+      </div>
+    );
+  }
   const handleUnavailable = () => {
     setFailed(true);
     setLoaded(false);
@@ -1534,6 +1593,7 @@ function CaseDetailContent({
         className="case-detail-cover"
         loading="eager"
         src={item.imageUrl}
+        textOnly={item.imageStatus === "text-only"}
         timeoutMs={9000}
         onUnavailable={() => onImageUnavailable?.(item)}
         onPreview={() =>
@@ -2315,6 +2375,53 @@ export function Image2CaseLibrary() {
   const assetSyncSignatureRef = useRef("");
   const assetSyncHydratedSessionRef = useRef("");
   const assetSyncLoadingSessionRef = useRef("");
+  const caseDetailHistoryRef = useRef(false);
+
+  // The mobile detail layer pushes one marked history entry so the browser back button closes it first.
+  const pushCaseDetailHistory = (caseKey: string) => {
+    if (typeof window === "undefined") return;
+
+    const nextState = { ...(window.history.state ?? {}), image2CaseDetail: caseKey };
+
+    try {
+      if (caseDetailHistoryRef.current) {
+        window.history.replaceState(nextState, "", window.location.href);
+        return;
+      }
+
+      window.history.pushState(nextState, "", window.location.href);
+      caseDetailHistoryRef.current = true;
+    } catch {
+      // Keep the detail layer usable when the browser blocks history updates.
+    }
+  };
+
+  const closeCaseDetail = useCallback(() => {
+    setIsDetailOpen(false);
+
+    if (typeof window === "undefined" || !caseDetailHistoryRef.current) return;
+
+    caseDetailHistoryRef.current = false;
+    const state: unknown = window.history.state;
+
+    if (state && typeof state === "object" && "image2CaseDetail" in state) {
+      window.history.back();
+    }
+  }, []);
+
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      const state: unknown = event.state;
+
+      if (state && typeof state === "object" && "image2CaseDetail" in state) return;
+
+      caseDetailHistoryRef.current = false;
+      setIsDetailOpen(false);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   const buildCurrentAssetSnapshot = () =>
     buildAssetSnapshot({
@@ -2385,7 +2492,7 @@ export function Image2CaseLibrary() {
         setIsAuthModalOpen(false);
         return;
       }
-      setIsDetailOpen(false);
+      closeCaseDetail();
     };
 
     document.body.style.overflow = "hidden";
@@ -2395,7 +2502,7 @@ export function Image2CaseLibrary() {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", closeOnEscape);
     };
-  }, [imagePreview, isDetailOpen, isHistoryOpen, isQuotaModalOpen, isCollectionPickerOpen, isAuthModalOpen]);
+  }, [closeCaseDetail, imagePreview, isDetailOpen, isHistoryOpen, isQuotaModalOpen, isCollectionPickerOpen, isAuthModalOpen]);
 
   useEffect(() => {
     setGenerationHistory(readGenerationHistory());
@@ -2638,16 +2745,14 @@ export function Image2CaseLibrary() {
     return picks.slice(0, 6);
   }, [cases]);
 
-  const filteredCases = useMemo(() => {
-    const q = normalize(query);
-    const rows = cases.filter((item) => {
-      const matchesSource = sourceId === "全部" || item.sourceId === sourceId || (!item.sourceId && sourceId === "canghe");
-      const matchesCategory = category === "全部" || item.category === category;
-      const matchesFavorite = !favoritesOnly || favoriteCaseKeys.has(getCaseKey(item));
-      const matchesCollection = !activeCollection || activeCollection.caseKeys.includes(getCaseKey(item));
-      const matchesPromptFamily =
-        showPromptVariants || Boolean(q) || favoritesOnly || Boolean(activeCollection) || item.promptFamily?.primary !== false;
-      const haystack = normalize(
+  // Localized zh + en fields keep Chinese and English queries working in both languages.
+  const caseSearchHaystacks = useMemo(() => {
+    const haystacks = new Map<string, CaseSearchHaystack>();
+
+    for (const item of cases) {
+      const zh = localizedCaseText(item, "zh");
+      const en = localizedCaseText(item, "en");
+      const text = normalize(
         [
           item.id,
           item.caseCode,
@@ -2661,14 +2766,71 @@ export function Image2CaseLibrary() {
           item.scenes.join(" "),
           item.sceneLabels.join(" "),
           item.promptPreview,
-          item.sourceLabel
+          item.sourceLabel,
+          zh.title,
+          zh.categoryLabel,
+          zh.promptPreview,
+          zh.imageAlt,
+          zh.valueTier,
+          zh.promptKind,
+          en.title,
+          en.categoryLabel,
+          en.promptPreview,
+          en.imageAlt,
+          en.valueTier,
+          en.promptKind
         ].join(" ")
       );
-      return matchesSource && matchesCategory && matchesFavorite && matchesCollection && matchesPromptFamily && (!q || haystack.includes(q));
-    });
 
-    return rows.sort((a, b) => b.valueScore - a.valueScore || b.id - a.id);
-  }, [activeCollection, cases, category, favoriteCaseKeys, favoritesOnly, query, showPromptVariants, sourceId]);
+      haystacks.set(getCaseKey(item), { compact: stripSearchWhitespace(text), text });
+    }
+
+    return haystacks;
+  }, [cases]);
+
+  const filteredCases = useMemo(() => {
+    const q = normalize(query);
+    const tokens = tokenizeSearchQuery(q);
+    const compactQuery = stripSearchWhitespace(q);
+    const rows: Array<{ item: Image2Case; relevance: number }> = [];
+
+    for (const item of cases) {
+      const matchesSource = sourceId === "全部" || item.sourceId === sourceId || (!item.sourceId && sourceId === "canghe");
+      const matchesCategory = category === "全部" || item.category === category;
+      const matchesFavorite = !favoritesOnly || favoriteCaseKeys.has(getCaseKey(item));
+      const matchesCollection = !activeCollection || activeCollection.caseKeys.includes(getCaseKey(item));
+      const matchesPromptFamily =
+        showPromptVariants || Boolean(q) || favoritesOnly || Boolean(activeCollection) || item.promptFamily?.primary !== false;
+      if (!matchesSource || !matchesCategory || !matchesFavorite || !matchesCollection || !matchesPromptFamily) continue;
+
+      const haystack = caseSearchHaystacks.get(getCaseKey(item));
+      if (tokens.length && !tokens.every((token) => matchesSearchToken(haystack, token))) continue;
+
+      // 相关度优先：整串命中 > 去空白整串命中 > 分词/逐字命中，其次才看价值分。
+      let relevance = 0;
+      if (q && haystack) {
+        if (haystack.text.includes(q)) relevance = 3;
+        else if (compactQuery && haystack.compact.includes(compactQuery)) relevance = 2;
+        else relevance = 1;
+      }
+
+      rows.push({ item, relevance });
+    }
+
+    return rows
+      .sort((a, b) => b.relevance - a.relevance || b.item.valueScore - a.item.valueScore || b.item.id - a.item.id)
+      .map((row) => row.item);
+  }, [
+    activeCollection,
+    caseSearchHaystacks,
+    cases,
+    category,
+    favoriteCaseKeys,
+    favoritesOnly,
+    query,
+    showPromptVariants,
+    sourceId
+  ]);
   const promptVariantExtraCount = useMemo(
     () => cases.filter((item) => item.promptFamily && !item.promptFamily.primary).length,
     [cases]
@@ -3064,6 +3226,7 @@ export function Image2CaseLibrary() {
     setGenerationStatus(null);
     if (window.matchMedia("(max-width: 980px)").matches) {
       setIsDetailOpen(true);
+      pushCaseDetailHistory(record.caseKey);
     }
   };
 
@@ -3098,11 +3261,16 @@ export function Image2CaseLibrary() {
   }, [caseDetails, selectedCaseSummary]);
 
   const openCase = (item: Image2Case) => {
-    setSelectedKey(getCaseKey(item));
+    const caseKey = getCaseKey(item);
+    const isMobileDetail = window.matchMedia("(max-width: 980px)").matches;
+
+    setSelectedKey(caseKey);
     setGeneration(null);
     setGenerationError("");
     setGenerationStatus(null);
-    setIsDetailOpen(window.matchMedia("(max-width: 980px)").matches);
+    setIsDetailOpen(isMobileDetail);
+
+    if (isMobileDetail) pushCaseDetailHistory(caseKey);
   };
 
   const previewCaseImage = (item: Image2Case, src = item.imageUrl) => {
@@ -3177,7 +3345,7 @@ export function Image2CaseLibrary() {
 
   const handleCaseCardClick = (event: MouseEvent<HTMLButtonElement>, item: Image2Case) => {
     const target = event.target instanceof HTMLElement ? event.target : null;
-    if (target?.closest(".case-image-shell")) {
+    if (item.imageStatus !== "text-only" && target?.closest(".case-image-shell")) {
       previewCaseImage(item);
       return;
     }
@@ -3187,7 +3355,7 @@ export function Image2CaseLibrary() {
 
   const handleHeroCardClick = (event: MouseEvent<HTMLButtonElement>, item: Image2Case) => {
     const target = event.target instanceof HTMLElement ? event.target : null;
-    if (target?.closest(".case-hero-card-overlay")) {
+    if (item.imageStatus === "text-only" || target?.closest(".case-hero-card-overlay")) {
       openCase(item);
       return;
     }
@@ -3311,6 +3479,7 @@ export function Image2CaseLibrary() {
     });
     if (window.matchMedia("(max-width: 980px)").matches) {
       setIsDetailOpen(true);
+      pushCaseDetailHistory(record.caseKey ?? String(record.caseId));
     }
   };
 
@@ -3538,6 +3707,7 @@ export function Image2CaseLibrary() {
                   alt={localized.imageAlt}
                   loading="eager"
                   src={heroImageOverrides[item.id] ?? item.imageUrl}
+                  textOnly={item.imageStatus === "text-only"}
                   timeoutMs={9000}
                   onUnavailable={() => hideUnavailableCase(item)}
                 />
@@ -3777,7 +3947,7 @@ export function Image2CaseLibrary() {
                       type="button"
                       onClick={(event) => handleCaseCardClick(event, item)}
                     >
-                      <CaseImage alt={localized.imageAlt} src={item.imageUrl} onUnavailable={() => hideUnavailableCase(item)} />
+                      <CaseImage alt={localized.imageAlt} src={item.imageUrl} textOnly={item.imageStatus === "text-only"} onUnavailable={() => hideUnavailableCase(item)} />
                       <div>
                         <small>
                           {item.caseCode ?? `Case ${item.id}`} · {localized.categoryLabel}
@@ -3911,7 +4081,7 @@ export function Image2CaseLibrary() {
             aria-label="关闭案例详情"
             className="case-mobile-detail-backdrop"
             type="button"
-            onClick={() => setIsDetailOpen(false)}
+            onClick={closeCaseDetail}
           />
           <aside className="case-mobile-detail-panel" role="dialog" aria-modal="true" aria-label={localizedCaseText(selectedCase, language).title}>
             <div className="case-mobile-detail-head">
@@ -3919,7 +4089,7 @@ export function Image2CaseLibrary() {
                 <small>{language === "zh" ? "案例详情" : "Case details"}</small>
                 <strong>{localizedCaseText(selectedCase, language).title}</strong>
               </div>
-              <button aria-label="关闭案例详情" type="button" onClick={() => setIsDetailOpen(false)}>
+              <button aria-label="关闭案例详情" type="button" onClick={closeCaseDetail}>
                 <X aria-hidden="true" />
               </button>
             </div>

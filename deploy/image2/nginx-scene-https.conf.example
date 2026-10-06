@@ -22,27 +22,27 @@ server {
     client_max_body_size 30M;
 
     location = /image2-cases {
-      return 308 https://image2.lsb0713.online$request_uri;
+      return 308 https://image2.cauai.fun$request_uri;
     }
 
     location ^~ /image2-cases/ {
-      return 308 https://image2.lsb0713.online$request_uri;
+      return 308 https://image2.cauai.fun$request_uri;
     }
 
     location = /admin/image2-cases {
-      return 308 https://image2.lsb0713.online$request_uri;
+      return 308 https://image2.cauai.fun$request_uri;
     }
 
     location ^~ /admin/image2-cases/ {
-      return 308 https://image2.lsb0713.online$request_uri;
+      return 308 https://image2.cauai.fun$request_uri;
     }
 
     location = /video-studio {
-      return 308 https://image2.lsb0713.online$request_uri;
+      return 308 https://image2.cauai.fun$request_uri;
     }
 
     location ^~ /video-studio/ {
-      return 308 https://image2.lsb0713.online$request_uri;
+      return 308 https://image2.cauai.fun$request_uri;
     }
 
     location ^~ /_next/static/ {
