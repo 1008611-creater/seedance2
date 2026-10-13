@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-label="城市霓虹生成样片">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#193640"/>
+      <stop offset="0.52" stop-color="#225f6c"/>
+      <stop offset="1" stop-color="#e79b55"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#dff8f2" stop-opacity=".72"/>
+      <stop offset="1" stop-color="#72c7f3" stop-opacity=".2"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="540" fill="url(#sky)"/>
+  <circle cx="750" cy="112" r="72" fill="#ffe5a1" opacity=".92"/>
+  <g fill="#102622">
+    <rect x="64" y="176" width="116" height="304" rx="3"/>
+    <rect x="210" y="126" width="148" height="354" rx="3"/>
+    <rect x="390" y="206" width="100" height="274" rx="3"/>
+    <rect x="520" y="154" width="166" height="326" rx="3"/>
+    <rect x="720" y="234" width="128" height="246" rx="3"/>
+  </g>
+  <g fill="#7ee3cf" opacity=".75">
+    <rect x="92" y="208" width="22" height="48" rx="4"/>
+    <rect x="244" y="160" width="26" height="62" rx="4"/>
+    <rect x="292" y="254" width="26" height="80" rx="4"/>
+    <rect x="552" y="192" width="28" height="70" rx="4"/>
+    <rect x="614" y="316" width="28" height="58" rx="4"/>
+    <rect x="758" y="270" width="24" height="52" rx="4"/>
+  </g>
+  <path d="M0 438 C190 384 326 450 496 396 C644 348 778 386 960 318 L960 540 L0 540Z" fill="#f4f0df"/>
+  <path d="M0 468 C160 424 308 456 470 426 C646 392 788 438 960 390" fill="none" stroke="#0e8f78" stroke-width="8" opacity=".74"/>
+  <g transform="translate(420 206)">
+    <rect x="0" y="0" width="196" height="118" rx="14" fill="url(#glass)" stroke="#eafffb" stroke-width="3"/>
+    <path d="M28 32 H166 M28 60 H138 M28 88 H154" stroke="#f7fffd" stroke-width="9" stroke-linecap="round"/>
+  </g>
+</svg>

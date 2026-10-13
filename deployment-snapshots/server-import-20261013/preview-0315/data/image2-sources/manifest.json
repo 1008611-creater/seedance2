@@ -1,0 +1,9 @@
+﻿{
+  "capturedAt": "2026-10-05",
+  "sources": {
+    "zerolu": {"repository":"https://github.com/ZeroLu/awesome-gpt-image","ref":"913388c"},
+    "youmind": {"repository":"https://github.com/YouMind-OpenLab/awesome-gpt-image-2","ref":"d827dcb","coverage":"README visible cases only; repository declares a larger web corpus"},
+    "evolink-commerce-25": {"repository":"https://github.com/EvoLinkAI/gpt-image-2.5-for-e-commerce","ref":"main","coverage":"README and linked images captured; no API credentials used"},
+    "youart-25": {"repository":"https://github.com/youart-open-source/awesome-gpt-image-2-5-prompts","ref":"f7f6276","coverage":"data/prompts.json, 150 text prompts"}
+  }
+}

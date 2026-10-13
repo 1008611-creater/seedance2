@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-label="雪山日出短时">
+  <defs>
+    <linearGradient id="dawn" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#c7e1ee"/>
+      <stop offset=".56" stop-color="#f2cf9e"/>
+      <stop offset="1" stop-color="#6f8fa0"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="540" fill="url(#dawn)"/>
+  <circle cx="730" cy="132" r="64" fill="#fff0ad" opacity=".88"/>
+  <path d="M0 412 210 178l112 142 166-206 172 230 108-128 192 196v128H0Z" fill="#375365"/>
+  <path d="m210 178 62 78-78-28Zm278-64 78 104-104-42Zm280 102 64 66-78-20Z" fill="#f8fbff" opacity=".9"/>
+  <path d="M0 426c146-38 306-16 448-34 172-22 310-70 512-28v176H0Z" fill="#eff5f6" opacity=".9"/>
+  <path d="M466 348h24l18 74h-58Z" fill="#202a2e"/>
+  <circle cx="478" cy="326" r="14" fill="#202a2e"/>
+</svg>

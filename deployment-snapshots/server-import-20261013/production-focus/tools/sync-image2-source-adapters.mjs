@@ -1,0 +1,545 @@
+import { parseImageRoles, promptFromBlock, evoExamples } from "./lib/image2-source-images.mjs";
+import { createHash } from "node:crypto";
+import { readFile, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import {
+  applyEditorialSpecificity,
+  attachPromptFamilies,
+  categoryZh,
+  normalizeCasePromptMetadata,
+  normalizePromptFamily,
+  sceneLabelsFor,
+  stripEmoji,
+  tagLabelsFor,
+  withEditorialFields,
+  withReuseFields
+} from "./lib/image2-case-enrichment.mjs";
+
+// 统一案例库同步器。
+// 预演：node tools/sync-image2-source-adapters.mjs
+// 写入：node tools/sync-image2-source-adapters.mjs --write
+//
+// 流程：解析快照 -> 统一分类/标签/复刻指南/编辑评分 -> 与既有案例库合并 -> 同提示词分组 -> 写回。
+// 幂等：同一批快照重复执行不会新增条目（靠 detailKey / sourceId+sourceCaseId / 规范化提示词识别）；除 importedAt 外内容未变化时保留原 importedAt 并跳过写入。
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const sourceRoot = path.join(root, "data", "image2-sources");
+const dataPath = path.join(root, "public", "data", "image2-case-library.json");
+const write = process.argv.includes("--write");
+
+const defs = {
+  zerolu: {
+    id: "zerolu",
+    label: "ZeroLu / awesome-gpt-image",
+    repo: "https://github.com/ZeroLu/awesome-gpt-image",
+    site: "https://github.com/ZeroLu/awesome-gpt-image",
+    model: "GPT Image 2",
+    license: "MIT 仓库；案例含第三方作者与外部图片，商业使用前逐条核查。",
+    note: "固定快照 README 的公开案例，保留原始提示词与作者链接。"
+  },
+  youmind: {
+    id: "youmind",
+    label: "YouMind / awesome-gpt-image-2",
+    repo: "https://github.com/YouMind-OpenLab/awesome-gpt-image-2",
+    site: "https://youmind.com/gpt-image-2-prompts",
+    model: "GPT Image 2",
+    license: "CC BY 4.0；社区内容可能有单独权利，商用前逐条核查。",
+    note: "只覆盖 README 可见带编号案例（Featured Prompts 与 All Prompts 两段），不把站点宣称总量计入。"
+  },
+  "evolink-commerce-25": {
+    id: "evolink-commerce-25",
+    label: "EvoLink / gpt-image-2.5-for-e-commerce",
+    repo: "https://github.com/EvoLinkAI/gpt-image-2.5-for-e-commerce",
+    site: "https://evolink.ai/gpt-image-2-5-sunburst",
+    model: "gpt-image-2.5",
+    license: "CC BY 4.0；社区案例保留贡献者与原始链接。",
+    note: "当前电商仓库 README 快照，保留输入产品图、操作目的与输出图的配对。"
+  },
+  "youart-25": {
+    id: "youart-25",
+    label: "YouArt / awesome-gpt-image-2-5-prompts",
+    repo: "https://github.com/youart-open-source/awesome-gpt-image-2-5-prompts",
+    site: "https://github.com/youart-open-source/awesome-gpt-image-2-5-prompts",
+    model: "gpt-image-2.5",
+    license: "按行保留 CC0、CC BY 4.0、Prompt Authors No Grant 与 YouArt Curation No Grant 条款。",
+    note: "data/prompts.json 的纯文本提示词，仓库未附逐条效果图；本站按“仅提示词”展示，不补通用示例图。"
+  }
+};
+
+// 上游分类 -> 本站 13 个规范分类。zerolu 用 README 二级标题（去 emoji 后匹配）。
+const zeroluCategoryMap = {
+  "Photography & Photorealism": "Photography & Realism",
+  "Game & Entertainment": "Scenes & Storytelling",
+  "UI/UX & Social Media": "UI & Interfaces",
+  "Video, Animation & Collage": "Scenes & Storytelling",
+  "Typography & Poster Design": "Posters & Typography",
+  "Infographics, Education & Documents": "Charts & Infographics",
+  "Character & Consistency": "Characters & People",
+  "Image Editing & Style Transfer": "Illustration & Art"
+};
+// youmind 用标题前缀（README 的 “小节 - 标题” 结构）分类，个别条目按内容修正。
+const youmindSectionMap = {
+  "Profile / Avatar": "Photography & Realism",
+  "Social Media Post": "Posters & Typography",
+  "Infographic / Edu Visual": "Charts & Infographics",
+  "YouTube Thumbnail": "Scenes & Storytelling",
+  "Comic / Storyboard": "Scenes & Storytelling",
+  "Product Marketing": "Products & E-commerce",
+  "E-commerce Main Image": "Products & E-commerce",
+  "Game Asset": "Scenes & Storytelling"
+};
+const youartCategoryMap = {
+  poster: "Posters & Typography",
+  "typography-text": "Posters & Typography",
+  infographic: "Charts & Infographics",
+  "ui-mockup": "UI & Interfaces",
+  "ecommerce-product": "Products & E-commerce",
+  "ad-creative": "Posters & Typography",
+  "character-design": "Characters & People",
+  portrait: "Photography & Realism",
+  illustration: "Illustration & Art"
+};
+
+const youmindFeaturedMap = {
+  "vr headset exploded view poster": "Charts & Infographics",
+  "illustrated city food map": "Charts & Infographics",
+  "momotaro explainer slide in hybrid style": "Charts & Infographics",
+  "e-commerce live stream ui mockup": "UI & Interfaces",
+  "anime martial arts battle illustration": "Illustration & Art",
+  "3d stone staircase evolution infographic": "Charts & Infographics"
+};
+
+function categoryFor(sourceId, rawCategory, title, prompt) {
+  const raw = clean(rawCategory);
+  if (sourceId === "zerolu") return zeroluCategoryMap[stripEmoji(raw)] || "Other Use Cases";
+  if (sourceId === "evolink-commerce-25") return "Products & E-commerce";
+  if (sourceId === "youart-25") return youartCategoryMap[raw.toLowerCase()] || "Other Use Cases";
+  if (sourceId === "youmind") {
+    const featured = youmindFeaturedMap[String(title || "").toLowerCase().trim()];
+    if (featured) return featured;
+    const text = title + " " + prompt;
+    if (/ukiyo-?e|浮世絵|浮世绘/i.test(text)) return "History & Classical Themes";
+    if (/research paper|academic poster|scrapbook poster/i.test(title)) return "Posters & Typography";
+    const section = String(title || "").split(" - ")[0].trim();
+    return youmindSectionMap[section] || "Other Use Cases";
+  }
+  return "Other Use Cases";
+}
+
+const clean = (v) => String(v == null ? "" : v).replace(/\r/g, "").trim();
+const cleanAuthor = (v) => clean(v).replace(/\*\*/g, "").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/[\u200b\u200e\u200f]/g, "").replace(/^[\s*\-]+/, "").replace(/[\s*]+$/, "");
+const hash = (v) => createHash("sha1").update(String(v), "utf8").digest("hex");
+const slug = (v) => clean(v).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "case-" + hash(v).slice(0, 10);
+const mdUrl = (v) => { const m = String(v || "").match(/https?:\/\/[^\s)>]+/i); return m ? m[0].replace(/[.,;]+$/, "") : ""; };
+const sourceUrl = (block) => mdUrl((block.split("\n").find((x) => /source\s*:/i.test(x))) || "");
+
+// 单块图片上限。EvoLink 电商的 Case 会把多个 Example 的图表收在同一个块里，
+// 上限过小会静默截断（原为 16，导致 4 个 Case 块共 26 张图丢失）。
+// 48 覆盖现有最大块（24 张），同时仍能挡住异常膨胀。
+function images(block, id) {
+  const a = [];
+  for (const m of block.matchAll(/<img\b[^>]*\bsrc=["']([^"']+)["']/gi)) a.push(m[1]);
+  for (const m of block.matchAll(/!\[[^\]]*\]\(([^)\s]+)/g)) a.push(m[1]);
+  return [...new Set(a.filter((x) => x && !/badge|shields\.io|trendshift/i.test(x)).map((x) => /^https?:/i.test(x) ? x : id === "zerolu" ? "https://raw.githubusercontent.com/ZeroLu/awesome-gpt-image/main/" + x.replace(/^\.?\//, "") : x))].slice(0, 48);
+}
+
+function blocks(text, pattern) {
+  const hs = [...text.matchAll(/^###\s+(.+)$/gm)], out = [];
+  for (let i = 0; i < hs.length; i++) {
+    const heading = clean(hs[i][1]);
+    if (!pattern.test(heading)) continue;
+    const start = hs[i].index + hs[i][0].length, next = text.slice(start).search(/^#{1,3}\s+/m);
+    const body = text.slice(start, next < 0 ? text.length : start + next), prior = text.slice(0, hs[i].index);
+    const cs = [...prior.matchAll(/^##\s+([^#].+)$/gm)];
+    out.push({ heading, body, category: cs.length ? clean(cs[cs.length - 1][1]) : "未分类" });
+  }
+  return out;
+}
+
+// 只做“上游字段 -> 统一结构”的映射；分类、标签、复刻指南、评分由增强模块统一补齐。
+function toCase(x) {
+  const p = clean(x.prompt);
+  if (!p) return null;
+  const d = defs[x.sourceId];
+  if (!d) return null;
+  const rawCategory = clean(x.category) || "未分类";
+  const category = categoryFor(x.sourceId, rawCategory, clean(x.title), p);
+  const roles = x.imageRoles || (x.images || []).map(url => ({ url, role: 'output', label: '' }));
+  const imgs = roles.filter(image => image.role === 'output').map(image => image.url);
+  // Remove explicit denials before matching requirements, so "without any reference image" is text-only.
+  const requirementText = p.replace(/(?:without|no|does not (?:need|require)|do not use)\s+(?:(?:any|a|an|the)\s+)?reference[ _-]?(?:image|photo|portrait|thumbnail)s?/gi, '').replace(/(?:无需|不需要|不用)参考图/g, '');
+  const referenceRequired = roles.some(image => image.role === 'reference') || /reference[ _-]?(?:image|photo|portrait|\d)|uploaded (?:image|product|photograph|photo)|input image|provided image|using this portrait|base image|参考图|上传图片/i.test(requirementText);
+  const sourceCaseId = String(x.sourceCaseId);
+  return {
+    stableKey: x.sourceId + ":" + (x.sourceRecord?.position || sourceCaseId),
+    title: clean(x.title) || sourceCaseId,
+    category,
+    categoryLabel: categoryZh[category] || category,
+    imageUrl: imgs[0] || "",
+    imageAlt: clean(x.title),
+    imageStatus: imgs.length ? "available" : "text-only",
+    imageRoles: roles,
+    referenceRequired,
+    inputCompleteness: referenceRequired ? (roles.some(image => image.role === 'reference') ? 'provided' : 'missing') : 'not-required',
+    originalLanguage: /[\u3400-\u9fff]/.test(p) ? 'zh-or-mixed' : 'en',
+    contentHash: hash(p),
+    promptProvenance: x.promptProvenance || 'upstream-original',
+    translationStatus: 'editorial-summary-not-translation',
+    licenseStatus: 'individual-rights-review-required',
+    extraImageUrls: imgs.slice(1),
+    prompt: p,
+    sourceLabel: x.author ? x.author + " · " + d.label : d.label,
+    sourceUrl: clean(x.sourceUrl) || d.site,
+    githubUrl: clean(x.githubUrl) || d.repo,
+    featured: false,
+    caseCode: x.sourceId.toUpperCase().slice(0, 5) + "-" + slug(sourceCaseId),
+    sourceCaseId,
+    sourceId: x.sourceId,
+    sourceName: d.label,
+    sourceCategory: rawCategory,
+    sourceNote: x.sourceNote || d.note,
+    sourceLicense: x.sourceLicense ? x.sourceLicense + "；" + d.license : d.license,
+    coverageNote: d.note,
+    model: x.model || '未知',
+    modelEvidence: { status: x.model ? 'upstream-declared' : 'not-confirmed', tested: false,
+      note: x.model ? '上游表格逐图标注；本站未实测。' : '仓库主题为 ' + d.model + '，未找到该条生成记录；不据仓库名称确认模型。' },
+    author: clean(x.author),
+    detailKey: x.sourceId + "-" + slug(sourceCaseId),
+    sourceRecord: x.sourceRecord || { author: clean(x.author), links: [clean(x.sourceUrl)].filter(Boolean) },
+    sourceRights: x.upstream ? { upstream: x.upstream, upstreamStatedTerms: x.sourceLicense || null, rightsNotice: x.rightsNotice || null, authorUrl: x.authorUrl || null } : undefined
+  };
+}
+
+function parseZero(text) {
+  return blocks(text, /./).map((x) => {
+    const p = x.body.match(/\*\*Prompt:?\*\*\s*\x60{3}(?:\w+)?\s*([\s\S]*?)\x60{3}/i);
+    if (!p) return null;
+    const s = sourceUrl(x.body);
+    const sourceLine = x.body.match(/^.*Source[^\n]*/im)?.[0] || '';
+    const authorLinks = [...sourceLine.matchAll(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g)];
+    const signedLinks = authorLinks.filter(link => !/^(?:Article|OpenNana)$/i.test(link[1]));
+    const author = (signedLinks.length ? signedLinks : authorLinks).map(link => clean(link[1])).join(' / ');
+    const reconstructed = /\*\*Comment:\*\*[^\n]*reconstruct/i.test(x.body);
+    return toCase({ sourceId: "zerolu", sourceCaseId: slug(x.heading) + "-" + hash(p[1]).slice(0, 8), title: x.heading, category: x.category, prompt: p[1], imageRoles: parseImageRoles(x.body, 'zerolu'), model: parseImageRoles(x.body, 'zerolu').find(image => image.role === 'output' && /GPT.?Image/i.test(image.label))?.label, sourceUrl: s || defs.zerolu.site, author, sourceRecord: { credit: sourceLine, links: [...new Set(authorLinks.map(link => link[2]))], position: x.heading }, promptProvenance: reconstructed ? 'upstream-reconstruction' : 'upstream-original', sourceNote: reconstructed ? '上游明确说明：提示词由可见效果图和帖子语境重建，未取得原帖完整提示词；本站保留的是上游重建稿。' : undefined, githubUrl: defs.zerolu.repo + "/blob/main/README.md" });
+  }).filter(Boolean);
+}
+
+function parseYouMind(text) {
+  return blocks(text, /^No\.\s*\d+/i).map((x) => {
+    const h = x.heading.match(/^No\.\s*(\d+)\s*[:：]?\s*(.*)$/i);
+    const p = x.body.match(/####[^\n]*Prompt[^\n]*[\s\S]*?\x60{3}(?:\w+)?\s*([\s\S]*?)\x60{3}/i);
+    if (!h || !p) return null;
+    const a = x.body.match(/Author\s*[:：]\s*([^\n|]+)/i);
+    return toCase({ sourceId: "youmind", sourceCaseId: h[1] + "-" + hash(p[1]).slice(0, 8), title: h[2] || "YouMind #" + h[1], category: x.category, prompt: p[1], imageRoles: parseImageRoles(x.body, 'youmind'), sourceUrl: sourceUrl(x.body) || "https://youmind.com/gpt-image-2-prompts?id=" + h[1], author: a ? cleanAuthor(a[1]) : "YouMind community", sourceRecord: { credit: a?.[0] || null, links: [sourceUrl(x.body)].filter(Boolean), position: x.heading }, githubUrl: defs.youmind.repo + "/blob/main/README.md" });
+  }).filter(Boolean);
+}
+
+function parseEvo(text) {
+  return blocks(text, /^Case\s+\d+/i).flatMap((x) => {
+    const h = x.heading.match(/^Case\s+(\d+)\s*:\s*(.*)$/i);
+    if (!h) return [];
+    const examples = evoExamples(x.body, x.category, h[2]);
+    const head = x.body.split(/^####\s+Example/m)[0];
+    const parentPrompt = promptFromBlock(head);
+    const base = (title, body, prompt, id, inherited = false) => toCase({
+      sourceId: 'evolink-commerce-25', sourceCaseId: id, title, category: x.category, prompt,
+      imageRoles: parseImageRoles(body, 'evolink-commerce-25'),
+      sourceUrl: sourceUrl(body) || mdUrl(body.match(/^\*\*Source[^\n]*/im)?.[0]) || defs['evolink-commerce-25'].repo,
+      author: body.match(/\bby\s+(@[A-Za-z0-9_]+)/)?.[1] || (/community/i.test(body) ? 'Community contribution' : 'EvoLinkAI'),
+      sourceRecord: { position: x.heading + ' / ' + title, links: [...new Set([...body.matchAll(/(?:Source|source)[^\n]*/g)].flatMap(row => [...row[0].matchAll(/https?:\/\/[^\s)>]+/g)].map(link => link[0]))) ] },
+      githubUrl: defs['evolink-commerce-25'].repo + '/blob/main/README.md',
+      promptProvenance: inherited ? 'inherited-parent-template' : 'upstream-original',
+      sourceNote: inherited ? '示例继承父案例模板「' + h[2] + '」；不是该效果图的独立生成记录，变量需自行填写。' : defs['evolink-commerce-25'].note
+    });
+    return [base(h[2], head, parentPrompt, h[1] + '-' + hash(h[2] + parentPrompt).slice(0, 8)),
+      ...examples.map(e => base(h[2] + ' · ' + e.title, e.body, promptFromBlock(e.body) || parentPrompt, e.key, !promptFromBlock(e.body)))].filter(Boolean);
+  });
+}
+
+function parseYouArt(data) {
+  return (data.prompts || []).map((r) => toCase({
+    sourceId: "youart-25",
+    sourceCaseId: r.slug || r.promptSha256,
+    title: r.title || r.slug,
+    category: r.category,
+    prompt: r.prompt,
+    sourceUrl: r.sourceUrl || r.url || defs["youart-25"].site,
+    author: r.author,
+    githubUrl: defs["youart-25"].repo + "/blob/main/data/prompts.json",
+    sourceNote: "YouArt corpus " + ((data._meta && data._meta.corpusDate) || "unknown") + "；上游 " + (r.upstream || "未声明") + "。仓库未附该条效果图，效果见原帖。",
+    sourceLicense: r.upstreamStatedTerms,
+    upstream: r.upstream || "YouArt curation",
+    rightsNotice: data._meta?.rightsNotice,
+    authorUrl: r.authorUrl,
+    sourceRecord: { position: r.slug, authorUrl: r.authorUrl, links: [...new Set([r.sourceUrl, r.url, r.authorUrl].filter(Boolean))], upstreamStatedTerms: r.upstreamStatedTerms, promptSha256: r.promptSha256 }
+  })).filter(Boolean);
+}
+
+const json = async (f) => JSON.parse((await readFile(f, "utf8")).replace(String.fromCharCode(0xFEFF), ""));
+const allocate = (key, used) => {
+  let n = (Number.parseInt(hash(key).slice(0, 8), 16) % 700000000) + 100000000;
+  while (used.has(n)) n += 1;
+  used.add(n);
+  return n;
+};
+const incompleteCase = (item) => {
+  const g = item.replicationGuide;
+  if (!clean(item.title) || !clean(item.prompt)) return true;
+  if (item.imageStatus !== "text-only" && !clean(item.imageUrl)) return true;
+  if (!g || !clean(g.workflow) || !clean(g.bestFor)) return true;
+  return (g.requiredInputs || []).length < 2 || (g.editableVariables || []).length < 3 || (g.keepFixed || []).length < 2 || (g.verification || []).length < 3 || (g.failureWatchouts || []).length < 2;
+};
+
+const current = await json(dataPath);
+const manifest = await json(path.join(sourceRoot, "manifest.json"));
+const parsed = {}, parseFailures = {}, discovered = {};
+const adapters = {
+  zerolu: ['README.md', parseZero], youmind: ['README.md', parseYouMind],
+  'evolink-commerce-25': ['README.md', parseEvo], 'youart-25': ['prompts.json', parseYouArt]
+};
+for (const [id, [filename, parse]] of Object.entries(adapters)) {
+  try {
+    const raw = await readFile(path.join(sourceRoot, id, filename), 'utf8');
+    const input = filename.endsWith('.json') ? JSON.parse(raw.replace(/^\uFEFF/, '')) : raw;
+    discovered[id] = id === 'youart-25' ? input.prompts.length : id === 'evolink-commerce-25'
+      ? [...raw.matchAll(/^### Case\s+\d+|^#### Example\s+\d+/gm)].length
+      : [...raw.matchAll(id === 'youmind' ? /^### No\.\s*\d+/gm : /^###\s+/gm)].length;
+    parsed[id] = parse(input);
+    if (!parsed[id].length) throw new Error('No parseable prompts in source snapshot');
+    for (const item of parsed[id]) {
+      item.upstreamRevision = manifest.sources?.[id]?.ref || 'snapshot';
+      item.sourceFile = filename;
+      item.sourceSnapshotHash = hash(raw);
+      item.collectedAt = manifest.capturedAt;
+    }
+  } catch (error) {
+    parsed[id] = [];
+    parseFailures[id] = error instanceof Error ? error.message : String(error);
+    console.error('来源解析失败（保留该源已有记录）: ' + id + ': ' + parseFailures[id]);
+  }
+}
+
+const enriched = applyEditorialSpecificity(
+  Object.values(parsed)
+    .flat()
+    .map(normalizeCasePromptMetadata)
+    .map(item => {
+      const enriched = withReuseFields(item);
+      if (item.referenceRequired) {
+        enriched.replicationGuide.workflow = '参考图编辑';
+        enriched.replicationGuide.requiredInputs = ['准备输入参考图：' + (item.inputCompleteness === 'provided' ? '见本条输入图组' : '上游未提供，请自行准备'), ...enriched.replicationGuide.requiredInputs];
+      }
+      return enriched;
+    })
+    .map(withEditorialFields)
+);
+
+// 合并阶段会 Object.assign 原地改写命中的条目对象；这里必须与磁盘快照隔离，
+// 否则末尾的 stripImportedAt(payload) === stripImportedAt(current) 会把已改写的
+// current 当成「新数据」，使上游内容变更被误判为无变化而跳过写入。
+const existingCases = Array.isArray(current.cases) ? structuredClone(current.cases) : [];
+const used = new Set();
+const idOwner = new Map();
+for (const item of existingCases) {
+  const id = Number(item.id);
+  if (Number.isFinite(id) && !used.has(id)) {
+    used.add(id);
+    idOwner.set(id, item);
+  }
+}
+const reassignedIds = [];
+for (const item of existingCases) {
+  const id = Number(item.id);
+  if (Number.isFinite(id) && idOwner.get(id) !== item) {
+    const next = allocate(String(item.detailKey || item.caseCode || id), used);
+    reassignedIds.push({ from: id, to: next, caseCode: item.caseCode || item.sourceCaseId });
+    item.id = next;
+    idOwner.set(next, item);
+  }
+}
+
+const titleKey = (value) => clean(value).toLowerCase().replace(/\s+/g, " ");
+const byDetailKey = new Map();
+const bySourceEntry = new Map();
+const bySourceTitle = new Map();
+const byPrompt = new Map();
+for (const item of existingCases) {
+  if (item.detailKey) byDetailKey.set(item.detailKey, item);
+  if (item.sourceId) bySourceEntry.set(item.sourceId + "\u0000" + item.sourceCaseId, item);
+  if (item.sourceId && clean(item.title)) {
+    const key = item.sourceId + "\u0000" + titleKey(item.title);
+    if (!bySourceTitle.has(key)) bySourceTitle.set(key, item);
+  }
+  const key = normalizePromptFamily(item.prompt);
+  if (key && !byPrompt.has(key)) byPrompt.set(key, item);
+}
+
+const all = [...existingCases];
+const perSource = {};
+for (const id of Object.keys(defs)) perSource[id] = { discovered: discovered[id] ?? null, parseFailure: parseFailures[id] ?? null, parsed: parsed[id].length, added: 0, updated: 0, mergedManual: 0, samePromptAsOtherSource: 0, textOnly: 0, missingImage: 0, missingSourceUrl: 0, published: 0 };
+
+for (const item of enriched) {
+  const stats = perSource[item.sourceId];
+  if (!clean(item.sourceUrl)) stats.missingSourceUrl += 1;
+  const entryKey = item.sourceId + "\u0000" + item.sourceCaseId;
+  const sameTitleKey = item.sourceId + "\u0000" + titleKey(item.title);
+  const entryHit = byDetailKey.get(item.detailKey) || bySourceEntry.get(entryKey);
+  const hit = entryHit || bySourceTitle.get(sameTitleKey);
+  if (hit) {
+    const id = Number(hit.id);
+    const stableKey = hit.stableKey || item.stableKey;
+    if (entryHit) {
+      Object.assign(hit, item, { id, stableKey, caseCode: hit.caseCode || item.caseCode, detailKey: hit.detailKey || item.detailKey });
+    } else {
+      // 上游列表改版后编号会变：同源同题的早期手工条目按内容合并，保留原 id、编号与主图，用解析版补全提示词与字段。
+      Object.assign(hit, item, {
+        id, stableKey, caseCode: hit.caseCode || item.caseCode,
+        sourceCaseId: hit.sourceCaseId || item.sourceCaseId,
+        detailKey: hit.detailKey || item.detailKey, title: hit.title || item.title
+      });
+      bySourceTitle.set(sameTitleKey, hit);
+      bySourceEntry.set(entryKey, hit);
+      stats.mergedManual += 1;
+    }
+    stats.updated += 1;
+    continue;
+  }
+  const promptKey = normalizePromptFamily(item.prompt);
+  const twin = promptKey ? byPrompt.get(promptKey) : undefined;
+  if (twin && twin.sourceId !== item.sourceId) stats.samePromptAsOtherSource += 1;
+  const next = { ...item, id: allocate(item.stableKey, used) };
+  all.push(next);
+  byDetailKey.set(next.detailKey, next);
+  bySourceEntry.set(entryKey, next);
+  if (!bySourceTitle.has(sameTitleKey)) bySourceTitle.set(sameTitleKey, next);
+  if (promptKey && !byPrompt.has(promptKey)) byPrompt.set(promptKey, next);
+  stats.added += 1;
+}
+
+// 上游新源没有 styles/scenes 字段，按旧导入器同一套规则补齐；已有字段的存量条目不覆盖。
+let tagFilled = 0;
+let sceneFilled = 0;
+for (const item of all) {
+  if (item.title === "Urban fruit juice ad poster") {
+    item.category = "Posters & Typography"; item.categoryLabel = categoryZh[item.category];
+    item.promptPreview = "城市涂鸦走廊中的果汁广告海报；原文包含竖版 3:4 构图、人物姿态、产品与广告文字要求。";
+  }
+  if (defs[item.sourceId] && !item.modelEvidence) {
+    item.model = '未知'; item.modelEvidence = { status: 'not-confirmed', tested: false, note: '历史收录，当前快照未找到对应生成记录；本站未实测。' };
+  }
+  if (!Array.isArray(item.styles) || !Array.isArray(item.styleLabels)) {
+    const tagData = tagLabelsFor({ category: item.category, sourceCategory: item.sourceCategory, title: item.title, prompt: item.prompt || "" });
+    item.styles = tagData.styles;
+    item.styleLabels = tagData.styleLabels;
+    tagFilled += 1;
+  }
+  if (!Array.isArray(item.scenes) || !Array.isArray(item.sceneLabels)) {
+    const sceneData = sceneLabelsFor({ sourceCategory: item.sourceCategory || item.categoryLabel || "未分类", aspect: item.aspect, resolution: item.resolution, author: item.author });
+    item.scenes = sceneData.scenes;
+    item.sceneLabels = sceneData.sceneLabels;
+    sceneFilled += 1;
+  }
+}
+const missingTagFields = all.filter((item) => !Array.isArray(item.styles) || !Array.isArray(item.styleLabels) || !Array.isArray(item.scenes) || !Array.isArray(item.sceneLabels)).length;
+
+for (const item of all) delete item.promptFamily;
+attachPromptFamilies(all);
+all.sort((a, b) => (Number(b.valueScore) || 0) - (Number(a.valueScore) || 0) || (Number(a.id) || 0) - (Number(b.id) || 0));
+
+const duplicateIds = all.length - new Set(all.map((item) => Number(item.id))).size;
+const counts = {};
+for (const id of Object.keys(defs)) {
+  const rows = all.filter((item) => item.sourceId === id);
+  perSource[id].licensePending = rows.length;
+  perSource[id].skippedWithoutPrompt = Math.max(0, (discovered[id] || 0) - parsed[id].length);
+  counts[id] = rows.length;
+  perSource[id].published = rows.length;
+  perSource[id].textOnly = rows.filter((item) => item.imageStatus === "text-only").length;
+  perSource[id].missingImage = rows.filter((item) => !clean(item.imageUrl)).length;
+}
+
+const categories = (() => {
+  const map = new Map();
+  for (const item of all) map.set(item.category, (map.get(item.category) || 0) + 1);
+  return [...map.entries()].map(([value, count]) => ({ value, label: categoryZh[value] || value, count })).sort((a, b) => a.label.localeCompare(b.label, "zh-Hans-CN"));
+})();
+
+const sources = [
+  ...(current.sources || []).filter((item) => !defs[item.id]),
+  ...Object.values(defs).map((d) => ({ id: d.id, label: d.label, site: d.site, repository: d.repo, count: counts[d.id], licenseNote: d.license, coverageNote: d.note, model: d.model, lastSync: manifest.capturedAt || "2026-10-05" }))
+];
+const radar = [
+  ...(current.sourceRadar || []).filter((item) => !defs[item.id]),
+  ...Object.values(defs).map((d) => ({ id: d.id, label: d.label, repository: d.repo, site: d.site, status: counts[d.id] ? "已接入" : "同步失败", coverage: counts[d.id], coverageNote: d.note, licenseNote: d.license }))
+];
+
+const payload = {
+  ...current,
+  source: current.source || "image2-unified-case-library",
+  importedAt: new Date().toISOString(),
+  totalCases: all.length,
+  categories,
+  sources,
+  sourceRadar: radar,
+  sync: {
+    mode: "snapshot",
+    capturedAt: manifest.capturedAt || "2026-10-05",
+    sourceRoot: "data/image2-sources",
+    counts,
+    idempotency: "sourceId + sourceCaseId/detailKey + 规范化提示词",
+    totalCases: all.length
+  },
+  cases: all
+};
+
+// 幂等判定：除 importedAt 外与现有数据文件一致时，保留原时间戳并跳过写入。
+const stripImportedAt = (value) => JSON.stringify(Object.fromEntries(Object.entries(value).filter(([key]) => key !== "importedAt")));
+const previousImportedAt = typeof current.importedAt === "string" ? current.importedAt : "";
+const payloadUnchanged = Boolean(previousImportedAt) && stripImportedAt(payload) === stripImportedAt(current);
+if (payloadUnchanged) {
+  payload.importedAt = previousImportedAt;
+}
+
+const familyCases = all.filter((item) => item.promptFamily);
+const familyIds = new Set(familyCases.map((item) => item.promptFamily.id));
+const tierCounts = {};
+for (const item of all) tierCounts[item.valueTier] = (tierCounts[item.valueTier] || 0) + 1;
+const workflowCounts = {};
+for (const item of all) { const w = item.replicationGuide?.workflow || "missing"; workflowCounts[w] = (workflowCounts[w] || 0) + 1; }
+const incomplete = all.filter(incompleteCase);
+
+const report = {
+  mode: write ? "write" : "dry-run",
+  totalCases: all.length,
+  uniqueIds: new Set(all.map((item) => Number(item.id))).size,
+  duplicateIds,
+  reassignedIds,
+  perSource,
+  parseFailures,
+  counts,
+  categories: categories.length,
+  tierCounts,
+  workflowCounts,
+  promptFamilies: { groups: familyIds.size, members: familyCases.length, extraVariants: familyCases.filter((item) => item.promptFamily.primary === false).length },
+  textOnly: all.filter((item) => item.imageStatus === "text-only").length,
+  tagFields: { filledStyles: tagFilled, filledScenes: sceneFilled, missing: missingTagFields },
+  incomplete: incomplete.length,
+  incompleteSamples: incomplete.slice(0, 5).map((item) => item.detailKey || item.caseCode || item.id),
+  importedAtPreserved: payloadUnchanged
+};
+console.log(JSON.stringify(report, null, 2));
+
+const failed = duplicateIds > 0 || incomplete.length > 0 || missingTagFields > 0 || Object.values(perSource).some((item) => item.missingSourceUrl > 0);
+if (failed) {
+  process.exitCode = 1;
+  console.error("同步自检未通过：请先处理重复 id、缺来源、缺复刻指南或缺标签字段的条目。");
+} else if (write && Object.keys(parseFailures).length < Object.keys(defs).length) {
+  if (payloadUnchanged) {
+    console.log(`数据文件内容未变化（保留 importedAt=${payload.importedAt}），跳过写入。`);
+  } else {
+    await writeFile(dataPath, JSON.stringify(payload, null, 2) + "\n", "utf8");
+  }
+}
+if (write) await writeFile(path.join(sourceRoot, 'last-sync.json'), JSON.stringify({ ...report, completedAt: new Date().toISOString() }, null, 2) + '\n', 'utf8');
+if (Object.keys(parseFailures).length) process.exitCode = 1;
