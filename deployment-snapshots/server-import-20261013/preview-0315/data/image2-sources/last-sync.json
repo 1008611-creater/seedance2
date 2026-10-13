@@ -1,0 +1,101 @@
+{
+  "mode": "write",
+  "totalCases": 1661,
+  "uniqueIds": 1661,
+  "duplicateIds": 0,
+  "reassignedIds": [],
+  "perSource": {
+    "zerolu": {
+      "discovered": 76,
+      "parseFailure": null,
+      "parsed": 72,
+      "added": 0,
+      "updated": 72,
+      "mergedManual": 0,
+      "samePromptAsOtherSource": 0,
+      "textOnly": 0,
+      "missingImage": 0,
+      "missingSourceUrl": 0,
+      "published": 72,
+      "licensePending": 72,
+      "skippedWithoutPrompt": 4
+    },
+    "youmind": {
+      "discovered": 126,
+      "parseFailure": null,
+      "parsed": 126,
+      "added": 0,
+      "updated": 126,
+      "mergedManual": 0,
+      "samePromptAsOtherSource": 0,
+      "textOnly": 0,
+      "missingImage": 0,
+      "missingSourceUrl": 0,
+      "published": 128,
+      "licensePending": 128,
+      "skippedWithoutPrompt": 0
+    },
+    "evolink-commerce-25": {
+      "discovered": 84,
+      "parseFailure": null,
+      "parsed": 83,
+      "added": 0,
+      "updated": 83,
+      "mergedManual": 32,
+      "samePromptAsOtherSource": 0,
+      "textOnly": 20,
+      "missingImage": 20,
+      "missingSourceUrl": 0,
+      "published": 83,
+      "licensePending": 83,
+      "skippedWithoutPrompt": 1
+    },
+    "youart-25": {
+      "discovered": 150,
+      "parseFailure": null,
+      "parsed": 150,
+      "added": 0,
+      "updated": 150,
+      "mergedManual": 0,
+      "samePromptAsOtherSource": 0,
+      "textOnly": 150,
+      "missingImage": 150,
+      "missingSourceUrl": 0,
+      "published": 150,
+      "licensePending": 150,
+      "skippedWithoutPrompt": 0
+    }
+  },
+  "parseFailures": {},
+  "counts": {
+    "zerolu": 72,
+    "youmind": 128,
+    "evolink-commerce-25": 83,
+    "youart-25": 150
+  },
+  "categories": 13,
+  "tierCounts": {
+    "精选": 106,
+    "高价值": 911,
+    "可参考": 644
+  },
+  "workflowCounts": {
+    "参考图编辑": 163,
+    "文本生成": 1498
+  },
+  "promptFamilies": {
+    "groups": 119,
+    "members": 278,
+    "extraVariants": 159
+  },
+  "textOnly": 170,
+  "tagFields": {
+    "filledStyles": 0,
+    "filledScenes": 0,
+    "missing": 0
+  },
+  "incomplete": 0,
+  "incompleteSamples": [],
+  "importedAtPreserved": false,
+  "completedAt": "2026-10-06T19:09:07.426Z"
+}

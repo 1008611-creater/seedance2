@@ -1,0 +1,47 @@
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  allowedDevOrigins: ["127.0.0.1", "localhost"],
+  async headers() {
+    const staticCache = "public, max-age=31536000, immutable";
+    const dataCache = "public, max-age=600, s-maxage=3600, stale-while-revalidate=86400";
+
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: "camera=(), geolocation=(), microphone=()" }
+        ]
+      },
+      {
+        source: "/image2/hero/:path*",
+        headers: [{ key: "Cache-Control", value: staticCache }]
+      },
+      {
+        source: "/image2/cases/:path*",
+        headers: [{ key: "Cache-Control", value: staticCache }]
+      },
+      {
+        source: "/api/image2/output/:path*",
+        headers: [{ key: "Cache-Control", value: staticCache }]
+      },
+      {
+        source: "/data/:path*",
+        headers: [{ key: "Cache-Control", value: dataCache }]
+      }
+    ];
+  },
+  async redirects() {
+    return [
+      {
+        source: "/image2-atlas",
+        destination: "/image2-cases",
+        permanent: false
+      }
+    ];
+  }
+};
+
+export default nextConfig;
